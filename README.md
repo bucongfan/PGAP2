@@ -1,30 +1,29 @@
-
 # PGAP2
+
 Pan-Genome Analysis Pipeline 2
 
 
-
 ## Quick start
-### Basic usage
-The inputdir contains all genome and its annotation file. 
+### <font style="color:rgb(51, 51, 51);">Basic usage</font>
+The input directory contains all the genome and annotation files.
 
-PGAP2 supports multiple format as input, <font style="color:rgb(52, 73, 94);">GFFs in the same format as output by Prokka, GFFs and its Genome fasta file in different file, Genbank flat file (GBFF) or just Genome fasta file (--reannot is required).</font>
+PGAP2 supports multiple input formats: GFF files in the same format as those output by Prokka, GFF files with their corresponding genome FASTA files in separate files, GenBank flat files (GBFF), or just genome FASTA files (with `--reannot` required).
 
-<font style="color:rgb(52, 73, 94);">Each format of input file can mix in one input directory, PGAP2 will recognize and process them according to its prefix and suffix.</font>
+Different formats of input files can be mixed in one input directory. PGAP2 will recognize and process them based on their prefixes and suffixes.
 
 ```bash
 pgap2 main -i inputdir/ -o outputdir/
 ```
 
 ### Preprocessing
-Quality check and visulization conducted by PGAP2 in preprocessing step. PGAP2 will generate a interactivae HTML file and coresponding vector figures to direct user understanding its input data. Input data and pre-alignment result will stroe as a pickle file for quick re-start the same calculation step.
+Quality checks and visualization are conducted by PGAP2 during the preprocessing step. PGAP2 generates an interactive HTML file and corresponding vector figures to help users understand their input data. The input data and pre-alignment results are stored as a pickle file for quick restarting of the same calculation step.
 
 ```bash
 pgap2 prep -i inputdir/ -o outputdir/
 ```
 
 ### Postprocessing
-Postprocessing pipeline performed by PGAP2. There are various pipeline integrated in postprocessing module, such as statistical analysis, single copy tree building, population clustering and tajima's D test. Whatever which submodule you want to carry out, you can always run as:
+The postprocessing pipeline is performed by PGAP2. There are various submodules integrated into the postprocessing module, such as statistical analysis, single-copy tree building, population clustering, and Tajima's D test. Regardless of which submodule you want to use, you can always run it as follows:
 
 ```bash
 pgap2 post [submodule] [options] -i inputdir/ -o outputdir/
@@ -80,10 +79,10 @@ And then install extra software that only necessary for a specific function by y
 + One of alignment software
     - [diamond](https://github.com/bbuchfink/diamond)
     - [blast+ ](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)
-+ If need to retrive missing gene locus with --retrieve
++ Using `--retrieve` to retrieve missing gene loci
     - [miniprot](https://github.com/lh3/miniprot)
     - [seqtk](https://github.com/lh3/seqtk)
-+ If need to re-annot your genome with --reannot
++ Using `--reannot` to re-annotate your genome
     - [prodigal](https://github.com/hyattpd/Prodigal)
 
 ### Postprocessing
@@ -115,4 +114,7 @@ PGAP2 will call Rscript in your environment virable. The library should have:
 
 
 ## Detilled <font style="color:rgb(31, 35, 40);">Documentation</font>
-Please refer detailled documentation from here
+Please refer detailled documentation from wiki.
+
+
+
