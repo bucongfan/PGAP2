@@ -3,7 +3,7 @@ Pan-Genome Analysis Pipeline 2
 
 
 ## Quick start
-### [<font style="color:rgb(51, 51, 51);">Basic usage</font>](https://gthlab.au/panaroo/#/gettingstarted/quickstart?id=basic-usage)
+### Basic usage
 The inputdir contains all genome and its annotation file. 
 
 PGAP2 supports multiple format as input, <font style="color:rgb(52, 73, 94);">GFFs in the same format as output by Prokka, GFFs and its Genome fasta file in different file, Genbank flat file (GBFF) or just Genome fasta file (--reannot is required).</font>
