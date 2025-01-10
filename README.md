@@ -34,7 +34,7 @@ The inputdir is the outputdir of main module.
 PGAP2 also support statistical analysis using a PAV file indepandently:
 
 ```bash
-pgap2 post profle --pav your_pav_file -o outputdir/
+pgap2 post profile --pav your_pav_file -o outputdir/
 ```
 
 ## Installation
