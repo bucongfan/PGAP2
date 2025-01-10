@@ -113,8 +113,8 @@ PGAP2 will call Rscript in your environment virable. The library should have:
 
 
 
-## Detilled <font style="color:rgb(31, 35, 40);">Documentation</font>
-Please refer detailled documentation from wiki.
+## Detailed Documentation
+Please refer documentation from [wiki](https://github.com/bucongfan/PGAP2/wiki).
 
 
 
