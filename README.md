@@ -114,7 +114,7 @@ PGAP2 will call Rscript in your environment virable. The library should have:
 
 
 
-## Detailed Documentation
+## Detailed documentation
 Please refer documentation from [wiki](https://github.com/bucongfan/PGAP2/wiki).
 
 
