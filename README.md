@@ -48,6 +48,7 @@ conda create -n pgap2 -c conda-forge -c bioconda -c defaults pgap2
 
 ```bash
 conda create -n pgap2 -c conda-forge mamba
+conda activate pgap2 
 mamba install -c conda-forge -c bioconda -c defaults pgap2
 ```
 
