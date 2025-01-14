@@ -69,13 +69,17 @@ And then install extra software that only necessary for a specific function by y
 <font style="color:rgb(52, 73, 94);">Dependencies</font> of PGAP2 are list below, and PGAP2 will check them whether in environment path or in pgap2/dependencies folder.
 
 ### Preprocessing
-+ [cd-hit](about:blank)
++ One of clustering software
+    - [cd-hit](https://github.com/weizhongli/cdhit)
+    - [MMseqs2](https://github.com/soedinglab/MMseqs2)
 + One of alignment software
     - [diamond](https://github.com/bbuchfink/diamond)
     - [blast+ ](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)
 
 ### Main
-+ [cd-hit](about:blank)
++ One of clustering software
+    - [cd-hit](https://github.com/weizhongli/cdhit)
+    - [MMseqs2](https://github.com/soedinglab/MMseqs2)
 + [mcl](https://github.com/micans/mcl)
 + One of alignment software
     - [diamond](https://github.com/bbuchfink/diamond)
