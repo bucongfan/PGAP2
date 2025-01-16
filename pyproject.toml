@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PGAP2"
+dynamic = ["version", "readme"]
+keywords = ["pan-genome", "prokaryotic", "genomes", "pipeline","cluster"]
+
+requires-python = ">= 3.10"
+description = "PGAP2: a comprehensive pan-genome analysis pipeline for prokaryotic genomes"
+authors = [
+    {name = "bucongfan", email = "bucf@big.ac.cn"}
+]
+maintainers = [
+    {name = "bucongfan", email = "bucf@big.ac.cn"}
+]
+license = {text = "MIT License"}
+dependencies = [
+    "biopython==1.82",
+    "networkx==3.3",
+    "pyfastani==0.5.1",
+    "edlib==1.3.9",
+    "loguru==0.6.0",
+    "numpy==1.23.3",
+    "pandas==1.5.0",
+    "pyecharts==2.0.1",
+    "scikit_learn==1.1.2",
+    "scipy==1.9.1",
+    "tqdm==4.64.1",
+    "miniFasta",
+    "tajimas_d",
+]
+
+[project.scripts]
+pgap2 = "pgap2.main:main"
+
+[project.urls]
+homepage = "https://github.com/bucongfan/PGAP2"
+documentation = "https://github.com/bucongfan/PGAP2/wiki"
+repository = "https://github.com/bucongfan/PGAP2"
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
+version = {attr = "pgap2.__init__.__version__"}
