@@ -28,8 +28,8 @@ jobs:
 
       - name: Build release distributions
         run: |
-          python3 -m pip install --upgrade build
-          python3 -m pip install --user --upgrade twine
+          # NOTE: put your own distribution build steps here.
+          python -m pip install build
           python -m build
 
       - name: Upload distributions
@@ -44,7 +44,7 @@ jobs:
       - release-build
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: pypi-AgEIcHlwaS5vcmcCJGFlNDgwZDI3LTIxN2QtNGE2My04NjkzLWFkZjliNjAxNzkyNAACKlszLCJlMTRhNTJlNi0yOTk2LTRjMzAtODM3NC1iMmUzMTdlM2IzN2UiXQAABiDjGKS9sny9e8xcBDmXRwdQuZ3iNAeRwGru6JUG1pLqHg
+      id-token: ${{ secrets.PYPI_TOKEN }}
 
     # Dedicated environments with protections for publishing are strongly recommended.
     # For more information, see: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules
@@ -57,6 +57,7 @@ jobs:
       # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
       # ALTERNATIVE: exactly, uncomment the following line instead:
       # url: https://pypi.org/project/YOURPROJECT/${{ github.event.release.name }}
+
     steps:
       - name: Retrieve release distributions
         uses: actions/download-artifact@v4
