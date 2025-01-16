@@ -4,7 +4,7 @@ Pan-Genome Analysis Pipeline 2
 
 
 ## Quick start
-### <font style="color:rgb(51, 51, 51);">Basic usage</font>
+### Basic usage
 The input directory contains all the genome and annotation files.
 
 PGAP2 supports multiple input formats: GFF files in the same format as those output by Prokka, GFF files with their corresponding genome FASTA files in separate files, GenBank flat files (GBFF), or just genome FASTA files (with `--reannot` required).
@@ -44,7 +44,7 @@ The best way to install full version of PGAP2 package is using conda:
 conda create -n pgap2 -c conda-forge -c bioconda -c defaults pgap2
 ```
 
-<font style="color:rgb(52, 73, 94);">alternatively it is often faster to use the </font>[mamba](https://github.com/mamba-org/mamba)<font style="color:rgb(52, 73, 94);"> solver:</font>
+alternatively it is often faster to use the [mamba](https://github.com/mamba-org/mamba) solver
 
 ```bash
 conda create -n pgap2 -c conda-forge mamba
@@ -66,7 +66,7 @@ git clone https://github.com/bucongfan/PGAP2
 
 And then install extra software that only necessary for a specific function by yourself.
 
-<font style="color:rgb(52, 73, 94);">Dependencies</font> of PGAP2 are list below, and PGAP2 will check them whether in environment path or in pgap2/dependencies folder.
+Dependencies of PGAP2 are list below, and PGAP2 will check them whether in environment path or in pgap2/dependencies folder.
 
 ### Preprocessing
 + One of clustering software
