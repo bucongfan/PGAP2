@@ -57,13 +57,11 @@ class _Externals():
 
     @staticmethod
     def _find_software(sfw_name):
-        # 优先检查 ../dependencies 目录
         default_path = os.path.join(os.path.dirname(
             os.path.realpath(__file__)), '../dependencies', sfw_name)
-        if os.path.exists(default_path) and os.access(default_path, os.X_OK):
+        if os.path.exists(default_path):
             return default_path
 
-        # 如果 ../dependencies 中没有，检查 PATH 中的可执行文件
         sfw_path = shutil.which(sfw_name)
         if sfw_path:
             if os.path.exists(sfw_path) and os.access(sfw_path, os.X_OK):

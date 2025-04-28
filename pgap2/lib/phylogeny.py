@@ -536,7 +536,7 @@ class Phylogeny():
         clustering_outdir = os.path.join(wd, '10.genetic_clustering')
         os.makedirs(clustering_outdir, exist_ok=True)
         add_paras = self.add_paras_dict[10]
-        cmd = f'{sfw.fastbaps} {add_paras} --input {self.maskrc_aln} --phylogeny {self.masked_tree} --out {clustering_outdir}/fastbaps_clusters.csv --threads {self.threads} --levels {self.fastbaps_levels} --prior {self.fastbaps_prior}'
+        cmd = f'python {sfw.fastbaps} {add_paras} --input {self.maskrc_aln} --phylogeny {self.masked_tree} --out {clustering_outdir}/fastbaps_clusters.csv --threads {self.threads} --levels {self.fastbaps_levels} --prior {self.fastbaps_prior}'
         subprocess.run(cmd, shell=True, check=True)
         logger.info(f'Run [{cmd}]')
 
