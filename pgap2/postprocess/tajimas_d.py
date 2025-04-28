@@ -34,8 +34,7 @@ def main(indir: str, outdir: str, nodraw: bool, threads: int, disable: bool = Fa
     phy = Phylogeny(basic=basic, outdir=outdir, threads=threads, disable=disable,
                     msa_method=msa_method, tree_method=None,
                     fastbaps_levels=None, fastbaps_prior=None, add_paras=add_paras)
-    for step_i in range(step):
-        step_i += 1
+    for step_i in range(step+1):
         if step_i <= 4:
             phy.start_at(step_i)
         elif step_i == 5:
