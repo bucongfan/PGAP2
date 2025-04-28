@@ -2,8 +2,8 @@ include pgap2/dependencies/draw_post_profile.r
 include pgap2/dependencies/draw_post_stat.r
 include pgap2/dependencies/draw_prep.r
 include pgap2/dependencies/run_fastbaps
-include pgap2/test_input/287_91.fa
-include pgap2/test_input/287_91.gff
-include	pgap2/test_input/AKU_12601.gff
-include pgap2/test_input/Readme_input.md
-include pgap2/test_input/SC_B67.gbk
+include pgap2/toy_input/287_91.fa
+include pgap2/toy_input/287_91.gff
+include	pgap2/toy_input/AKU_12601.gff
+include pgap2/toy_input/Readme_input.md
+include pgap2/toy_input/SC_B67.gbk
