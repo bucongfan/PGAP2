@@ -8,7 +8,6 @@ library(tidyr)
 library(optparse)
 library(patchwork)
 
-# 设置命令行参数解析
 option_list <- list(
   make_option(c("-a", "--stat_attrs"), type = "character", help = "preprocess.stat.tsv"),
   make_option(c("-b", "--gene_code"), type = "character", help = "preprocess.gene_code.csv"),
@@ -17,11 +16,9 @@ option_list <- list(
   make_option(c("-o", "--output_dir"), type = "character", help = "Output directory")
 )
 
-# 解析命令行参数
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
-# 创建输出目录
 if (!dir.exists(opt$output_dir)) {
   dir.create(opt$output_dir)
 }
@@ -31,7 +28,6 @@ input_code <- read.csv(opt$gene_code, header = TRUE, sep = ",", row.names = 1)
 
 
 #-----------------------------------------------------------------------------#
-# 保存图形
 
 save_basic_plots <- function(A, B, C, D, E, single_file, output_dir) {
   if (single_file) {
@@ -47,7 +43,7 @@ save_basic_plots <- function(A, B, C, D, E, single_file, output_dir) {
       plot_layout(guides = "collect", ncol = 3)
     p2 <- D + ggtitle("D") +
       E + ggtitle("E") +
-      plot_layout(guides = "collect", ncol = 2) & # 合并图例
+      plot_layout(guides = "collect", ncol = 2) & 
       theme(legend.position = "right")
     combined_plot <- p1 / p2 + plot_layout(heights = c(1, 2))
     ggsave(file.path(output_dir, "pgap2.preprocess.pdf"), combined_plot, width = 9.8, height = 8.4)
@@ -63,13 +59,12 @@ draw_ani <- function(input_prep, ani_thre) {
     geom_hline(yintercept = ani_thre, linetype = "dotted", col = "red") +
     theme(legend.position = "none") +
     scale_x_discrete(labels = c("")) +
-    # 使用 geom_text_repel() 添加标签和箭头
     geom_text_repel(
-      data = subset(input_prep, ani == 100 | is_outlier_ani == 1), # 筛选满足条件的数据
-      aes(x = as.factor(1), y = ani, label = strain), # 标签位置与数据
-      arrow = arrow(type = "closed", length = unit(0.1, "inches")), # 添加箭头
-      vjust = -0.5, size = 3, color = "black", # 标签和箭头的样式
-      box.padding = 0.2, min.segment.length = 1 # 调整标签与点的间距
+      data = subset(input_prep, ani == 100 | is_outlier_ani == 1), 
+      aes(x = as.factor(1), y = ani, label = strain), 
+      arrow = arrow(type = "closed", length = unit(0.1, "inches")), 
+      vjust = -0.5, size = 3, color = "black", 
+      box.padding = 0.2, min.segment.length = 1 
     )
   return(p)
 }
@@ -114,11 +109,10 @@ draw_proportion <- function(input_prep) {
     scale_x_discrete(
       breaks = function(x) {
         y_levels <- levels(factor(long_data$strain))
-        # 如果类别数大于 20，选择均匀的 20 个类别
         if (length(y_levels) > 25) {
-          return(y_levels[seq(1, length(y_levels), length.out = 25)]) # 选择 20 个类别
+          return(y_levels[seq(1, length(y_levels), length.out = 25)]) 
         } else {
-          return(y_levels) # 如果类别少于 20 个，显示所有
+          return(y_levels) 
         }
       }
     )
@@ -139,12 +133,11 @@ draw_gene_code <- function(input_code) {
     ylab(NULL) +
     scale_y_discrete(
       breaks = function(x) {
-        # 获取 Var2 的所有类别
         y_levels <- levels(factor(df$Var2))
         if (length(y_levels) > 25) {
           return(y_levels[seq(1, length(y_levels), length.out = 25)])
         } else {
-          return(y_levels) # 如果类别少于 20 个，显示所有
+          return(y_levels) 
         }
       }
     )

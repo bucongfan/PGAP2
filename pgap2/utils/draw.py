@@ -927,7 +927,7 @@ def preprocess_draw_vector(**kwargs):
             f'No preprocess.gene_code.csv found in {outdir}')
     single_file = '--single_file' if single_file else ''
     run_command(
-        f"{sfw} -a {input_prep} -b {input_code} -o {outdir} --ani_thre {ani_threshold} {single_file}")
+        f"Rscript {sfw} -a {input_prep} -b {input_code} -o {outdir} --ani_thre {ani_threshold} {single_file}")
 
 
 def postprocess_draw_vector(**kwargs):
@@ -942,7 +942,7 @@ def postprocess_draw_vector(**kwargs):
             raise FileNotFoundError(
                 f'No postprocess.stat_attrs.tsv found in {outdir}')
         single_file = '--single_file' if single_file else ''
-        run_command(f"{sfw} -a {input_file} -o {outdir} {single_file}")
+        run_command(f"Rscript {sfw} -a {input_file} -o {outdir} {single_file}")
     elif target == 'profile':
         input_files = (os.path.join(outdir, 'postprocess.pan_group_stat.tsv'),
                        os.path.join(
@@ -959,7 +959,7 @@ def postprocess_draw_vector(**kwargs):
         (input_a, input_b, input_c, input_d, input_e) = input_files
         single_file = '--single_file' if single_file else ''
         run_command(
-            f"{sfw} -a {input_a} -b {input_b} -c {input_c} -d {input_d} -e {input_e} -o {outdir} {single_file}")
+            f"Rscript {sfw} -a {input_a} -b {input_b} -c {input_c} -d {input_d} -e {input_e} -o {outdir} {single_file}")
     else:
         logger.error(f'Invalid target: {target}')
 

@@ -6,7 +6,6 @@ library(dplyr)
 library(optparse)
 library(patchwork)
 
-# 设置命令行参数解析
 option_list <- list(
   make_option(c("-a", "--pan_group_stat"), type = "character", help = "postprocess.pan_group_stat.tsv"),
   make_option(c("-b", "--clust_strain_freq"), type = "character", help = "postprocess.clust_strain_freq.tsv"),
@@ -17,16 +16,13 @@ option_list <- list(
   make_option(c("-o", "--output_dir"), type = "character", help = "Output directory")
 )
 
-# 解析命令行参数
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
-# 创建输出目录
 if (!dir.exists(opt$output_dir)) {
   dir.create(opt$output_dir)
 }
 
-# 读取饼图数据文件
 
 pan_group_stat_data <- read.csv(opt$pan_group_stat, header = TRUE, sep = "\t")
 
@@ -39,7 +35,6 @@ new_clusters_data <- read.csv(opt$new_clusters, header = TRUE, sep = "\t")
 para_stat_data <- read.csv(opt$para_stat, header = TRUE, sep = "\t")
 
 #-----------------------------------------------------------------------------#
-# 保存图形
 save_para_plots <- function(A, B, single_file, output_dir) {
   if (single_file) {
     ggsave(file.path(output_dir, "postprocess.para_stat.pdf"), A + ggtitle(""))
@@ -47,10 +42,10 @@ save_para_plots <- function(A, B, single_file, output_dir) {
   } else {
     combined_plot <- A + B +
       plot_layout(
-        ncol = 2, # 2列
-        nrow = 1, # 2行
-        widths = c(1, 1), # 第一列宽度为第二列的两倍
-        heights = c(1, 1) # 两行的高度相等
+        ncol = 2, 
+        nrow = 1, 
+        widths = c(1, 1), 
+        heights = c(1, 1)
       )
     ggsave(file.path(output_dir, "pgap2.postprocess_stat_para.pdf"), combined_plot, width = 10.52, height = 5.8)
   }
@@ -65,10 +60,10 @@ save_basic_plots <- function(A, B, C, D, single_file, output_dir) {
   } else {
     combined_plot <- A + B + C + D +
       plot_layout(
-        ncol = 2, # 2列
-        nrow = 2, # 2行
-        widths = c(1, 1), # 第一列宽度为第二列的两倍
-        heights = c(1, 1) # 两行的高度相等
+        ncol = 2, 
+        nrow = 2,
+        widths = c(1, 1), 
+        heights = c(1, 1)
       )
     ggsave(file.path(output_dir, "pgap2.postprocess_profile.pdf"), combined_plot, width = 9.52, height = 7.25)
   }
@@ -84,8 +79,8 @@ draw_pan_group_stat <- function(pan_group_stat_data) {
     lab.font = c(4, "plain", "black"),
   ) + theme(
     legend.position = "none",
-    plot.margin = margin(0, 0, 0, 0), # 去除空白边距
-    axis.text = element_blank(), # 隐藏坐标轴
+    plot.margin = margin(0, 0, 0, 0), 
+    axis.text = element_blank(), 
     axis.title = element_blank()
   ) + ggtitle("A")
   return(pan_group_stat)
@@ -107,15 +102,15 @@ draw_rarefaction <- function(rarefaction_data) {
   ) + theme(
     axis.line = element_line(linewidth = 0),
     panel.background = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5), # 添加边框
-    panel.grid = element_blank(), # 去除网格线
-    plot.margin = margin(10, 10, 10, 10), # 增加图形的外边距，防止文字被裁剪
-    legend.position = c(0.15, 0.85), # 将图例放到图框内
-    legend.box = "horizontal", # 使图例在框内水平排列
-    legend.background = element_blank(), # 去除图例背景
-    legend.key.size = unit(0.5, "cm"), # 控制图例块的大小
-    legend.title = element_text(size = 10), # 设置图例标题字体大小
-    legend.text = element_text(size = 8) # 设置图例文本字体大小
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5), 
+    panel.grid = element_blank(), 
+    plot.margin = margin(10, 10, 10, 10), 
+    legend.position = c(0.15, 0.85), 
+    legend.box = "horizontal", 
+    legend.background = element_blank(), 
+    legend.key.size = unit(0.5, "cm"), 
+    legend.title = element_text(size = 10), 
+    legend.text = element_text(size = 8) 
   ) + guides(color = guide_legend(override.aes = list(alpha = 1))) + ggtitle("C")
   # ggboxplot(rarefaction.data, color = 'Type', x = 'Strain', y = 'Sampling',fill=NA) +
   #  theme(
@@ -136,13 +131,13 @@ draw_new_clusters <- function(new_clusters_data) {
   ) + theme(
     axis.line = element_line(linewidth = 0),
     panel.background = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5), # 添加边框
-    panel.grid = element_blank(), # 去除网格线
-    plot.margin = margin(10, 10, 10, 10), # 增加图形的外边距，防止文字被裁剪
-    legend.box = "horizontal", # 使图例在框内水平排列
-    legend.key.size = unit(0.5, "cm"), # 控制图例块的大小
-    legend.title = element_text(size = 10), # 设置图例标题字体大小
-    legend.text = element_text(size = 8) # 设置图例文本字体大小
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5), 
+    panel.grid = element_blank(), 
+    plot.margin = margin(10, 10, 10, 10), 
+    legend.box = "horizontal", 
+    legend.key.size = unit(0.5, "cm"), 
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 8)
   ) + guides(color = guide_legend(override.aes = list(alpha = 1))) + ggtitle("D")
   return(new_clusters)
 }
@@ -153,14 +148,21 @@ draw_para_stat <- function(para_stat_data) {
     x = "Para_strain", y = "Para_gene", size = "duplication_degree",
     color = "black", shape = 21, fill = "Group",
     conf.int = TRUE,
-    palette = c("#B8DBB3", "#72B063", "#719AAC", "#E29135", "#94C6CD"),
+    palette = c("#72B063", "#719AAC", "#B8DBB3", "#94C6CD", "#E29135"),
     xlab = "Paralogous Strain",
     ylab = "Paralogous Gene"
   ) +
-    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") + # 添加 x = y 线
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") + 
     guides(
-      size = "none" # 隐藏 size 图例
-    ) + ggtitle("A")
+      size = "none" 
+    ) + scale_fill_manual(
+    values = c(
+      "Cloud" = "#72B063",
+      "Shell" = "#719AAC",
+      "Soft_core" = "#B8DBB3",
+      "Core" = "#94C6CD",
+      "Strict_core" = "#E29135"
+    ))+ggtitle("A")
   return(para_stat_a)
 }
 
@@ -172,12 +174,12 @@ draw_para_stat_facet <- function(para_stat_data) {
     xlab = "Paralogous Strain",
     ylab = "Paralogous Gene"
   ) +
-    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") + # 添加 x = y 线
-    scale_y_log10() + scale_x_log10() + # 对数缩放
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") + 
+    scale_y_log10() + scale_x_log10() + 
     scale_color_gradient(low = "#dddfe6", high = "#d90429") +
     labs(color = "Dup degree") +
     guides(
-      size = "none" # 隐藏 size 图例
+      size = "none" 
     ) + ggtitle("B")
   return(para_stat_b)
 }
