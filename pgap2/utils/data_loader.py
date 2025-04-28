@@ -218,7 +218,8 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
                                 f"Duplicate gene start position [{start}] in [{contig_name}].")
                             start += 1
                         gene_order_map[start] = per
-                for per in sorted(gene_order_map.keys()):
+                for per_pos in sorted(gene_order_map.keys()):
+                    per = gene_order_map[per_pos]
                     gene_name = per.qualifiers.get('gene', '')
                     product_name = per.qualifiers.get('product', '')
                     id_name = per.id
@@ -245,7 +246,7 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
         if os.path.exists(f'{temp_out}/../genome_index/'):
             strain_index_path = f'{temp_out}/../genome_index/{strain_index}'
             os.path.exists(strain_index_path) or os.makedirs(strain_index_path)
-            records = SeqIO.parse(gbf_file, 'genbank')
+            records = list(SeqIO.parse(gbf_file, 'genbank'))
             for record in records:
                 record.id = str(contig_name_map[record.id])
             genome_file = f'{strain_index_path}/ref.fa'

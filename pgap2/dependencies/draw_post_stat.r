@@ -25,7 +25,7 @@ stat_attrs_data <- read.csv(opt$stat_attrs, header = TRUE, sep = "\t")
 
 
 #-----------------------------------------------------------------------------#
-# 保存图形
+# save figure
 
 save_basic_plots <- function(A, B, C, D, single_file, output_dir) {
   if (single_file) {
@@ -37,9 +37,9 @@ save_basic_plots <- function(A, B, C, D, single_file, output_dir) {
     combined_plot <- A + B + C + D +
       plot_layout(
         guides = "collect",
-        ncol = 2, # 2列
-        nrow = 2, # 2行
-        widths = c(1, 1), # 第一列宽度为第二列的两倍
+        ncol = 2, 
+        nrow = 2,
+        widths = c(1, 1), 
         heights = c(1, 1)
       ) +
       theme(legend.position = "bottom")
@@ -59,24 +59,31 @@ draw_stat_attr <- function(stat_attrs_data, attr, xlab_name) {
     x = "Edge", y = "Prop",
     color = "Group", scales = "free", size = 1,
     xlab = xlab_name, ylab = "Gene Cluster Proportion",
-    palette = c("#B8DBB3", "#72B063", "#719AAC", "#E29135", "#94C6CD")
+    # palette = c("#72B063", "#719AAC", "#B8DBB3", "#94C6CD", "#E29135")
   ) +
     scale_y_log10() +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
       axis.line = element_line(linewidth = 0),
       panel.background = element_blank(),
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5), # 添加边框
-      panel.grid = element_blank(), # 去除网格线
-      plot.margin = margin(10, 10, 10, 10), # 增加图形的外边距，防止文字被裁剪
-      legend.box = "vertical", # 使图例在框内水平排列
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5), 
+      panel.grid = element_blank(),
+      plot.margin = margin(10, 10, 10, 10), 
+      legend.box = "vertical", 
       legend.position = c(left_position, 0.85),
       legend.background = element_blank(),
       legend.direction = "vertical",
-      legend.key.size = unit(0.5, "cm"), # 控制图例块的大小
-      legend.title = element_text(size = 10), # 设置图例标题字体大小
+      legend.key.size = unit(0.5, "cm"), 
+      legend.title = element_text(size = 10), 
       legend.text = element_text(size = 8)
-    ) +
+    ) + scale_color_manual(
+      values = c(
+        "Cloud" = "#72B063",
+        "Shell" = "#719AAC",
+        "Soft_core" = "#B8DBB3",
+        "Core" = "#94C6CD",
+        "Strict_core" = "#E29135"
+      ))+
     guides(color = guide_legend(override.aes = list(alpha = 1))) + ggtitle(toupper(attr))
 
   return(attr_plot)
@@ -84,9 +91,9 @@ draw_stat_attr <- function(stat_attrs_data, attr, xlab_name) {
 
 
 stat_attrs_data <- stat_attrs_data %>%
-  group_by(Attr, Group) %>% # 按 Attr 分组
-  mutate(Prop = Count / sum(Count)) %>% # 计算每行的 Prop 值
-  ungroup() # 取消分组
+  group_by(Attr, Group) %>% 
+  mutate(Prop = Count / sum(Count)) %>% 
+  ungroup() 
 stat_attrs_data$Group <- factor(stat_attrs_data$Group, levels = c("Strict_core", "Core", "Soft_core", "Shell", "Cloud"))
 
 A <- draw_stat_attr(stat_attrs_data, "mean", xlab_name = "Gene Identity")

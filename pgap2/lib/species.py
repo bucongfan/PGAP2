@@ -72,6 +72,13 @@ class Species():
         sketch = pyfastani.Sketch()
         for strain in self.strain_dict:
             genome_file = f'{self.outdir}/genome_index/{strain}/ref.fa'
+            if not os.path.exists(f"{self.outdir}/genome_index"):
+                logger.error(
+                    f"Genome index directory {self.outdir}/genome_index not exists")
+                logger.error(
+                    f"Please try the pipeline again in the new output directory")
+                exit()
+
             records = SeqIO.to_dict(SeqIO.parse(genome_file, "fasta"))
             self.strain_dict[strain].genome = records
             sketch.add_draft(strain, (bytes(record.seq)
