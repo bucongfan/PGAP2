@@ -4,7 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PGAP2"
-dynamic = ["version", "readme"]
+version = "0.1.2"
+dynamic = ["readme"]
 keywords = ["pan-genome", "prokaryotic", "genomes", "pipeline","cluster"]
 
 requires-python = ">= 3.10"
@@ -42,4 +43,3 @@ repository = "https://github.com/bucongfan/PGAP2"
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"], content-type = "text/markdown"}
-version = {attr = "pgap2.__init__.__version__"}
