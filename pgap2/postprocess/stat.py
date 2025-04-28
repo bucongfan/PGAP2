@@ -215,31 +215,17 @@ def fit_rerefaction(pan_rarefaction, outdir):
 
 
 def calculate_new_clusters(pav, genome_order):
-    """
-    计算新增基因簇的数量。
 
-    Args:
-        pav (np.ndarray): Presence-Absence 矩阵 (行: 基因簇, 列: 基因组)。
-        genome_order (list): 基因组加入的顺序 (列索引列表)。
-
-    Returns:
-        list: 每次加入基因组时新增的基因簇数量。
-    """
-    # 初始化选中的基因簇 (全为 False 表示未被选中)
     selected_pav = np.zeros(pav.shape[0], dtype=bool)
     new_clusters = []
 
     for i in range(len(genome_order)):
-        # 当前基因组的列索引
         genome_idx = genome_order[i]
 
-        # 当前基因组中存在的基因簇
         current_genes = pav[:, genome_idx].astype(bool)
 
-        # 找到新出现的基因簇
         new_genes = current_genes & ~selected_pav
 
-        # 更新选中的基因簇
         selected_pav |= current_genes
 
         new_clusters.append(int(np.sum(new_genes)))
@@ -459,11 +445,11 @@ def launch(args: argparse.Namespace):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     assert os.path.exists(
-        f'{args.indir}/basic.pkl'), logger.error(f'basic.pkl not found in {args.indir}, the input dir should be the output dir of partition step')
+        f'{args.indir}/basic.pkl'), logger.error(f'basic.pkl not found in {args.indir}, the input dir should be the output dir of the main step')
     assert os.path.exists(
-        f'{args.indir}/pgap2.partition.gene_content.detail.tsv'), logger.error(f'pgap2.partition.gene_content.detail.tsv not found in {args.indir}, the input dir should be the output dir of partition step')
+        f'{args.indir}/pgap2.partition.gene_content.detail.tsv'), logger.error(f'pgap2.partition.gene_content.detail.tsv not found in {args.indir}, the input dir should be the output dir of the main step')
     assert os.path.exists(
-        f'{args.indir}/pgap2.partition.gene_content.pav'), logger.error(f'pgap2.partition.gene_content.pav not found in {args.indir}, the input dir should be the output dir of partition step')
+        f'{args.indir}/pgap2.partition.gene_content.pav'), logger.error(f'pgap2.partition.gene_content.pav not found in {args.indir}, the input dir should be the output dir of the main step')
     tqdm_.set_total_step(1)
     main(indir=args.indir, outdir=outdir, nodraw=args.nodraw,
          threads=args.threads, disable=args.disable, single_file=args.single_file,

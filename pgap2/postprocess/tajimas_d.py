@@ -57,11 +57,11 @@ def launch(args: argparse.Namespace):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     assert os.path.exists(
-        f'{args.indir}/basic.pkl'), logger.error(f'basic.pkl not found in {args.indir}, the input dir should be the output dir of partition step')
+        f'{args.indir}/basic.pkl'), logger.error(f'basic.pkl not found in {args.indir}, the input dir should be the output dir of the main step')
     assert os.path.exists(
-        f'{args.indir}/pgap2.partition.gene_content.detail.tsv'), logger.error(f'pgap2.partition.gene_content.detail.tsv not found in {args.indir}, the input dir should be the output dir of partition step')
+        f'{args.indir}/pgap2.partition.gene_content.detail.tsv'), logger.error(f'pgap2.partition.gene_content.detail.tsv not found in {args.indir}, the input dir should be the output dir of the main step')
     assert os.path.exists(
-        f'{args.indir}/pgap2.partition.gene_content.pav'), logger.error(f'pgap2.partition.gene_content.pav not found in {args.indir}, the input dir should be the output dir of partition step')
+        f'{args.indir}/pgap2.partition.gene_content.pav'), logger.error(f'pgap2.partition.gene_content.pav not found in {args.indir}, the input dir should be the output dir of the main step')
     main(indir=args.indir, outdir=outdir, nodraw=args.nodraw,
          threads=args.threads, disable=args.disable,
          step=args.step, para_strategy=args.para_strategy,
