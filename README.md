@@ -41,15 +41,15 @@ pgap2 post profile --pav your_pav_file -o outputdir/
 The best way to install full version of PGAP2 package is using conda:
 
 ```bash
-conda create -n pgap2 -c conda-forge -c bioconda -c defaults pgap2
+conda create -n pgap2 -c bucongfan pgap2
 ```
 
-alternatively it is often faster to use the [mamba](https://github.com/mamba-org/mamba) solver
+alternatively it is often faster to use the [mamba](https://github.com/mamba-org/mamba) solver (Recommended)
 
 ```bash
 conda create -n pgap2 -c conda-forge mamba
 conda activate pgap2 
-mamba install -c conda-forge -c bioconda -c defaults pgap2
+mamba install -c bucongfan pgap2
 ```
 
 Or sometimes you only want to carry out a specific function, such as partioning and don't want install too many extra softwares for fully version of PGAP2, then you can just install PGAP2:
