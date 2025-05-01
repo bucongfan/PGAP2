@@ -1,7 +1,7 @@
-# PGAP2
+![image](https://github.com/bucongfan/PGAP2/blob/main/pgap2.logo.png)
 
-Pan-Genome Analysis Pipeline 2
-
+## Brief
+PGAP2 (Pan-Genome Analysis Pipeline 2) is an ultra-fast and comprehensive toolkit for prokaryotic pan-genome analysis. Powered by a Fine-Grained Feature Network, PGAP2 can construct a pan-genome map from 1,000 genomes within 20 minutes while ensuring high accuracy. In addition, it offers a rich set of upstream quality control modules and downstream analysis tools to support common pan-genome analyses.
 
 ## Quick start
 ### Basic usage
