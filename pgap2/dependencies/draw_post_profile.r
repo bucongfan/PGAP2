@@ -42,9 +42,9 @@ save_para_plots <- function(A, B, single_file, output_dir) {
   } else {
     combined_plot <- A + B +
       plot_layout(
-        ncol = 2, 
-        nrow = 1, 
-        widths = c(1, 1), 
+        ncol = 2,
+        nrow = 1,
+        widths = c(1, 1),
         heights = c(1, 1)
       )
     ggsave(file.path(output_dir, "pgap2.postprocess_stat_para.pdf"), combined_plot, width = 10.52, height = 5.8)
@@ -60,9 +60,9 @@ save_basic_plots <- function(A, B, C, D, single_file, output_dir) {
   } else {
     combined_plot <- A + B + C + D +
       plot_layout(
-        ncol = 2, 
+        ncol = 2,
         nrow = 2,
-        widths = c(1, 1), 
+        widths = c(1, 1),
         heights = c(1, 1)
       )
     ggsave(file.path(output_dir, "pgap2.postprocess_profile.pdf"), combined_plot, width = 9.52, height = 7.25)
@@ -79,8 +79,8 @@ draw_pan_group_stat <- function(pan_group_stat_data) {
     lab.font = c(4, "plain", "black"),
   ) + theme(
     legend.position = "none",
-    plot.margin = margin(0, 0, 0, 0), 
-    axis.text = element_blank(), 
+    plot.margin = margin(0, 0, 0, 0),
+    axis.text = element_blank(),
     axis.title = element_blank()
   ) + ggtitle("A")
   return(pan_group_stat)
@@ -102,15 +102,15 @@ draw_rarefaction <- function(rarefaction_data) {
   ) + theme(
     axis.line = element_line(linewidth = 0),
     panel.background = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5), 
-    panel.grid = element_blank(), 
-    plot.margin = margin(10, 10, 10, 10), 
-    legend.position = c(0.15, 0.85), 
-    legend.box = "horizontal", 
-    legend.background = element_blank(), 
-    legend.key.size = unit(0.5, "cm"), 
-    legend.title = element_text(size = 10), 
-    legend.text = element_text(size = 8) 
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+    panel.grid = element_blank(),
+    plot.margin = margin(10, 10, 10, 10),
+    legend.position = c(0.15, 0.85),
+    legend.box = "horizontal",
+    legend.background = element_blank(),
+    legend.key.size = unit(0.5, "cm"),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 8)
   ) + guides(color = guide_legend(override.aes = list(alpha = 1))) + ggtitle("C")
   # ggboxplot(rarefaction.data, color = 'Type', x = 'Strain', y = 'Sampling',fill=NA) +
   #  theme(
@@ -131,11 +131,11 @@ draw_new_clusters <- function(new_clusters_data) {
   ) + theme(
     axis.line = element_line(linewidth = 0),
     panel.background = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5), 
-    panel.grid = element_blank(), 
-    plot.margin = margin(10, 10, 10, 10), 
-    legend.box = "horizontal", 
-    legend.key.size = unit(0.5, "cm"), 
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+    panel.grid = element_blank(),
+    plot.margin = margin(10, 10, 10, 10),
+    legend.box = "horizontal",
+    legend.key.size = unit(0.5, "cm"),
     legend.title = element_text(size = 10),
     legend.text = element_text(size = 8)
   ) + guides(color = guide_legend(override.aes = list(alpha = 1))) + ggtitle("D")
@@ -152,17 +152,18 @@ draw_para_stat <- function(para_stat_data) {
     xlab = "Paralogous Strain",
     ylab = "Paralogous Gene"
   ) +
-    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") + 
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
     guides(
-      size = "none" 
+      size = "none"
     ) + scale_fill_manual(
-    values = c(
-      "Cloud" = "#72B063",
-      "Shell" = "#719AAC",
-      "Soft_core" = "#B8DBB3",
-      "Core" = "#94C6CD",
-      "Strict_core" = "#E29135"
-    ))+ggtitle("A")
+      values = c(
+        "Cloud" = "#72B063",
+        "Shell" = "#719AAC",
+        "Soft_core" = "#B8DBB3",
+        "Core" = "#94C6CD",
+        "Strict_core" = "#E29135"
+      )
+    ) + ggtitle("A")
   return(para_stat_a)
 }
 
@@ -174,12 +175,12 @@ draw_para_stat_facet <- function(para_stat_data) {
     xlab = "Paralogous Strain",
     ylab = "Paralogous Gene"
   ) +
-    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") + 
-    scale_y_log10() + scale_x_log10() + 
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    scale_y_log10() + scale_x_log10() +
     scale_color_gradient(low = "#dddfe6", high = "#d90429") +
     labs(color = "Dup degree") +
     guides(
-      size = "none" 
+      size = "none"
     ) + ggtitle("B")
   return(para_stat_b)
 }
@@ -188,8 +189,11 @@ A <- draw_pan_group_stat(pan_group_stat_data)
 B <- draw_clust_strain_freq(clust_strain_freq_data)
 C <- draw_rarefaction(rarefaction_data)
 D <- draw_new_clusters(new_clusters_data)
-E <- draw_para_stat(para_stat_data)
-F <- draw_para_stat_facet(para_stat_data)
 
 save_basic_plots(A, B, C, D, opt$single_file, opt$output_dir)
-save_para_plots(E, F, opt$single_file, opt$output_dir)
+# continue if para_stat_data is not empty
+if (nrow(para_stat_data) != 0) {
+  E <- draw_para_stat(para_stat_data)
+  F <- draw_para_stat_facet(para_stat_data)
+  save_para_plots(E, F, opt$single_file, opt$output_dir)
+}

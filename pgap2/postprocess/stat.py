@@ -409,33 +409,57 @@ def main(indir: str, outdir: str, nodraw: bool, threads: int, disable: bool = Fa
 
         logger.info(f'Vector report at {outdir}:')
         if single_file:
-            logger.info(
-                f'[1/10] postprocess.stat_attrs_mean.pdf')
-            logger.info(
-                f'[2/10] postprocess.stat_attrs_min.pdf')
-            logger.info(
-                f'[3/10] postprocess.stat_attrs_var.pdf')
-            logger.info(
-                f'[4/10] postprocess.stat_attrs_uni.pdf')
-            logger.info(
-                f'[5/10] postprocess.pan_group_stat.pdf')
-            logger.info(
-                f'[6/10] postprocess.clust_strain_freq.pdf')
-            logger.info(
-                f'[7/10] postprocess.rarefaction.pdf')
-            logger.info(
-                f'[8/10] postprocess.new_clusters.pdf')
-            logger.info(
-                f'[9/10] postprocess.para_stat.pdf')
-            logger.info(
-                f'[10/10] postprocess.para_stat_facet.pdf')
+            if os.path.exists(f'{outdir}/postprocess.para_stat.pdf'):
+                logger.info(
+                    f'[1/10] postprocess.stat_attrs_mean.pdf')
+                logger.info(
+                    f'[2/10] postprocess.stat_attrs_min.pdf')
+                logger.info(
+                    f'[3/10] postprocess.stat_attrs_var.pdf')
+                logger.info(
+                    f'[4/10] postprocess.stat_attrs_uni.pdf')
+                logger.info(
+                    f'[5/10] postprocess.pan_group_stat.pdf')
+                logger.info(
+                    f'[6/10] postprocess.clust_strain_freq.pdf')
+                logger.info(
+                    f'[7/10] postprocess.rarefaction.pdf')
+                logger.info(
+                    f'[8/10] postprocess.new_clusters.pdf')
+                logger.info(
+                    f'[9/10] postprocess.para_stat.pdf')
+                logger.info(
+                    f'[10/10] postprocess.para_stat_facet.pdf')
+            else:
+                logger.info(
+                    f'[1/8] postprocess.stat_attrs_mean.pdf')
+                logger.info(
+                    f'[2/8] postprocess.stat_attrs_min.pdf')
+                logger.info(
+                    f'[3/8] postprocess.stat_attrs_var.pdf')
+                logger.info(
+                    f'[4/8] postprocess.stat_attrs_uni.pdf')
+                logger.info(
+                    f'[5/8] postprocess.pan_group_stat.pdf')
+                logger.info(
+                    f'[6/8] postprocess.clust_strain_freq.pdf')
+                logger.info(
+                    f'[7/8] postprocess.rarefaction.pdf')
+                logger.info(
+                    f'[8/8] postprocess.new_clusters.pdf')
         else:
-            logger.info(
-                f'[1/3] pgap2.postprocess_stat.pdf')
-            logger.info(
-                f'[2/3] pgap2.postprocess_stat_para.pdf')
-            logger.info(
-                f'[3/3] pgap2.postprocess_profile.pdf')
+            if os.path.exists(f'{outdir}/pgap2.postprocess_stat_para.pdf'):
+                logger.info(
+                    f'[1/3] pgap2.postprocess_stat.pdf')
+                logger.info(
+                    f'[2/3] pgap2.postprocess_stat_para.pdf')
+                logger.info(
+                    f'[3/3] pgap2.postprocess_profile.pdf')
+            else:
+                logger.info(
+                    f'[1/2] pgap2.postprocess_stat.pdf')
+                logger.info(
+                    f'[2/2] pgap2.postprocess_profile.pdf')
 
     logger.success('Done')
 
