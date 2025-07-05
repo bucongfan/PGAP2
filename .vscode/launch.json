@@ -12,12 +12,12 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
-                "post",
-                "stat",
+                "main",
+                "-r",
                 "-i",
-                "/Users/bucongfan/core/PGAP2/09.gold/output",
+                "/Users/bucongfan/core/PGAP2/simulation/output",
                 "-o",
-                "/Users/bucongfan/core/PGAP2/09.gold/output"
+                "/Users/bucongfan/core/PGAP2/simulation/pgap_output"
             ]
         }
     ]

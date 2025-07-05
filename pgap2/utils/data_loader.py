@@ -273,10 +273,10 @@ def open_file(file_name) -> IO:
             return opener(file_name, 'rt')
         elif file_format == ".zip":
             with opener(file_name, 'r') as zip_file:
-                # 假设 ZIP 文件中只有一个文件
+                # assuming the zip file contains only one file
                 return zip_file.open(zip_file.namelist()[0], 'r')
     else:
-        # 如果不是支持的压缩文件格式，则按普通文件方式处理
+        # if no compression, just open the file normally
         return open(file_name, 'r')
 
 
@@ -321,7 +321,7 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
             if len(key_value) == 2:
                 key, value = key_value
                 attr_dict[key.lower()] = re.sub(
-                    ',', '_', value)  # 替换非法字符为下划线
+                    ',', '_', value)  # replace illegal characters with underscores
         return attr_dict
 
     with open_file(in_file) as fh:
@@ -354,7 +354,7 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
                                  f"seems to be a gene with multiple exons.")
                     gene_dict[contig_name][parent].location += location
                 else:
-                    # 新增基因信息
+                    # add new gene feature
                     feature = SeqFeature(
                         location=location,
                         type="CDS",
@@ -471,17 +471,20 @@ def pool_file_parser(file_dict_with_index, falen, retrieve, annot, temp_out, gco
 
 def process_file(file_pair):
     """
-    读取给定的蛋白质文件和注释文件。
+    read protein and annotation files from a pair of file paths.
+    This function is used in multiprocessing to read files concurrently.
+    :param file_pair: A tuple containing the annotation file path and protein file path.
+    :return: A tuple containing the protein lines and annotation lines.
     """
     annot_file, prot_file = file_pair
     prot_lines = []
     annot_lines = []
 
-    # 读取蛋白质序列
+    # read protein sequences
     with open(prot_file) as pf:
         prot_lines = pf.readlines()
 
-    # 读取注释信息
+    # read annotation information
     with open(annot_file) as af:
         annot_lines = af.readlines()
 
@@ -565,7 +568,7 @@ def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, retr
         f'Check the total involved protein sequence in {outdir}/total.involved_prot.fa')
     logger.info(
         f'Check the total annotation in {outdir}/total.involved_annot.tsv')
-    # shutil.rmtree(temp_out)  # 清理临时目录
+    # shutil.rmtree(temp_out)  # clean up the temporary directory
 
     return pg
 
@@ -668,7 +671,7 @@ def get_file_dict(indir):
                 f'Skip because [{basename}] is not recognized.')
             continue
 
-        # 获取菌株名称（去除后缀）
+        # get the strain name from the file name
         strain_name = os.path.splitext(basename)[0]
 
         if strain_name not in file_dict:

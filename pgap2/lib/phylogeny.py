@@ -124,13 +124,11 @@ class Phylogeny():
                 raise Exception(
                     f"Error occurred while running MSA: {process.stderr}")
             if msa_method == 'mafft' and process.returncode == 0:
-                # 将标准输出写入文件
                 with open(output, "w") as handle:
                     handle.write(process.stdout)
         return ((cluster, output))
 
     def _generate_msa_commands(self, prot_align_outdir):
-        # Generate MSA commands. TODO: change cmd from Bio.Align.Applications to subprocess.run using sfw.xxx
         add_paras = self.add_paras_dict[2]
         commands = []
         for cluster in self.basic.used_cluster:

@@ -12,16 +12,12 @@ from pgap2.utils.draw import postprocess_draw, postprocess_draw_vector
 from pgap2.postprocess.stat import get_pan_group, get_rarefaction, fit_rerefaction
 
 
-# 判断 DataFrame 的每个元素是否是数字
-
-
 def main(pav_file: str, outdir: str, nodraw: bool, threads: int = 1, disable: bool = False, single_file: bool = False, S: int = 100, N: int = 500, R: int = 3, K: int = 3, method: str = 'DG'):
 
     logger.info(f'Reading the pangenome information...')
     sep = detect_separator(pav_file)
     pav = pd.read_csv(pav_file, sep=sep, index_col=0)
     is_number = is_numeric_pd(pav)
-    # 如果里面元素是字符串，而不是数字，就统计里面;的个数，让值变成;的个数+1
     if not is_number:
         logger.warning(
             'The pav matrix contains non-numeric values, counting the number of ";" in each cell')

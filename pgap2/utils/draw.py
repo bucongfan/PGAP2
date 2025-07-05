@@ -223,14 +223,14 @@ def calculate_logedges(min_val, max_val, num_bins):
 
 
 def calculate_counts(data, edges):
-    # 初始化计数字典
+    # initialize the result with 1 for each edge except the last one
     result = OrderedDict({edge: 1 for edge in edges[:-1]})
     for value in data:
         for i in range(len(edges) - 1):
             if edges[i] <= value < edges[i + 1]:
                 result[edges[i]] += 1
                 break
-             # 最后一个区间改为左闭右闭
+             # check if the value is exactly equal to the last edge
             if value == edges[-1]:
                 result[edges[-2]] += 1
     return list(result.values())

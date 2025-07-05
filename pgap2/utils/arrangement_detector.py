@@ -32,14 +32,14 @@ def get_rearrange_list(G, tree):
     return rearrange_list
 
 
-def merge_by_synteny(G: nx.Graph, pg: Pangenome, tree: Tree, context_sim: float, flank: int, sensitivity: str, ins: bool = False):
+def merge_by_synteny(G: nx.Graph, pg: Pangenome, tree: Tree, context_sim: float, flank: int, sensitivity: str, ins: bool = False, step: int = 4):
 
     def find_final_node(node, mapping):
         while mapping[node] != node:
             node = mapping[node]
         return node
 
-    for _, nodes in tqdm(tree.root_leaf.items(), unit=' node', desc=tqdm_.step(5), disable=pg.disable_tqdm):
+    for _, nodes in tqdm(tree.root_leaf.items(), unit=' node', desc=tqdm_.step(step=step), disable=pg.disable_tqdm):
         if len(nodes) == 1:
             continue
         exists_nodes = [_ for _ in nodes if G.has_node(_)]
@@ -119,4 +119,6 @@ def merge_by_synteny(G: nx.Graph, pg: Pangenome, tree: Tree, context_sim: float,
                     'length'] > G.nodes[clust_b]['length'] else (clust_b, clust_a)
                 G = merge_node(G, pg, tree, [clust_a, clust_b], target=clust_a)
                 split_clust_map[clust_b] = clust_a
+                if pg.retrieve:
+                    tree.update_removed_nodes(clust_b)
     return G

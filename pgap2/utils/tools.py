@@ -40,7 +40,7 @@ def detect_separator(filename):
         possible_seps = [',', '\t']
         sep_counts = {sep: lines[0].count(
             sep) for sep in possible_seps}
-        # 选择出现次数最多的分隔符作为文件的分隔符
+        # Count occurrences of each separator in the first line
         separator = max(sep_counts, key=sep_counts.get)
         if separator == '\t':
             logger.info(f'The separator of the file is [table].')
@@ -53,7 +53,7 @@ def detect_separator(filename):
 
 
 def check_gcode(value):
-    # 定义所有的有效基因编码及其对应的描述
+    # define a mapping of valid genetic codes
     VALID_GCODES_MAP = {
         1: "The Standard Code",
         2: "The Vertebrate Mitochondrial Code",
@@ -84,17 +84,14 @@ def check_gcode(value):
         33: "Cephalodiscidae Mitochondrial UAA-Tyr Code"
     }
 
-    # 将值转换为整数
     ivalue = int(value)
 
-    # 检查值是否在有效的基因编码中
     if ivalue not in VALID_GCODES_MAP:
         valid_gcodes_str = '\n'.join(
             f"\t\t{code}: {name}" for code, name in VALID_GCODES_MAP.items())
         raise argparse.ArgumentTypeError(
             f"Invalid genetic code {ivalue}. Valid codes are:\n{valid_gcodes_str}"
         )
-    # 如果有效，返回值
     return ivalue
 
 
@@ -486,13 +483,12 @@ def test_connectedness(tree: Tree, G: nx.Graph, u, v, sensitivity='moderate'):
         len_u = len(u_repre_nodes)
         len_v = len(v_repre_nodes)
 
-        # 对不同敏感度进行处理
+        # for different sensitivity
         if max(len_u, len_v) == 1:
             if tree.distance_graph.has_edge(u_repre_nodes[0], v_repre_nodes[0]):
                 flag = True
             else:
                 flag = False
-        # elif sensitivity == 'strict' or max(len_u, len_v) == 2:
         elif sensitivity == 'strict':
             u_indices = [int(tree.matrix_node_map[node])
                          for node in u_repre_nodes]
@@ -518,14 +514,16 @@ def test_connectedness(tree: Tree, G: nx.Graph, u, v, sensitivity='moderate'):
             needed_a = ceil(len(v_repre_nodes) / 2)
             needed_b = ceil(len(u_repre_nodes) / 2)
 
-            u_connections = submatrix.sum(axis=1)  # 每行的和，即 u 节点的连接数
-            v_connections = submatrix.sum(axis=0)  # 每列的和，即 v 节点的连接数
+            # sum of each row, i.e., connections of u nodes
+            u_connections = submatrix.sum(axis=1)
+            # sum of each column, i.e., connections of v nodes
+            v_connections = submatrix.sum(axis=0)
 
-            # 判断是否有足够的连接
+            # Check if there are enough connections
             sufficient_u = np.sum(u_connections >= needed_a)
             sufficient_v = np.sum(v_connections >= needed_b)
 
-            # 如果有足够的 u 和 v 节点满足条件
+            # If there are enough u and v nodes meeting the criteria
             if sufficient_u >= needed_b and sufficient_v >= needed_a:
                 flag = True
             else:

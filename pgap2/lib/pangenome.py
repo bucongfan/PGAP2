@@ -42,6 +42,12 @@ class Pangenome():
         self.dup_id: float = 0
         self.accurate: bool = False
         self.exhaust_orth: bool = False
+        self.retrieve: bool = False
+        self.evalue: float = 1e-5
+        self.aligner: str = 'diamond'
+        self.LD: int = 0
+        self.AL: int = 0
+        self.AS: int = 0
         self.annot_file = None
         self.total_gene_num = 0
 
@@ -213,6 +219,18 @@ class Pangenome():
                         self.nucl_fa.update({gene_index: seq})
             logger.info(
                 f'Load {len(self.nucl_fa)} nucl sequences for bidirection best check')
+        elif self.retrieve:
+            self.nucl_fa = {}
+            with open(self.annot_file) as fh:
+                for line in fh:
+                    if line.startswith('#'):
+                        continue
+                    lines = line.strip().split('\t')
+                    gene_index = lines[0]
+                    falen = int(lines[4])
+                    seq = lines[8]
+                    self.nucl_fa.update({gene_index: seq})
+                    self.falen.update({gene_index: falen})
         else:
             with open(self.annot_file) as fh:
                 for line in fh:
@@ -220,7 +238,6 @@ class Pangenome():
                         continue
                     lines = line.strip().split('\t')
                     gene_index = lines[0]
-                    seq = lines[8]
                     falen = int(lines[4])
                     self.falen.update({gene_index: falen})
 
@@ -228,11 +245,14 @@ class Pangenome():
         flat_annot_file = self.annot_file
         self.annot = {}
         self.annot_contig_map = {}
-        self.gene_rank = defaultdict(list)
+        self.gene_rank = defaultdict(lambda: [[], []])  # contig: [plus, minus]
         if os.path.exists(flat_annot_file):
             bar = tqdm(total=self.total_gene_num,
                        unit=' Gene', desc=tqdm_.step(6), disable=self.disable_tqdm)
             loaded_contig_name = set()
+            if retrieve:
+                coord_pat = re.compile(r'\[(\d+):\d+\]\(([+-])\)')
+
             with open(flat_annot_file) as fh:
                 for line in fh:
                     if line.startswith('#'):
@@ -250,9 +270,17 @@ class Pangenome():
                     gene_name = lines[6]
                     gene_product = lines[7]
                     if retrieve:
-                        start = int(re.search(r'\[(\d+):', lines[3]).group(1))
+                        # start = int(re.search(r'\[(\d+):', lines[3]).group(1))
+                        # strand = re.search(r'\[(\+|-)\d+:\d+\]', lines[3]).group(1)
+                        m = coord_pat.search(lines[3])
+                        if m:
+                            start = int(m.group(1))   # 起始坐标
+                            strand = m.group(2)        # '+' 或 '-'
                         contig = ":".join(lines[0].split(":")[:2])
-                        self.gene_rank[contig].append(start)
+                        if strand == '+':
+                            self.gene_rank[contig][0].append(start)
+                        else:
+                            self.gene_rank[contig][1].append(start)
                     self.annot.update({gene_index: {'len': gene_len, 'id': gene_id,
                                                     'name': gene_name, 'product': gene_product}})
             bar.close()
@@ -260,7 +288,7 @@ class Pangenome():
             logger.error(f'Cannot find the annot file {flat_annot_file}')
             raise FileNotFoundError
 
-    # 导入pangeenome结果
+    # load pangeenome result
     def load_one_pan(self, pan_clust):
         one_pan = self.one_pan[:]
         one_pan_symbol = self.one_pan_symbol[:]
@@ -307,16 +335,8 @@ class Pangenome():
         if feature == 'strain':
             return strain
         if feature == 'gene_rank':
-            gene_rank_dict = OrderedDict()
-            strain_index = int(gene.split(':')[0])
-            contig_index = int(gene.split(':')[1])
-            for i in range(strain.ori_gene_num[contig_index]+1):
-                this_gene = f'{strain_index}:{contig_index}:{i}'
-                start = re.search(
-                    r'\[(\d+)', strain.get_gene_feature(this_gene, 'location')).group(1)
-                gene_rank_dict.update({int(start): this_gene})
-            return gene_rank_dict
-
+            raise NotImplementedError(
+                'The gene rank feature is not implemented yet. Please tell me in github.')
         return strain.get_gene_feature(gene, feature)
 
     def get_flank_gene(self, gene: str, flank: int):

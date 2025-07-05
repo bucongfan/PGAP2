@@ -115,9 +115,9 @@ draw_rarefaction <- function(rarefaction_data) {
   # ggboxplot(rarefaction.data, color = 'Type', x = 'Strain', y = 'Sampling',fill=NA) +
   #  theme(
   #    axis.line = element_line(linewidth = 0),
-  #    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.75),  # 添加边框
-  #    panel.grid = element_blank(),  # 去除网格线
-  #    plot.margin = margin(10, 10, 10, 10)  # 增加图形的外边距，防止文字被裁剪
+  #    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.75),
+  #    panel.grid = element_blank(),
+  #    plot.margin = margin(10, 10, 10, 10)
   #  )+
   #  scale_x_discrete(breaks = unique(rarefaction.data$Strain)[seq(1, length(unique(rarefaction.data$Strain)), by = 5)])
 

@@ -420,7 +420,7 @@ def similarity_partition(tree: Tree, G: nx.Graph, nodes, search_distance, pre_co
     return need_merge_nodes, merge_node_attr
 
 
-def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str = 'strict', radius: int = 3, context_sim: float = 0, flank: int = 5, disable: bool = True):
+def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str = 'strict', radius: int = 3, context_sim: float = 0, flank: int = 5, disable: bool = True, step: int = 4):
 
     def find_final_node(node, mapping):
         # If the node points to itself, it is returned
@@ -432,7 +432,8 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str
     root_leaf = tree.root_leaf
 
     iter_count = 0
-    removed_nodes = set()
+    removed_nodes = tree.get_removed_nodes()
+
     merge_event = True
     pre_compute = {}
     changed_nodes = set()
@@ -441,7 +442,7 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str
         merge_event = False
         pre_changed_nodes = changed_nodes
         changed_nodes = set()
-        for main_nodes in tqdm(root_leaf.values(), unit=f" Round: {iter_count}", disable=disable, desc=tqdm_.step(4)):
+        for main_nodes in tqdm(root_leaf.values(), unit=f" Round: {iter_count}", disable=disable, desc=tqdm_.step(step=step)):
             if len(main_nodes) == 1:
                 continue
             exists_nodes = set()
@@ -495,7 +496,9 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str
                         split_clust_map[v] = u
                         merge_event = True
                         changed_nodes.update(set([u, v]))
-
+    if pg.retrieve:
+        logger.info(f'---- Retrieving genes from the removed nodes...')
+        tree.set_removed_nodes(removed_nodes)
     return (G, pg, tree)
 
 
@@ -670,6 +673,12 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
     pg.dup_id = dup_id
     pg.accurate = accurate
     pg.exhaust_orth = exhaust_orth
+    pg.retrieve = retrieve
+    pg.evalue = evalue
+    pg.aligner = aligner
+    pg.LD = LD
+    pg.AL = AL
+    pg.AS = AS
 
     logger.info('Get the gene primal clust result by mcl')
     mcl(pg, tree)
@@ -687,7 +696,7 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
     logger.info(f'Load expect identity: {max_in_range}')
     tree.load_expect_identity(max_in_range)
     logger.info(f'Clean up the distance graph according to paralogous genes')
-    tree.build_index(disable=disable)
+    tree.update_distance_graph(disable=disable)
     logger.info(f'Merge by gene similarity')
 
     G, pg, tree = merge_by_similarity(G=G, pg=pg, tree=tree,
@@ -710,11 +719,19 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
 
     if retrieve:
         logger.info(f'Retrieve gene from missing')
-        G, pg = retrieve_gene(G, pg,
-                              outdir,
-                              radius=radius,
-                              threads=threads,
-                              )
+        G, pg, tree = retrieve_gene(G, pg, tree)
+        G, pg, tree = merge_by_similarity(G=G, pg=pg, tree=tree,
+                                          sensitivity=sensitivity,
+                                          radius=radius,
+                                          context_sim=context_similirity,
+                                          flank=flank,
+                                          disable=disable, step=10)
+        G = merge_by_synteny(G=G, pg=pg, tree=tree,
+                             context_sim=context_similirity,
+                             flank=flank,
+                             sensitivity=sensitivity,
+                             ins=ins, step=11
+                             )
 
     logger.info('Organize the results')
     pg.init_pan_temp()
@@ -782,7 +799,7 @@ def partition_portal(args):
     if args.annot:
         sfw.check_dependency("prodigal")
     if args.retrieve:
-        tqdm_.set_total_step(8)
+        tqdm_.set_total_step(12)
     else:
         tqdm_.set_total_step(7)
     launch(args)

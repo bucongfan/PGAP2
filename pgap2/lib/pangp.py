@@ -59,7 +59,6 @@ class PanGP():
             #     result.append(this_comb)
             result = []
             for _ in range(sampling_num):
-                # 每次从 range(N) 中抽取 K 个不重复的样本
                 sample = np.array(random.sample(range(self.strain_num), k))
                 result.append(sample)
             return result

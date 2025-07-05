@@ -1,0 +1,2 @@
+[console_scripts]
+pgap2 = pgap2.main:main

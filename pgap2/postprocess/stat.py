@@ -4,7 +4,6 @@ import random
 import argparse
 import numpy as np
 import pandas as pd
-# import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from loguru import logger
@@ -23,12 +22,10 @@ from pgap2.utils.draw import postprocess_draw, postprocess_draw_vector
 
 
 def generate_tasks(strain_num, N):
-    # 如果任务数小于等于 N，正常生成
     if strain_num <= N:
         tasks = [i
                  for i in range(1, strain_num + 1)]
     else:
-        # 生成等差数列，选取 N 个索引
         indices = np.linspace(1, strain_num, N, dtype=int)
         tasks = [i for i in indices]
 
@@ -41,50 +38,6 @@ def core_gene_model(x, C0, a, C_inf):
 
 def pan_gene_model(x, k, gamma):
     return k * x**gamma
-
-
-# @numba.njit
-# def stat_pan_core(sampling_list, pav, i_strain, strain_num):
-#     core_list = []
-#     pan_list = []
-
-#     for this_index in sampling_list:
-#         # 从矩阵中提取指定的列
-#         this_pav = pav[:, this_index]
-
-#         pan_num = 0  # 记录有至少一个非零元素的行数
-#         core_num = 0  # 记录所有元素都是非零的行数
-
-#         # 遍历每一行，手动检查是否符合条件
-#         for i in range(this_pav.shape[0]):
-#             row = this_pav[i, :]
-
-#             # 检查是否为泛基因（至少有一个非零元素）
-#             has_nonzero = False
-#             all_nonzero = True
-#             for j in range(row.shape[0]):
-#                 if row[j] != 0:
-#                     has_nonzero = True
-#                 else:
-#                     all_nonzero = False
-
-#             # 如果有非零元素，增加泛基因数量
-#             if has_nonzero:
-#                 pan_num += 1
-
-#             # 如果所有元素都非零，增加核心基因数量
-#             if all_nonzero:
-#                 core_num += 1
-
-#         core_list.append(core_num)
-#         pan_list.append(pan_num)
-
-#         # 如果当前是最后一个菌株，进行额外操作
-#         if i_strain == strain_num:
-#             for temp_i in range(1, strain_num):
-#                 core_list.append(core_num)
-#                 pan_list.append(pan_num)
-#     return core_list, pan_list
 
 
 def stat_pan_core(sampling_list, pav, i_strain, strain_num):
@@ -145,7 +98,6 @@ def log_pan_genome_state(popt_pan, ofh):
     ofh.write(
         f"The pan-genome is {genome_status}. {status_description}\n")
 
-    # 描述初始速率
     logger.info(
         f"The coefficient k is approximately {k:.2f}, indicating the initial addition rate of new gene clusters per genome.\nLarger values of k suggest a higher initial rate of gene discovery. ")
     ofh.write(

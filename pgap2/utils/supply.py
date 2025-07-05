@@ -71,7 +71,7 @@ class _Externals():
                     f"{sfw_name} found at '{sfw_path}' but it is not executable.")
                 return None
 
-        # 如果都找不到，记录错误
+        # If the software is not found in the default path or PATH
         logger.error(
             f"{sfw_name} not found in '{default_path}' or in PATH, and neither is executable.")
         return None
@@ -125,7 +125,7 @@ def set_verbosity_level(outdir, verbose=False, debug=False, tag='main'):
 
 
 def run_command(cmd):
-    logger.info(f'Run: [{cmd}]')
+    # logger.info(f'Run: [{cmd}]')
     code, output = subprocess.getstatusoutput(cmd=cmd)
     if int(code) == 0:
         ...
