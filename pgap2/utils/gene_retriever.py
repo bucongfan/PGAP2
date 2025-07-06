@@ -212,6 +212,7 @@ def realign_parser(outdir, evalue, aligner, mcxdeblast, mcl, ID, LD, AL, AS, thr
 
 def realign(pg: Pangenome, tree: Tree, outdir, need_realign_root: set):
     logger.info('Dumping query sequences...')
+    exitst_file_flag = False
     with open(f'{outdir}/seq.fa', 'w') as fh:
         for root in tqdm(list(need_realign_root), desc=tqdm_.step(8), unit='group', disable=pg.disable_tqdm):
             nodes = tree.root_leaf[root]
@@ -222,25 +223,30 @@ def realign(pg: Pangenome, tree: Tree, outdir, need_realign_root: set):
                 continue
             for node in nodes:
                 if node in pg.nucl_fa:
+                    exitst_file_flag = True
                     nucl_seq = Seq(pg.nucl_fa[node])
                     fh.write(f'>{node}\n{nucl_seq.translate()}\n')
-    logger.info('Re-aligning sequences to update the identity network...')
-    edges, notused_edges = realign_parser(outdir=outdir, evalue=pg.evalue, aligner=pg.aligner, mcxdeblast=sfw.mcxdeblast,
-                                          mcl=sfw.mcl, ID=pg.para_id, LD=pg.LD, AL=pg.AL, AS=pg.AS, threads=pg.threads, attribution=tree.leaf_root)
-    if edges is not None:
-        for node_a, node_b, weight in edges:
-            assert tree.distance_graph.has_node(
-                node_a), f'Node {node_a} not found in the distance graph.'
-            assert tree.distance_graph.has_node(
-                node_b), f'Node {node_b} not found in the distance graph.'
-            tree.distance_graph.add_edge(node_a, node_b, weight=weight)
-            tree.raw_distance_graph.add_edge(node_a, node_b, weight=weight)
-        for (node_a, node_b), weight in notused_edges.items():
-            assert tree.raw_distance_graph.has_node(
-                node_a), f'Node {node_a} not found in the distance graph.'
-            assert tree.raw_distance_graph.has_node(
-                node_b), f'Node {node_b} not found in the distance graph.'
-            tree.raw_distance_graph.add_edge(node_a, node_b, weight=weight)
+    if exitst_file_flag:
+        logger.info('Re-aligning sequences to update the identity network...')
+        edges, notused_edges = realign_parser(outdir=outdir, evalue=pg.evalue, aligner=pg.aligner, mcxdeblast=sfw.mcxdeblast,
+                                              mcl=sfw.mcl, ID=pg.para_id, LD=pg.LD, AL=pg.AL, AS=pg.AS, threads=pg.threads, attribution=tree.leaf_root)
+        if edges is not None:
+            for node_a, node_b, weight in edges:
+                assert tree.distance_graph.has_node(
+                    node_a), f'Node {node_a} not found in the distance graph.'
+                assert tree.distance_graph.has_node(
+                    node_b), f'Node {node_b} not found in the distance graph.'
+                tree.distance_graph.add_edge(node_a, node_b, weight=weight)
+                tree.raw_distance_graph.add_edge(node_a, node_b, weight=weight)
+            for (node_a, node_b), weight in notused_edges.items():
+                assert tree.raw_distance_graph.has_node(
+                    node_a), f'Node {node_a} not found in the distance graph.'
+                assert tree.raw_distance_graph.has_node(
+                    node_b), f'Node {node_b} not found in the distance graph.'
+                tree.raw_distance_graph.add_edge(node_a, node_b, weight=weight)
+    else:
+        logger.warning(
+            f'There is no gene alignment available, skipping re-alignment.')
     return pg, tree
 
 
