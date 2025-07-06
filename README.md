@@ -58,7 +58,7 @@ Or sometimes you only want to carry out a specific function, such as partioning 
 pip install pgap2
 ```
 
-Or via source file to get the beta version:
+Or via source file to get the latest version:
 
 ```bash
 git clone https://github.com/bucongfan/PGAP2
