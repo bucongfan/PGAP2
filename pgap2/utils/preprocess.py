@@ -179,7 +179,7 @@ def find_outlier_from_cloud(genome_attr):
     return outlier
 
 
-def main(indir, outdir, orth_id, para_id, dup_id, evalue, aligner, clust_method, accurate, coverage, nodraw, single_file, LD, AS, AL, marker_file, ani_thre, annot, threads, disable, retrieve, falen, gcode):
+def main(indir, outdir, orth_id, para_id, dup_id, id_attr_key, type_filter, evalue, aligner, clust_method, accurate, coverage, nodraw, single_file, LD, AS, AL, marker_file, ani_thre, annot, threads, disable, retrieve, falen, gcode):
     logger.debug(f'----------------')
     file_dict = get_file_dict(indir=indir)
     decode_status = False
@@ -190,7 +190,7 @@ def main(indir, outdir, orth_id, para_id, dup_id, evalue, aligner, clust_method,
             previous: PklCheck = pickle.load(fh)
             logger.info(f'Check the previous file parameters...')
             decode_status = previous.decode(
-                orth_id=orth_id, para_id=para_id, dup_id=dup_id, accurate=accurate, coverage=coverage, falen=falen, annot=annot, retrieve=retrieve, evalue=evalue, aligner=aligner, clust_method=clust_method, LD=LD, AS=AS, AL=AL,)
+                orth_id=orth_id, para_id=para_id, dup_id=dup_id, id_attr_key=id_attr_key, type_filter=type_filter, accurate=accurate, coverage=coverage, falen=falen, annot=annot, retrieve=retrieve, evalue=evalue, aligner=aligner, clust_method=clust_method, LD=LD, AS=AS, AL=AL,)
 
             if decode_status:
                 # success
@@ -257,7 +257,7 @@ def main(indir, outdir, orth_id, para_id, dup_id, evalue, aligner, clust_method,
     if decode_status is False:
         logger.info(f'Load strain from {indir}')
         pg = file_parser(
-            indir=indir, outdir=outdir, annot=annot, threads=threads, disable=disable, retrieve=retrieve, falen=falen, gcode=gcode, prefix='preprocess')
+            indir=indir, outdir=outdir, annot=annot, threads=threads, disable=disable, retrieve=retrieve, falen=falen, gcode=gcode, id_attr_key=id_attr_key, type_filter=type_filter, prefix='preprocess')
         file_prot = f'{outdir}/total.involved_prot.fa'
         file_annot = f'{outdir}/total.involved_annot.tsv'
         pg.load_annot_file(file_annot)
@@ -347,6 +347,7 @@ def main(indir, outdir, orth_id, para_id, dup_id, evalue, aligner, clust_method,
     pickle_preprocess = PklCheck(outdir=outdir, name='preprocess')
     pickle_preprocess.load('file_dict', main_data=file_dict)
     pickle_preprocess.load('pangenome', main_data=pg, parameter={'orth_id': orth_id, 'para_id': para_id, 'dup_id': dup_id, 'accurate': accurate,
+                                                                 'id_attr_key': id_attr_key, 'type_filter': type_filter,
                                                                  'coverage': coverage, 'AS': AS, 'AL': AL, 'LD': LD, 'retrieve': retrieve,
                                                                  'evalue': evalue, 'aligner': aligner, 'clust_method': clust_method,
                                                                  'annot': annot, 'falen': falen})
@@ -392,6 +393,7 @@ def launch(args: argparse.Namespace):
         os.mkdir(outdir)
     main(indir=indir, outdir=outdir,
          orth_id=args.orth_id, para_id=args.para_id, dup_id=args.dup_id, accurate=args.accurate,
+         id_attr_key=args.id_attr_key, type_filter=args.type_filter,
          LD=args.LD, AS=args.AS, AL=args.AL,
          evalue=args.evalue,
          aligner=args.aligner, clust_method=args.clust_method,
@@ -432,6 +434,10 @@ def preprocess_cmd(subparser: _SubParsersAction):
                                       default=0.98, help='The maximum identity between the most similar panclusters, 0 means automatic selection.')
     subparser_preprocess.add_argument('--para_id', required=False, type=float,
                                       default=0.7, help='Use this identity as the paralogous identity, 0 means automatic selection.')
+    subparser_preprocess.add_argument("--type-filter", required=False, type=str,
+                                      default='CDS', help="Only for gff file as input, feature type (3rd column) to include, Only lines matching these types will be processed.")
+    subparser_preprocess.add_argument("--id-attr-key", required=False, type=str,
+                                      default='ID', help="Only for gff file as input, Attribute key to extract from the 9th column as the record ID (e.g., 'ID', 'gene', 'locus_tag').")
     # subparser_preprocess.add_argument('--coverage', required=False, type=float,
     #                                   default=0.98, help='The least coverage of each gene.')
     subparser_preprocess.add_argument('--min_falen', '-l', required=False, type=check_min_falen,

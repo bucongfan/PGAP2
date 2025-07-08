@@ -293,7 +293,7 @@ def dict_to_fasta(dictionary, name_map, output_file):
     return output_file
 
 
-def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, annot: bool, partial: bool = False, retrieve: bool = False, falen: int = 10, gcode: int = 11):
+def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, annot: bool, partial: bool = False, retrieve: bool = False, falen: int = 10, gcode: int = 11, read_type: str = 'CDS', read_attr: str = 'ID'):
     logger.debug(f'Reading gffa file: {gffa_file}')
     in_file = gffa_file
 
@@ -330,7 +330,7 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
             if line.startswith('#'):
                 continue
             line_list = line.strip('\n').split('\t')
-            if (len(line_list) == 9) and (line_list[2] == 'CDS'):
+            if (len(line_list) == 9) and (line_list[2].lower() == read_type.lower()):
                 count += 1
                 contig_name = line_list[0]
                 location = SimpleLocation(
@@ -339,14 +339,17 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
                     strand=1 if str(line_list[6]) in ('+', '.') else -1)
 
                 attrs = parse_attributes(line_list[8])
-                geneid = attrs.get('id')
+                geneid = attrs.get(read_attr.lower(), None)
                 parent = attrs.get('parent', geneid)
                 name = attrs.get('name', '')
                 gene = attrs.get('gene', '')
                 product = attrs.get('product', '')
+                if geneid is None:
+                    logger.warning(
+                        f'Cannot find {read_attr} in {line_list[8]}')
 
                 # if parent is None:
-                if True:  # for test simpan
+                if read_attr.lower() != 'cds':  # for test simpan
                     parent = geneid
 
                 if parent in gene_dict[contig_name]:
@@ -441,7 +444,7 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
     return good_gene_num, bad_gene_num, annot_file, prot_file
 
 
-def pool_file_parser(file_dict_with_index, falen, retrieve, annot, temp_out, gcode):
+def pool_file_parser(file_dict_with_index, falen, retrieve, annot, temp_out, gcode, id_attr_key, type_filter):
     strain_index, file_list = file_dict_with_index
     strain_name, file_dict = file_list
 
@@ -454,7 +457,7 @@ def pool_file_parser(file_dict_with_index, falen, retrieve, annot, temp_out, gco
         gffa_file = file_dict['gff']
         fa_file = file_dict.get('fa', None)
         good_gene_num, bad_gene_num, annot_file, prot_file = gffa_parser(gffa_file, fa_file, strain_name,
-                                                                         temp_out, strain_index, annot, retrieve=retrieve, falen=falen, gcode=gcode)
+                                                                         temp_out, strain_index, annot, retrieve=retrieve, falen=falen, gcode=gcode, read_type=type_filter, read_attr=id_attr_key)
 
     elif ('fa' in file_dict) and annot:
         good_gene_num, bad_gene_num, annot_file, prot_file = fa_parser(gffa_file, strain_name,
@@ -491,7 +494,7 @@ def process_file(file_pair):
     return prot_lines, annot_lines
 
 
-def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, retrieve: bool = False, falen: int = 11, gcode: int = 11, prefix='partition') -> Pangenome:
+def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_attr_key: str = 'ID', type_filter: str = 'CDS', retrieve: bool = False, falen: int = 11, gcode: int = 11, prefix='partition') -> Pangenome:
     temp_out = tempfile.mkdtemp(dir=outdir)
     if retrieve or prefix == 'preprocess':
         genome_index_path = f'{outdir}/genome_index'
@@ -523,7 +526,7 @@ def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, retr
 
     with get_context('fork').Pool(processes=threads, initializer=set_logger, initargs=(logger,)) as p:
         total_bad_gene_num = 0
-        for good_gene_num, bad_gene_num, strain_name, strain_index, annot_file, prot_file in p.imap_unordered(partial(pool_file_parser, falen=falen, retrieve=retrieve, annot=annot, temp_out=temp_out, gcode=gcode), enumerate(file_dict.items())):
+        for good_gene_num, bad_gene_num, strain_name, strain_index, annot_file, prot_file in p.imap_unordered(partial(pool_file_parser, falen=falen, retrieve=retrieve, annot=annot, temp_out=temp_out, gcode=gcode, id_attr_key=id_attr_key, type_filter=type_filter), enumerate(file_dict.items())):
             if bad_gene_num is None:
                 continue
             if bad_gene_num > 0:

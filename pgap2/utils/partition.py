@@ -559,7 +559,7 @@ def get_expect_identity(tree: Tree, G: Pangenome, pg: Pangenome):
     return round(max_in_range, 5)
 
 
-def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str, falen: int, threads: int, orth_id: float, para_id: float, dup_id: float, coverage: float, LD: float, AS: float, AL: float, context_similirity: float, accurate: bool, exhaust_orth: bool, flank: int, disable: bool, annot: bool, gcode: int, retrieve: bool, radius: int, sensitivity: int, ins: bool):
+def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str, falen: int, threads: int, orth_id: float, para_id: float, dup_id: float, id_attr_key: str, type_filter: str, coverage: float, LD: float, AS: float, AL: float, context_similirity: float, accurate: bool, exhaust_orth: bool, flank: int, disable: bool, annot: bool, gcode: int, retrieve: bool, radius: int, sensitivity: int, ins: bool):
 
     decode_status = False
     file_dict = get_file_dict(indir)
@@ -570,7 +570,7 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
             previous: PklCheck = pickle.load(fh)
             logger.info(f'Check the previous file parameters...')
             decode_status = previous.decode(
-                orth_id=orth_id, para_id=para_id, dup_id=dup_id, accurate=accurate, coverage=coverage, LD=LD, AS=AS, AL=AL, evalue=evalue, aligner=aligner, clust_method=clust_method, falen=falen, annot=annot, retrieve=retrieve,)
+                orth_id=orth_id, para_id=para_id, dup_id=dup_id, accurate=accurate, coverage=coverage, id_attr_key=id_attr_key, type_filter=type_filter, LD=LD, AS=AS, AL=AL, evalue=evalue, aligner=aligner, clust_method=clust_method, falen=falen, annot=annot, retrieve=retrieve,)
             if decode_status:
                 # success
                 pg = previous.data_dump('pangenome')
@@ -646,7 +646,7 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
     if decode_status is False:
         logger.info(f'Load strain from {indir}')
         pg = file_parser(
-            indir=indir, outdir=outdir, annot=annot, threads=threads, disable=disable, retrieve=retrieve, falen=falen, gcode=gcode, prefix='partition')
+            indir=indir, outdir=outdir, annot=annot, threads=threads, disable=disable, retrieve=retrieve, falen=falen, gcode=gcode, id_attr_key=id_attr_key, type_filter=type_filter, prefix='partition')
         file_prot = f'{outdir}/total.involved_prot.fa'
         logger.info(f'Total gene invovled in this project in: {file_prot}')
         pg.load_annot_file(f'{outdir}/total.involved_annot.tsv')
@@ -662,6 +662,7 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
         pickle_preprocess = PklCheck(outdir=outdir, name='preprocess')
         pickle_preprocess.load('file_dict', main_data=file_dict)
         pickle_preprocess.load('pangenome', main_data=pg, parameter={'orth_id': orth_id, 'para_id': para_id, 'dup_id': dup_id, 'accurate': accurate,
+                                                                     'id_attr_key': id_attr_key, 'type_filter': type_filter,
                                                                      'coverage': coverage, 'AS': AS, 'AL': AL, 'LD': LD, 'retrieve': retrieve,
                                                                      'evalue': evalue, 'aligner': aligner, 'clust_method': clust_method,
                                                                      'annot': annot, 'falen': falen})
@@ -764,6 +765,7 @@ def launch(args: argparse.Namespace):
          falen=args.min_falen, threads=args.threads, evalue=args.evalue,
          aligner=args.aligner, clust_method=args.clust_method,
          orth_id=args.orth_id, para_id=args.para_id, dup_id=args.dup_id,
+         id_attr_key=args.id_attr_key, type_filter=args.type_filter,
          coverage=0.98,
          #  coverage=args.coverage,
          LD=args.LD, AS=args.AS, AL=args.AL,
@@ -819,6 +821,10 @@ def partition_cmd(subparser: _SubParsersAction):
                                      default=0.98, help='The maximum identity between the most similar panclusters.')
     subparser_partition.add_argument('--para_id', required=False, type=float,
                                      default=0.7, help='Use this identity as the paralogous identity.')
+    subparser_partition.add_argument("--type-filter", required=False, type=str,
+                                     default='CDS', help="Only for gff file as input, feature type (3rd column) to include, Only lines matching these types will be processed.")
+    subparser_partition.add_argument("--id-attr-key", required=False, type=str,
+                                     default='ID', help="Only for gff file as input, Attribute key to extract from the 9th column as the record ID (e.g., 'ID', 'gene', 'locus_tag').")
     subparser_partition.add_argument('--exhaust_orth', '-e', required=False, action='store_true',
                                      default=False, help='Try to split every paralogs gene exhausted')
     subparser_partition.add_argument('--sensitivity', '-s', required=False, type=str,
