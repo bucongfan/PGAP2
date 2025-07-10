@@ -158,9 +158,10 @@ def fa_parser(genome_file, strain_name, temp_out, strain_index: int, annot: bool
                     logger.debug(
                         f'[Skip unregular gene] {id_name} from {strain_name}: {e}')
 
-    if os.path.exists(f'{temp_out}/../genome_index/'):
-        strain_index_path = f'{temp_out}/../genome_index/{strain_index}'
-        os.path.exists(strain_index_path) or os.makedirs(strain_index_path)
+    if os.path.exists(f'{temp_out}/../../genome_index/'):  # retrieve mode
+        dir_index = strain_index // 1000
+        strain_index_path = f'{temp_out}/../../genome_index/{dir_index}/{strain_index}'
+        os.makedirs(strain_index_path, exist_ok=True)
         records = SeqIO.parse(genome_file, 'fasta')
         for record in records:
             record.id = str(contig_name_map[record.id])
@@ -243,9 +244,10 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
                             f'[Skip unregular gene] {id_name} from {strain_name}: {e}')
         in_seq_handle.close()
 
-        if os.path.exists(f'{temp_out}/../genome_index/'):
-            strain_index_path = f'{temp_out}/../genome_index/{strain_index}'
-            os.path.exists(strain_index_path) or os.makedirs(strain_index_path)
+        if os.path.exists(f'{temp_out}/../../genome_index/'):
+            dir_index = strain_index // 1000
+            strain_index_path = f'{temp_out}/../../genome_index/{dir_index}/{strain_index}'
+            os.makedirs(strain_index_path, exist_ok=True)
             records = list(SeqIO.parse(gbf_file, 'genbank'))
             for record in records:
                 record.id = str(contig_name_map[record.id])
@@ -432,9 +434,10 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
                         logger.debug(
                             f'[Skip unregular gene] {id_name} from {strain_name}: {e}')
 
-        if os.path.exists(f'{temp_out}/../genome_index/'):
-            strain_index_path = f'{temp_out}/../genome_index/{strain_index}'
-            os.path.exists(strain_index_path) or os.makedirs(strain_index_path)
+        if os.path.exists(f'{temp_out}/../../genome_index/'):
+            dir_index = strain_index // 1000
+            strain_index_path = f'{temp_out}/../../genome_index/{dir_index}/{strain_index}'
+            os.makedirs(strain_index_path, exist_ok=True)
             genome_file = dict_to_fasta(
                 seq_dict, contig_name_map, f'{strain_index_path}/ref.fa')
 
@@ -447,6 +450,9 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
 def pool_file_parser(file_dict_with_index, falen, retrieve, annot, temp_out, gcode, id_attr_key, type_filter):
     strain_index, file_list = file_dict_with_index
     strain_name, file_dict = file_list
+    dir_index = strain_index//1000
+    temp_out = f'{temp_out}/{dir_index}'
+    os.makedirs(temp_out, exist_ok=True)
 
     if 'gbf' in file_dict:
         gbf_file = file_dict['gbf']
@@ -576,82 +582,6 @@ def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_a
     return pg
 
 
-# def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, retrieve: bool = False, falen: int = 11, gcode: int = 11, prefix='partition') -> Pangenome:
-#     temp_out = tempfile.mkdtemp(dir=outdir)
-#     if retrieve or prefix == 'preprocess':
-#         genome_index_path = f'{outdir}/genome_index'
-#         if not os.path.exists(genome_index_path):
-#             try:
-#                 os.makedirs(genome_index_path)
-#             except OSError as e:
-#                 logger.info(
-#                     f"Error creating folder '{genome_index_path}': {e}")
-#         else:
-#             try:
-#                 shutil.rmtree(genome_index_path)
-#                 os.makedirs(genome_index_path)
-#             except OSError as e:
-#                 logger.info(
-#                     f"Error creating folder '{genome_index_path}': {e}")
-
-#     file_dict = get_file_dict(indir)
-
-#     pg = Pangenome(outdir=outdir, threads=threads,
-#                    gcode=gcode, disable=disable)
-#     logger.debug(f'Sequence extraction in {temp_out}')
-
-#     bar = tqdm(range(len(file_dict)),
-#                unit=" strain", disable=disable, desc=tqdm_.step(1))
-
-#     total_gene_num = 0
-#     per_file_list = []
-#     with get_context('fork').Pool(processes=threads, initializer=set_logger, initargs=(logger,)) as p:
-#         total_bad_gene_num = 0
-#         for good_gene_num, bad_gene_num, strain_name, strain_index, annot_file, prot_file in p.imap_unordered(partial(pool_file_parser, falen=falen, retrieve=retrieve, annot=annot, temp_out=temp_out, gcode=gcode), enumerate(file_dict.items())):
-#             if bad_gene_num is None:
-#                 continue
-#             if bad_gene_num > 0:
-#                 logger.warning(
-#                     f'{strain_name} invalid gene count: {bad_gene_num}')
-#             per_file_list.append((annot_file, prot_file))
-#             total_bad_gene_num += bad_gene_num
-#             strain = Strain(strain_name=strain_name,
-#                             strain_index=strain_index,
-#                             bed_gene_num=bad_gene_num,
-#                             gene_num=good_gene_num)
-#             total_gene_num += sum(good_gene_num)
-#             pg.load_strain(
-#                 strain=strain)
-#             bar.update()
-#         bar.close()
-#         logger.info(f'Total loaded gene count: {total_gene_num}')
-#         pg.total_gene_num = total_gene_num
-#         if total_bad_gene_num > 0:
-#             logger.info(
-#                 f'Total invalid gene count: {total_bad_gene_num}')
-#             logger.info(f'Check all record in log file: {outdir}/{prefix}.log')
-
-#     logger.info(f'Writing the total involved gene and annotation...')
-#     with open(f'{outdir}/total.involved_prot.fa', 'w') as prot_fh, open(f'{outdir}/total.involved_annot.tsv', 'w') as annot_fh:
-#         annot_fh.write(
-#             f'#Gene_index\tStrain\tContig\tLocation\tLength\tGene_ID\tGene_name\tProduct_name\tNucleotide_sequence\tProtein_sequence\n')
-#         for annot_file, prot_file in tqdm(per_file_list, unit=' strain', desc=tqdm_.step(1), disable=disable):
-#             with open(prot_file) as fh:
-#                 for line in fh:
-#                     prot_fh.write(line)
-#             # os.remove(prot_file)
-#             with open(annot_file) as fh:
-#                 for line in fh:
-#                     annot_fh.write(line)
-#             # os.remove(annot_file)
-#     logger.info(
-#         f'Check the total involved protein sequence in {outdir}/total.involved_prot.fa')
-#     logger.info(
-#         f'Check the total annotation in {outdir}/total.involved_annot.tsv')
-#     # shutil.rmtree(temp_out)
-#     return pg
-
-
 def get_file_dict(indir):
     support_format = {'gffa': 'gff', 'gff': 'gff',  'gff3': 'gff',
                       'fasta': 'fa', 'fa': 'fa', 'fsa': 'fa', 'fna': 'fa',
@@ -684,6 +614,8 @@ def get_file_dict(indir):
 
     if len(file_dict) == 0:
         logger.error(f'No file found in {indir}')
+        logger.error(
+            f'PGAP2 can only understand {list(support_format.keys())} file, please check the input directory {indir}')
         exit(1)
 
     # sort and put it into the OrderedDict

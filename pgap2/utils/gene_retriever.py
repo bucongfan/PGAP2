@@ -293,6 +293,11 @@ def retrieve_gene_from_genome(G: nx.Graph, pg: Pangenome, tree: Tree):
             f'Retrieving {len(need_retrieve[strain])} genes for strain {strain}...')
         bar.update()
         strain_seq_dict = {}
+        dir_index = int(strain)//1000
+        query_fa = f'{pg.outdir}/genome_index/{dir_index}/{strain}/query.fa'
+        ref_fa = f'{pg.outdir}/genome_index/{dir_index}/{strain}/ref.fa'
+        ref_mpi = f'{pg.outdir}/genome_index/{dir_index}/{strain}/ref.mpi'
+        out_paf = f'{pg.outdir}/genome_index/{dir_index}/{strain}/out.paf'
         # the retrieved node want to merge to this node
         for node in need_retrieve[strain]:
             if not G.has_node(node):
@@ -314,12 +319,11 @@ def retrieve_gene_from_genome(G: nx.Graph, pg: Pangenome, tree: Tree):
                 temp_file.write(f'{repre_member}\n')
             temp_file.flush()
             run_command(
-                f'{sfw.seqtk} subseq {pg.prot_file} {temp_file.name} >{pg.outdir}/genome_index/{strain}/query.fa')
+                f'{sfw.seqtk} subseq {pg.prot_file} {temp_file.name} >{query_fa}')
         logger.debug(f'Running and parsing miniprot for strain {strain}...')
         run_command(
-            f'{sfw.miniprot} -t {pg.threads} -N 1 -S {pg.outdir}/genome_index/{strain}/ref.mpi {pg.outdir}/genome_index/{strain}/query.fa >{pg.outdir}/genome_index/{strain}/out.paf')
-        need_retrieve_node = retrieve_from_paf(
-            fpaf=f'{pg.outdir}/genome_index/{strain}/out.paf')
+            f'{sfw.miniprot} -t {pg.threads} -N 1 -S {ref_mpi} {query_fa} >{out_paf}')
+        need_retrieve_node = retrieve_from_paf(fpaf=out_paf)
 
         for contig in need_retrieve_node:
             retrieved_node = set()
@@ -409,7 +413,7 @@ def retrieve_gene_from_genome(G: nx.Graph, pg: Pangenome, tree: Tree):
                     expect_node_name = pg.annot[expect_node]['id']
                 if not strain_seq_dict:
                     strain_seq_dict = SeqIO.to_dict(
-                        SeqIO.parse(f'{pg.outdir}/genome_index/{strain}/ref.fa', 'fasta'))
+                        SeqIO.parse(ref_fa, 'fasta'))
                 feature = SeqFeature(FeatureLocation(
                     start=start, end=end, strand=loc['strand']), type="CDS", id=retrieve_gene_name)
                 seq = feature.extract(strain_seq_dict[contig].seq)

@@ -71,7 +71,8 @@ class Species():
     def _ani_index_strain(self):
         sketch = pyfastani.Sketch()
         for strain in self.strain_dict:
-            genome_file = f'{self.outdir}/genome_index/{strain}/ref.fa'
+            dir_index = int(strain)//1000
+            genome_file = f'{self.outdir}/genome_index/{dir_index}/{strain}/ref.fa'
             if not os.path.exists(f"{self.outdir}/genome_index"):
                 logger.error(
                     f"Genome index directory {self.outdir}/genome_index not exists")
