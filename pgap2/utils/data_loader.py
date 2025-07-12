@@ -224,9 +224,14 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
                     gene_name = per.qualifiers.get('gene', '')
                     product_name = per.qualifiers.get('product', '')
                     id_name = per.qualifiers.get(read_attr, '')
-                    locus_tag = per.qualifiers.get('locus_tag', 'locus_tag')
+                    locus_tag = per.qualifiers.get('locus_tag', '')
                     if not id_name:
-                        id_name = locus_tag
+                        if locus_tag:
+                            id_name = locus_tag[0]
+                        elif gene_name:
+                            id_name = gene_name
+                        else:
+                            id_name = per.location
                     nucl_fa = per.extract(rec.seq)
                     try:
                         prot_fa = nucl_fa.translate(table=gcode, cds=True)
