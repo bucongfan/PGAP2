@@ -555,7 +555,12 @@ def get_expect_identity(tree: Tree, G: Pangenome, pg: Pangenome):
                 continue
             range_value = max(weight_set) - min(weight_set)
             all_range_value.append(range_value)
-    max_in_range = max(all_range_value)
+    if not all_range_value:
+        max_in_range = 1 - pg.para_id
+        logger.warning(
+            f"No valid range values found. returning default value of {max_in_range}")
+    else:
+        max_in_range = max(all_range_value)
     return round(max_in_range, 5)
 
 
