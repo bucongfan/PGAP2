@@ -175,7 +175,7 @@ def fa_parser(genome_file, strain_name, temp_out, strain_index: int, annot: bool
     return good_gene_num, bad_gene_num, annot_file, prot_file
 
 
-def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, partial: bool = False, retrieve: bool = False, falen: int = 11, gcode: int = 11):
+def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, partial: bool = False, retrieve: bool = False, falen: int = 11, gcode: int = 11, read_type: str = 'CDS', read_attr: str = 'gene'):
     logger.debug(f'Reading genome file: {gbf_file}')
 
     if annot:
@@ -212,7 +212,7 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
                 rec = seq_dict[contig_name]
                 gene_order_map = {}
                 for per in rec.features:
-                    if per.type == 'CDS':
+                    if per.type == read_type:
                         start = per.location.start
                         if start in gene_order_map:
                             logger.debug(
@@ -223,7 +223,11 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
                     per = gene_order_map[per_pos]
                     gene_name = per.qualifiers.get('gene', '')
                     product_name = per.qualifiers.get('product', '')
-                    id_name = per.id
+                    id_name = per.qualifiers.get(read_attr, '')
+                    if not id_name:
+                        logger.warning(
+                            f'Cannot find {read_attr} in {per.qualifiers}, using CDS id {per.id} instead.')
+                        id_name = per.id
                     nucl_fa = per.extract(rec.seq)
                     try:
                         prot_fa = nucl_fa.translate(table=gcode, cds=True)
@@ -457,7 +461,7 @@ def pool_file_parser(file_dict_with_index, falen, retrieve, annot, temp_out, gco
     if 'gbf' in file_dict:
         gbf_file = file_dict['gbf']
         good_gene_num, bad_gene_num, annot_file, prot_file = gbf_parser(gbf_file, strain_name,
-                                                                        temp_out, strain_index, annot, retrieve=retrieve, falen=falen, gcode=gcode)
+                                                                        temp_out, strain_index, annot, retrieve=retrieve, falen=falen, gcode=gcode, read_type=type_filter, read_attr=id_attr_key)
 
     elif 'gff' in file_dict:
         gffa_file = file_dict['gff']
