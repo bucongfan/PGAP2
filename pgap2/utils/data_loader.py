@@ -224,10 +224,9 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
                     gene_name = per.qualifiers.get('gene', '')
                     product_name = per.qualifiers.get('product', '')
                     id_name = per.qualifiers.get(read_attr, '')
+                    locus_tag = per.qualifiers.get('locus_tag', 'locus_tag')
                     if not id_name:
-                        logger.warning(
-                            f'Cannot find {read_attr} in {per.qualifiers}, using CDS id {per.id} instead.')
-                        id_name = per.id
+                        id_name = locus_tag
                     nucl_fa = per.extract(rec.seq)
                     try:
                         prot_fa = nucl_fa.translate(table=gcode, cds=True)
