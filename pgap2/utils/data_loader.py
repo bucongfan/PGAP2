@@ -566,20 +566,24 @@ def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_a
             logger.info(f'Check all record in log file: {outdir}/{prefix}.log')
 
     logger.info(f'Writing the total involved gene and annotation...')
+    batch_size = 1000
+    for i in range(0, len(per_file_list), batch_size):
+        batch = per_file_list[i:i + batch_size]
 
-    with open(f'{outdir}/total.involved_prot.fa', 'w') as prot_fh, open(f'{outdir}/total.involved_annot.tsv', 'w') as annot_fh:
-        annot_fh.write(
-            f'#Gene_index\tStrain\tContig\tLocation\tLength\tGene_ID\tGene_name\tProduct_name\tNucleotide_sequence\tProtein_sequence\n')
+        with open(f'{outdir}/total.involved_prot.fa', 'a') as prot_fh, open(f'{outdir}/total.involved_annot.tsv', 'a') as annot_fh:
+            if i == 0:  # Write header only once
+                annot_fh.write(
+                    f'#Gene_index\tStrain\tContig\tLocation\tLength\tGene_ID\tGene_name\tProduct_name\tNucleotide_sequence\tProtein_sequence\n')
 
-        for annot_file, prot_file in tqdm(per_file_list, unit=' strain', desc=tqdm_.step(1), disable=disable):
-            with open(prot_file) as fh:
-                # prot_lines.extend(fh.readlines())
-                for line in fh:
-                    prot_fh.write(line)
-            with open(annot_file) as fh:
-                # annot_lines.extend(fh.readlines())
-                for line in fh:
-                    annot_fh.write(line)
+            for annot_file, prot_file in tqdm(batch, unit=' strain', desc=tqdm_.step(1), disable=disable):
+                with open(prot_file) as fh:
+                    # prot_lines.extend(fh.readlines())
+                    for line in fh:
+                        prot_fh.write(line)
+                with open(annot_file) as fh:
+                    # annot_lines.extend(fh.readlines())
+                    for line in fh:
+                        annot_fh.write(line)
 
     logger.info(
         f'Check the total involved protein sequence in {outdir}/total.involved_prot.fa')
