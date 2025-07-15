@@ -410,7 +410,12 @@ def preprocess_portal(args):
     set_verbosity_level(args.outdir, args.verbose, args.debug, 'preprocess')
     if not args.nodraw:
         sfw.check_dependency('draw_prep')
-    sfw.check_dependency("cdhit")
+
+    if args.clust_method == 'mmseqs2':
+        sfw.check_dependency("mmseqs2")
+    elif args.clust_method == 'cdhit':
+        sfw.check_dependency("cdhit")
+
     if args.aligner == 'diamond':
         sfw.check_dependency("diamond")
     elif args.aligner == 'blast':
