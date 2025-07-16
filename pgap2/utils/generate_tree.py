@@ -11,6 +11,31 @@ from pgap2.lib.tree import Tree
 from pgap2.utils.supply import run_command
 from pgap2.utils.supply import sfw, tqdm_
 
+"""
+clustering using cdhit or mmseqs2, and then build a tree based on the clustering result.
+
+input:
+- input_file: Input file containing gene sequences.
+- orth_list: List of orthologous gene identities for clustering.
+- outdir: Output directory for storing results.
+
+params:
+- coverage: Coverage threshold for clustering.
+- evalue: E-value threshold for filtering alignments.
+- falen: Flank length for context comparison.
+- disable: Boolean to disable progress bar.
+- threads: Number of threads to use for parallel processing.
+- ID: Identity threshold for filtering alignments.
+- LD: Length difference threshold for filtering alignments.
+- AL: Alignment coverage threshold for filtering alignments.
+- AS: Alignment score threshold for filtering alignments.
+- aligner: Aligner to use for sequence alignment ('diamond' or 'blastp').
+- clust_method: Clustering method to use ('cdhit' or 'mmseqs2').
+
+output:
+- Tree object containing the orthologous gene relationships and distances.
+"""
+
 
 def clust_recorder(subject: dict, query: dict, tag: str) -> dict:
     '''

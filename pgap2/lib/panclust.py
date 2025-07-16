@@ -1,3 +1,18 @@
+"""
+
+PanClust is a legacy class that may be deprecated in future versions. 
+
+The primary purpose of this class is to store basic metadata for each gene cluster, including values such as 
+minimum, uniqueness, variance, mean, and the representative node. The constructor accepts a set of genes 
+and their associated statistics, storing them as attributes of the class.
+
+Additionally, the class maintains a list of per-strain gene clustering records, enabling downstream analyses 
+that rely on strain-specific clustering information. PanClust itself does not implement any analysis logic; 
+it functions purely as a structured data container.
+
+"""
+
+
 class Panclust():
     def __init__(self, one_pan: set, min: float, uni: float, var: float, mean: float, repre_node: str) -> None:
         '''

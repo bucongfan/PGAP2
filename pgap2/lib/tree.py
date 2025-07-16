@@ -5,6 +5,21 @@ from tqdm import tqdm
 from collections import defaultdict
 from pgap2.utils.supply import tqdm_
 
+"""
+This module defines the core similarity tree class used in PGAP2.
+
+The class extends `networkx.DiGraph` and is designed to store and manipulate the similarity tree structure 
+central to PGAP2’s analysis. It provides standard graph operations such as node insertion, deletion, 
+lookup, and traversal, while also incorporating domain-specific features tailored to genomic similarity 
+analysis.
+
+In addition to generic tree operations, the class supports PGAP2-specific functionalities, including 
+gene context management, expected similarity loading, and topological operations such as ancestor 
+retrieval and context neighborhood extraction. It serves as the primary structure for managing 
+gene and genome-level relationships in the PGAP2 workflow.
+
+"""
+
 
 class Tree(nx.DiGraph):
     def __init__(self, *args, **kwargs):

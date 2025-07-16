@@ -11,6 +11,34 @@ from pgap2.lib.phylogeny import Phylogeny
 from pgap2.utils.supply import sfw, tqdm_
 from pgap2.utils.supply import set_verbosity_level
 
+"""
+Post-process the single copy tree results.
+This module provides a command-line interface for running the single copy tree workflow, which includes
+multiple steps such as multiple sequence alignment, tree construction.
+It allows users to specify various parameters for the analysis, such as the method of multiple sequence alignment
+and the method of tree construction.
+
+input:
+- indir: Input directory containing the necessary files for the single copy tree workflow.
+- outdir: Output directory where the results will be saved.
+params:
+- nodraw: If set, the workflow will not generate any graphical output.
+- threads: Number of threads to use for parallel processing.
+- disable: If set, disables the progress bar.
+- also_pan: If set, includes pan-genome alignment in the output.
+- core_thre: Core threshold for tree construction.
+- step: Specifies the step at which to terminate the workflow.
+- para_strategy: Strategy for handling paralogs.
+- msa_method: Method for multiple sequence alignment.
+- tree_method: Method for tree construction.
+- add_paras: Additional parameters for specific steps in the workflow.
+output:
+- Phylogenetic tree and population structure analysis results.
+
+TODO:
+- Add visualization capabilities for the phylogenetic tree.
+"""
+
 
 def main(indir: str, outdir: str, nodraw: bool, threads: int, disable: bool = False, also_pan: bool = False, core_thre: float = 0.95, step: int = 9, para_strategy: str = 'best', msa_method: str = 'mafft', tree_method: str = 'fasttree', add_paras: list = []):
     detail_file = f'{indir}/pgap2.partition.gene_content.detail.tsv'

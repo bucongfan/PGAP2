@@ -8,6 +8,13 @@ from Bio.SeqRecord import SeqRecord
 
 from pgap2.lib.pangenome import Pangenome
 
+"""
+This class is used to store and manage basic pangenome information extracted from the main function,
+which is then used for subsequent post-processing analyses.
+It includes methods for loading used clusters, phylogeny information, and handling PAV files.
+It does not contain any analysis methods itself, serving only as a data carrier.
+"""
+
 
 class Basic():
     def __init__(self, pg: Pangenome) -> None:

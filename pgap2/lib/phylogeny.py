@@ -14,6 +14,7 @@ from loguru import logger
 from datetime import datetime
 from multiprocessing import get_context
 
+# deprecated by biopython
 # from Bio.Align.Applications import MafftCommandline
 # from Bio.Align.Applications import MuscleCommandline
 # from Bio.Align.Applications import TCoffeeCommandline
@@ -21,6 +22,20 @@ from multiprocessing import get_context
 from pgap2.lib.basic import Basic
 from pgap2.utils.supply import sfw, tqdm_
 from pgap2.utils.supply import set_golbal
+
+"""
+core class for phylogeny post-processing.
+This class handles the entire workflow of phylogeny post-processing, including:
+- Dumping sequences from the basic pangenome data.
+- Performing multiple sequence alignment (MSA) using various methods, calling Mafft, Muscle, and TCoffee.
+- Performing codon alignment.
+- Trimming alignments, calling trimAl.
+- Performing Tajima's D test.
+- Concatenating alignments.
+- Constructing phylogenetic trees using different methods, including FastTree and RAxML.
+- Inferring recombination events using clonalFrameML.
+
+"""
 
 
 def set_logger(logger_):

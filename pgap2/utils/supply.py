@@ -6,6 +6,10 @@ from tqdm import tqdm
 from loguru import logger
 from datetime import datetime
 
+"""
+A collection of utility functions for handling external software dependencies and logging.
+"""
+
 
 class _tqdm_prefix:
     def __init__(self):

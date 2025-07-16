@@ -27,8 +27,30 @@ from pgap2.utils.arrangement_detector import merge_by_synteny
 from pgap2.utils.data_loader import file_parser, get_file_dict
 from pgap2.utils.tools import merge_node, shortest_path_length_with_max_length, get_similarity, merge_judge, check_min_falen, check_gcode
 
+"""
+main function for partitioning pangenome data into clusters based on identity and synteny.
+This module provides functions to generate a network of genes, classify paralogs, and select representative nodes based on gene identity and synteny.
 
-def slecet_repre_node(G: nx.Graph, tree: Tree, each_gene, para_repre, para_context):
+input:
+- G: Gene network graph, edge is gene distance.
+- tree: identity tree of the genes.
+- pg: Pangenome object containing strain and gene information.
+
+output:
+- total.involved_annot.tsv: gene annotation information of each cluster
+- total.involved_prot.fa: all protein sequences involved in this analysis
+- pgap2.partition.summary_statistics.txt: Pan-group statistic result
+- pgap2.partition.gene_content.detail.tsv: Partitioning result with annotation information
+- pgap2.partition.gene_content.pav: Presence-Absence Variation Matrix
+- pgap2.partition.gene_content.csv: gene content of each cluster
+- pgap2.partition.map.gml: Graph of pangenome
+- basic.pkl: Binary file recorded necessary parameters and file paths used to quick downstream analysis
+- partition.log: Running log
+
+"""
+
+
+def select_repre_node(G: nx.Graph, tree: Tree, each_gene, para_repre, para_context):
     child_context = para_context[each_gene]
     max_similarity = 0
     # max_repre = None
@@ -189,7 +211,7 @@ def generate_network(pg: Pangenome, tree: Tree):
                 for each_gene in para_clust:
                     if each_gene in para_repre:
                         continue
-                    max_repre = slecet_repre_node(
+                    max_repre = select_repre_node(
                         G, tree, each_gene, para_repre, para_context)
 
                     if not max_repre:
@@ -209,7 +231,7 @@ def generate_network(pg: Pangenome, tree: Tree):
                         para_repre_map[each_gene] = repre
 
                 for each_other_clust in other_clusts:
-                    max_repre = slecet_repre_node(
+                    max_repre = select_repre_node(
                         G, tree, each_other_clust, para_repre_map.keys(), para_context)
                     if not max_repre:
                         logger.debug(

@@ -7,6 +7,23 @@ import numpy as np
 from loguru import logger
 from itertools import combinations
 
+"""
+This class implements the PanGP algorithm for rarefaction sampling of pangenome data.
+It allows for sampling of gene clusters based on specified parameters such as the number of strains,
+the number of samples, and the method of sampling.
+It provides methods for sampling combinations of strains, calculating diversity scores, and managing
+the known distance matrix between strains.
+
+input:
+- pav: A pandas DataFrame representing the pangenome data.
+- S: The number of samples to be taken.
+- R: The number of repetitions for sampling.
+- K: The number of strains to be sampled in each combination.
+- method: The method of sampling to be used ('TR' for total random, 'DG' for diversity-guided).
+output:
+- A PanGP object that can be used to perform sampling and analysis on the pangenome data.
+"""
+
 
 class PanGP():
     def __init__(self, pav: pd.DataFrame, S, R, K, method) -> None:

@@ -11,6 +11,35 @@ from pgap2.lib.phylogeny import Phylogeny
 from pgap2.utils.supply import sfw, tqdm_
 from pgap2.utils.supply import set_verbosity_level
 
+"""
+Post-process the BAPS results.
+This module provides a command-line interface for running the BAPS workflow, which includes
+multiple steps such as multiple sequence alignment, tree construction, and population structure analysis.
+It allows users to specify various parameters for the analysis, such as the method of multiple sequence alignment
+and the method of tree construction.
+The main function orchestrates the workflow, and the launch function initializes the process based on user input.
+The baps_cmd function sets up the command-line arguments for the BAPS workflow.
+The output of the BAPS workflow includes a phylogenetic tree, population structure analysis.
+
+input:
+- indir: Input directory containing the necessary files for the BAPS workflow.
+- outdir: Output directory where the results will be saved.
+
+params:
+- also_pan: If set, includes pan-genome alignment in the output.
+- core_thre: Core threshold for tree construction.
+- step: Specifies the step at which to terminate the workflow.
+- para_strategy: Strategy for handling paralogs.
+- msa_method: Method for multiple sequence alignment.
+- tree_method: Method for tree construction.
+- fastbaps_levels: Number of levels for fastBAPS clustering.
+- fastbaps_prior: Prior for fastBAPS clustering.
+- add_paras: Additional parameters for specific steps in the workflow.
+
+output:
+- Phylogenetic tree and population structure analysis results.
+"""
+
 
 def main(indir: str, outdir: str, nodraw: bool, threads: int, disable: bool = False, also_pan: bool = False, core_thre: float = 0.95, step: int = 9, para_strategy: str = 'best', msa_method: str = 'mafft', tree_method: str = 'fasttree', fastbaps_levels: int = 2, fastbaps_prior: str = 'symmetric', add_paras: list = []):
     detail_file = f'{indir}/pgap2.partition.gene_content.detail.tsv'

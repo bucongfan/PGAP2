@@ -11,6 +11,28 @@ from pgap2.lib.phylogeny import Phylogeny
 from pgap2.utils.supply import sfw, tqdm_
 from pgap2.utils.supply import set_verbosity_level
 
+"""
+Statistical analysis of Tajima's D based on gene content.
+Tajima's D is a measure of genetic diversity within a population.
+This module provides a command-line interface for running the Tajima's D test on gene clusters.
+
+input:
+- indir: Input directory containing the necessary files for the Tajima's D test.
+- outdir: Output directory where the results will be saved.
+params:
+- threads: Number of threads to use for parallel processing.
+- disable: If set, disables the progress bar.
+- msa_method: Method for multiple sequence alignment.
+- para_strategy: Strategy for handling paralogs.
+- clusts: A file containing one line per cluster for which Tajima's D test needs to be performed. By default, all clusters will be used.
+- step: Specifies the step at which to terminate the workflow.
+- add_paras: Additional parameters for specific steps in the workflow
+output:
+- a TSV file containing the results of the Tajima's D test for each cluster.
+TODO:
+- Add visualization capabilities for the Tajima's D results.
+"""
+
 
 def main(indir: str, outdir: str, nodraw: bool, threads: int, disable: bool = False, clusts: str = '', step: int = 5, para_strategy: str = 'best', msa_method: str = 'mafft', add_paras: list = []):
     detail_file = f'{indir}/pgap2.partition.gene_content.detail.tsv'

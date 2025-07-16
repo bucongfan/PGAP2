@@ -11,6 +11,32 @@ from pgap2.utils.supply import set_verbosity_level
 from pgap2.utils.draw import postprocess_draw, postprocess_draw_vector
 from pgap2.postprocess.stat import get_pan_group, get_rarefaction, fit_rerefaction
 
+"""
+Post-process the pangenome profile.
+This module provides a command-line interface for running the pangenome profile workflow, which includes
+multiple steps such as rarefaction analysis, group frequency analysis, and drawing.
+It allows users to specify various parameters for the analysis, such as the method of rarefaction
+and the number of iterations.
+
+input:
+- pav_file: Input file containing the pangenome presence-absence matrix.
+- outdir: Output directory where the results will be saved.
+
+params:
+- nodraw: If set, the workflow will not generate any graphical output.
+- threads: Number of threads to use for parallel processing.
+- disable: If set, disables the progress bar.
+- single_file: If set, generates a single PDF report.
+- S: Number of samples for rarefaction.
+- N: Number of iterations for rarefaction.
+- R: Number of rarefaction curves to generate.
+- K: Number of clusters for group frequency analysis.
+- method: Method for rarefaction analysis.
+
+output:
+- Pangenome profile and various statistics related to the pangenome analysis.
+"""
+
 
 def main(pav_file: str, outdir: str, nodraw: bool, threads: int = 1, disable: bool = False, single_file: bool = False, S: int = 100, N: int = 500, R: int = 3, K: int = 3, method: str = 'DG'):
 

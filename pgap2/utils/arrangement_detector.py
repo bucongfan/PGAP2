@@ -8,6 +8,27 @@ from pgap2.lib.tree import Tree
 from pgap2.utils.tools import merge_node, get_similarity, merge_judge
 from pgap2.utils.supply import tqdm_
 
+"""
+This module provides functions to handle rearrangements in a pangenome graph based on context similarity.
+
+After core gene partitioning, this method identifies and resolves recent duplication events in genomes 
+by detecting highly similar nodes that may represent redundant gene copies. 
+Such nodes are candidates for merging if they exhibit extremely high sequence identity and 
+are located in similar genomic contexts. This helps refine the pangenome graph by reducing redundancy 
+and improving structural coherence.
+
+input:
+- G: Pangenome graph containing gene clusters.
+- pg: Pangenome object containing strain and gene information.
+- tree: Identity tree of the genes.
+- context_sim: Context similarity threshold for merging nodes.
+- flank: Flank size for context comparison.
+- sensitivity: Sensitivity level for merging decisions.
+- ins: Boolean indicating whether to consider insertion events.
+output:
+- G: Updated Pangenome graph after merging nodes based on context similarity.
+"""
+
 
 def get_flank_clust(pg: Pangenome, tree: Tree, repre_node, flank):
     repre_flank_gene = pg.get_flank_gene(gene=repre_node, flank=flank)

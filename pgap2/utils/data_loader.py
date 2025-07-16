@@ -22,6 +22,34 @@ from pgap2.lib.strain import Strain
 from pgap2.utils.supply import run_command
 from pgap2.utils.supply import sfw, tqdm_
 
+"""
+
+Data loader module for PGAP2.
+This module provides functions to load genomic data from various file formats,
+including FASTA, GenBank, and GFF3 output.
+It includes functions for parsing these files, extracting gene sequences,
+and loading annotations into the PGAP2 data structures.
+
+input: 
+- indir: Input directory containing genomic files.
+- outdir: Output directory for processed data.
+- annot: Boolean indicating whether to generate annotation files.
+- threads: Number of threads to use for parallel processing.
+- disable: Boolean to disable progress bars.
+- id_attr_key: Attribute key to use for gene IDs.
+- type_filter: Type of features to filter (e.g., 'CDS').
+- retrieve: Boolean indicating whether to retrieve sequences.
+- falen: Minimum length of gene sequences to consider valid.
+- gcode: Genetic code to use for translation.
+- prefix: Prefix for output files.
+
+output:
+- processed: Boolean indicating whether the data was processed successfully.
+- stats: Dictionary containing statistics about the processed data.
+- pangenome: Pangenome object containing the loaded strains and genes.
+
+"""
+
 
 def set_logger(logger_):
     global logger
@@ -546,6 +574,9 @@ def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_a
             if bad_gene_num > 0:
                 logger.warning(
                     f'{strain_name} invalid gene count: {bad_gene_num}')
+            if sum(good_gene_num) == 0:
+                logger.warning(
+                    f'{strain_name} has no valid gene. Try using -r to retrieve it.')
             per_file_list.append((annot_file, prot_file))
             total_bad_gene_num += bad_gene_num
             strain = Strain(strain_name=strain_name,

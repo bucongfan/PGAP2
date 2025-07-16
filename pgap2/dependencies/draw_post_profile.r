@@ -6,6 +6,11 @@ library(dplyr)
 library(optparse)
 library(patchwork)
 
+# This script is used to draw post profile plots for PGAP2.
+# It reads in various postprocess files and generates plots for pan group statistics,
+# cluster strain frequency, rarefaction, new clusters, and paralogous statistics.
+# The plots can be saved either as individual files or combined into a single file.
+
 option_list <- list(
   make_option(c("-a", "--pan_group_stat"), type = "character", help = "postprocess.pan_group_stat.tsv"),
   make_option(c("-b", "--clust_strain_freq"), type = "character", help = "postprocess.clust_strain_freq.tsv"),

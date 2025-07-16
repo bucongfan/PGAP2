@@ -8,6 +8,14 @@ from collections import defaultdict
 from pgap2.utils.supply import tqdm_
 
 
+"""
+Species class provides an abstraction for handling genomic data at a level above individual strains. 
+It is designed to manage a group of strains within the same species, supporting operations such as 
+loading marker files, indexing strains, computing average nucleotide identity (ANI), and identifying outlier genomes. 
+This class serves as a higher-level container to facilitate species-level analysis and representative genome selection.
+"""
+
+
 class Species():
     def __init__(self, marker_file, strain_dict, ani, outdir) -> None:
         self.species_tag = {'darb_strain': '', 'outgroup_strain_list': []}
@@ -66,7 +74,7 @@ class Species():
         return self.outlier_dict
 
     def get_ani(self, strain):
-        return self.ani_dict[strain]
+        return self.ani_dict.get(strain, 0.0)
 
     def _ani_index_strain(self):
         sketch = pyfastani.Sketch()

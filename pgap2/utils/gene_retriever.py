@@ -21,6 +21,39 @@ from pgap2.utils.tools import insert_node, merge_node
 from pgap2.utils.supply import run_command
 from pgap2.utils.supply import tqdm_, sfw
 
+"""
+Gene retrieval functions for PGAP2.
+
+This module implements the retrieval of potentially missing genes in PGAP2 based on synteny-aware graph analysis.
+When the upstream and downstream neighbors of a gene node are found to be present in other strains but 
+the node itself is missing, PGAP2 considers the strain as a candidate for gene loss and attempts retrieval.
+
+The retrieval process uses the longest protein sequence from the missing node as a query, and calls Miniprot 
+to align it against the genome of the candidate strain. Retrieved sequences may correspond to coding genes 
+or pseudogenes.
+
+PGAP2 then evaluates each candidate based on multiple criteria—including sequence identity, overlap with existing genes, 
+and physical distance to neighboring genes—to decide whether the candidate should be inserted as a new node 
+in the graph.
+
+input:
+- G: NetworkX graph representing the pangenome.
+- pg: Pangenome object containing strain and gene information.
+- tree: Identity tree of the genes.
+
+intermediate steps:
+- query_fa: FASTA file containing query sequences.
+- ref_fa: FASTA file containing reference sequences.
+- ref_mpi: MPI file for reference sequences.
+- out_paf: Output PAF file after alignment.
+
+output:
+- G: Updated NetworkX graph with retrieved genes.
+- pg: Updated Pangenome object with new genes.
+- tree: Updated identity tree with new genes.
+- need_realign_root: Set of roots that need to be realigned after gene retrieval.
+"""
+
 
 def set_logger(logger_):
     global logger

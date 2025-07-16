@@ -2,6 +2,15 @@ from loguru import logger
 import numpy as np
 import pickle
 
+"""
+
+Pickle check class for validating and loading pickled data.
+This class is used to store and manage pickled data, ensuring that the data can be loaded correctly
+and that the parameters match the expected values.
+It provides methods for loading data, checking parameters, and dumping the data back to a pickle file.
+
+"""
+
 
 class PklCheck():
     def __init__(self, outdir: str, name: str) -> None:

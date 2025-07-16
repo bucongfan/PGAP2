@@ -25,6 +25,32 @@ from pgap2.utils.tools import check_min_falen, check_gcode
 from pgap2.utils.data_loader import file_parser, get_file_dict
 from pgap2.utils.draw import preprocess_draw, preprocess_draw_vector
 
+"""
+preprocsess.py
+This module provides functionality for preprocessing genomic data, including loading marker files, indexing strains,
+computing average nucleotide identity (ANI), and identifying outlier genomes.
+It includes functions for genome feature statistics, pooling genomes, creating symlinks, and preprocessing output
+to generate reports and visualizations.
+
+input:
+- marker_file: Path to the marker file containing strain information.
+- ani: Expected average nucleotide identity threshold.
+- outdir: Output directory for storing results.
+
+output:
+- Preprocessed data including ANI calculations, outlier identification, and genome statistics.
+- postprocess.ANI.pdf: Vector plot of ANI results.
+- postprocess.gene_number.pdf: Vector plot of gene number statistics.
+- postprocess.half_core.pdf: Vector plot of half-core gene statistics.
+- postprocess.proportion.pdf: Vector plot of base composition proportions.
+- postprocess.gene_code.pdf: Vector plot of gene code statistics.
+- preprocess.stat.tsv: Tab-separated values file containing strain statistics.
+- preprocess.gene_code.csv: CSV file containing gene code statistics.
+- html_report: HTML report summarizing preprocessing results.
+- refined_input: Directory containing symlinks to passed high-quality input files.
+- preprocess.pkl: Pickle file containing preprocessed data for future re-use.
+"""
+
 
 def trim_path(ani_result, prefix, suffix):
     trim_result = {}

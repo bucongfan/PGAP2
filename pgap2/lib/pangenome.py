@@ -9,6 +9,20 @@ from collections import defaultdict, OrderedDict
 
 from pgap2.utils.supply import tqdm_
 
+"""
+This module defines the core class of PGAP2: Pangenome.
+
+The Pangenome class serves as the top-level structure in PGAP2’s analysis pipeline, sitting above 
+Species and Strain in the hierarchy. It records all global information and configuration parameters 
+used throughout the pan-genome analysis process.
+
+This includes attributes such as the output directory, number of threads, total number of genomes, 
+and references to genome-level data structures (e.g., genome dictionaries). In addition to serving 
+as a central data container, the class also supports functionality for data export, loading, 
+and checkpointing of intermediate results.
+
+"""
+
 
 def pan_judger(ortho_num: int, total_num: int):
     freq = float(ortho_num/total_num)

@@ -12,12 +12,11 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
-                "main",
-                "-r",
+                "prep",
                 "-i",
-                "/Users/bucongfan/core/PGAP2/simulation/output",
+                "/Users/bucongfan/core/PGAP2/low_quality/input",
                 "-o",
-                "/Users/bucongfan/core/PGAP2/simulation/pgap_output"
+                "/Users/bucongfan/core/PGAP2/low_quality/output_prep",
             ]
         }
     ]

@@ -3,6 +3,20 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 import sys
 
+"""
+Only when assigned --acurate/-a, this script will be called to calculate pairwise identity (pwid) between two sequences.
+It uses edlib to compute the edit distance and then calculates the identity based on the length of the shorter sequence.
+This is useful for determining the similarity between two sequences in a pangenome analysis for paralogs.
+The output is printed in a tab-separated format: query_id, target_id, and pairwise identity (pwid).
+
+input:
+- fasta_file: Path to the FASTA file containing sequences.
+- query_id: ID of the query sequence.
+- target_id: ID of the target sequence.
+output:
+- Prints the query_id, target_id, and pairwise identity (pwid) in a tab-separated format.
+"""
+
 
 def run_pw(seqA, seqB, dna=False):
     def calculate_pwid(sA, sB, dna):

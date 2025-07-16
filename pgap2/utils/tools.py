@@ -14,6 +14,11 @@ from pgap2.lib.tree import Tree
 from pgap2.lib.pangenome import Pangenome
 from pgap2.utils.supply import run_command
 
+"""
+Functions for handling pan-genome analysis.
+Any relevant reused functions for analysis should be added here.
+"""
+
 
 def check_min_falen(value):
     ivalue = int(value)

@@ -5,18 +5,20 @@ library(dplyr)
 library(optparse)
 library(patchwork)
 
-# 设置命令行参数解析
+# This script is used to draw post profile plots for PGAP2.
+# It reads in various postprocess files and generates plots for pan group statistics,
+# cluster strain frequency, rarefaction, new clusters, and paralogous statistics.
+# The plots can be saved either as individual files or combined into a single file.
+
 option_list <- list(
   make_option(c("-a", "--stat_attrs"), type = "character", help = "postprocess.stat_attrs.tsv"),
   make_option(c("-s", "--single_file"), action = "store_true", default = FALSE, help = "Generate each plot to the single file"),
   make_option(c("-o", "--output_dir"), type = "character", help = "Output directory")
 )
 
-# 解析命令行参数
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
-# 创建输出目录
 if (!dir.exists(opt$output_dir)) {
   dir.create(opt$output_dir)
 }
@@ -37,9 +39,9 @@ save_basic_plots <- function(A, B, C, D, single_file, output_dir) {
     combined_plot <- A + B + C + D +
       plot_layout(
         guides = "collect",
-        ncol = 2, 
+        ncol = 2,
         nrow = 2,
-        widths = c(1, 1), 
+        widths = c(1, 1),
         heights = c(1, 1)
       ) +
       theme(legend.position = "bottom")
@@ -66,15 +68,15 @@ draw_stat_attr <- function(stat_attrs_data, attr, xlab_name) {
       axis.text.x = element_text(angle = 45, hjust = 1),
       axis.line = element_line(linewidth = 0),
       panel.background = element_blank(),
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5), 
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
       panel.grid = element_blank(),
-      plot.margin = margin(10, 10, 10, 10), 
-      legend.box = "vertical", 
+      plot.margin = margin(10, 10, 10, 10),
+      legend.box = "vertical",
       legend.position = c(left_position, 0.85),
       legend.background = element_blank(),
       legend.direction = "vertical",
-      legend.key.size = unit(0.5, "cm"), 
-      legend.title = element_text(size = 10), 
+      legend.key.size = unit(0.5, "cm"),
+      legend.title = element_text(size = 10),
       legend.text = element_text(size = 8)
     ) + scale_color_manual(
       values = c(
@@ -83,7 +85,8 @@ draw_stat_attr <- function(stat_attrs_data, attr, xlab_name) {
         "Soft_core" = "#B8DBB3",
         "Core" = "#94C6CD",
         "Strict_core" = "#E29135"
-      ))+
+      )
+    ) +
     guides(color = guide_legend(override.aes = list(alpha = 1))) + ggtitle(toupper(attr))
 
   return(attr_plot)
@@ -91,9 +94,9 @@ draw_stat_attr <- function(stat_attrs_data, attr, xlab_name) {
 
 
 stat_attrs_data <- stat_attrs_data %>%
-  group_by(Attr, Group) %>% 
-  mutate(Prop = Count / sum(Count)) %>% 
-  ungroup() 
+  group_by(Attr, Group) %>%
+  mutate(Prop = Count / sum(Count)) %>%
+  ungroup()
 stat_attrs_data$Group <- factor(stat_attrs_data$Group, levels = c("Strict_core", "Core", "Soft_core", "Shell", "Cloud"))
 
 A <- draw_stat_attr(stat_attrs_data, "mean", xlab_name = "Gene Identity")

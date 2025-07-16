@@ -8,6 +8,11 @@ library(tidyr)
 library(optparse)
 library(patchwork)
 
+# This script is used to draw post profile plots for PGAP2.
+# It reads in various postprocess files and generates plots for pan group statistics,
+# cluster strain frequency, rarefaction, new clusters, and paralogous statistics.
+# The plots can be saved either as individual files or combined into a single file.
+
 option_list <- list(
   make_option(c("-a", "--stat_attrs"), type = "character", help = "preprocess.stat.tsv"),
   make_option(c("-b", "--gene_code"), type = "character", help = "preprocess.gene_code.csv"),
@@ -43,7 +48,7 @@ save_basic_plots <- function(A, B, C, D, E, single_file, output_dir) {
       plot_layout(guides = "collect", ncol = 3)
     p2 <- D + ggtitle("D") +
       E + ggtitle("E") +
-      plot_layout(guides = "collect", ncol = 2) & 
+      plot_layout(guides = "collect", ncol = 2) &
       theme(legend.position = "right")
     combined_plot <- p1 / p2 + plot_layout(heights = c(1, 2))
     ggsave(file.path(output_dir, "pgap2.preprocess.pdf"), combined_plot, width = 9.8, height = 8.4)
@@ -60,11 +65,11 @@ draw_ani <- function(input_prep, ani_thre) {
     theme(legend.position = "none") +
     scale_x_discrete(labels = c("")) +
     geom_text_repel(
-      data = subset(input_prep, ani == 100 | is_outlier_ani == 1), 
-      aes(x = as.factor(1), y = ani, label = strain), 
-      arrow = arrow(type = "closed", length = unit(0.1, "inches")), 
-      vjust = -0.5, size = 3, color = "black", 
-      box.padding = 0.2, min.segment.length = 1 
+      data = subset(input_prep, ani == 100 | is_outlier_ani == 1),
+      aes(x = as.factor(1), y = ani, label = strain),
+      arrow = arrow(type = "closed", length = unit(0.1, "inches")),
+      vjust = -0.5, size = 3, color = "black",
+      box.padding = 0.2, min.segment.length = 1
     )
   return(p)
 }
@@ -110,9 +115,9 @@ draw_proportion <- function(input_prep) {
       breaks = function(x) {
         y_levels <- levels(factor(long_data$strain))
         if (length(y_levels) > 25) {
-          return(y_levels[seq(1, length(y_levels), length.out = 25)]) 
+          return(y_levels[seq(1, length(y_levels), length.out = 25)])
         } else {
-          return(y_levels) 
+          return(y_levels)
         }
       }
     )
@@ -137,7 +142,7 @@ draw_gene_code <- function(input_code) {
         if (length(y_levels) > 25) {
           return(y_levels[seq(1, length(y_levels), length.out = 25)])
         } else {
-          return(y_levels) 
+          return(y_levels)
         }
       }
     )

@@ -20,6 +20,22 @@ from pgap2.utils.supply import sfw, tqdm_
 from pgap2.utils.supply import set_verbosity_level
 from pgap2.utils.draw import postprocess_draw, postprocess_draw_vector
 
+"""
+Statistical analysis of pan-genome and core-genome dynamics based on pav file.
+This module provides functions to perform rarefaction analysis, fit curves to core and pan gene data,
+and generate statistics related to pan-genome structure.
+It is different with profile.py, which is doing the same thing but with PGAP2 standard output from main function.
+While this module is designed to be used with pav file directly.
+input:
+- pav: The input pangenome abundance vector file.
+
+params:
+- Totally same with profile.py, except for the input file.
+
+output:
+- A dictionary containing the rarefaction curves for core and pan genes.
+"""
+
 
 def generate_tasks(strain_num, N):
     if strain_num <= N:

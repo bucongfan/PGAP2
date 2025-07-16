@@ -3,6 +3,7 @@ import tempfile
 import numpy as np
 from loguru import logger
 from itertools import chain
+from decimal import Decimal
 from collections import Counter, OrderedDict
 
 import pyecharts.options as opts
@@ -11,9 +12,14 @@ from pyecharts.commons.utils import JsCode
 
 from pgap2.lib.species import Species
 from pgap2.utils.supply import run_command
-from decimal import Decimal, getcontext
 
+"""
+This module contains functions to visualize data related to species analysis in PGAP2 to generate html and vector graphics.
+including pie charts, scatter plots, bar charts, and line charts used in PGAP2 preprocessing and postprocessing.
+It also provides utility functions for calculating edges and counts for histograms, as well as preprocessing data for visualization.
+"""
 
+# configuration dictionaries for preprocessing and postprocessing visualizations
 preprocess_cfg_dict = [{"cid": "PGAP2_preprocess_ani_scatter3d", "width": "518px", "height": "258px", "top": "67px", "left": "586px"},
                        {"cid": "PGAP2_preprocess_species_pie", "width": "531px",
                            "height": "259px", "top": "65px", "left": "39px"},
@@ -48,6 +54,8 @@ def get_cord(Z, strain_name, strain_order):
         if name == strain_name:
             return Z[i]
     raise ValueError(f"Cannot find {strain_name} in ani dict")
+
+# Function to preprocess species pie chart data
 
 
 def preprocess_species_pie(darb_dict, sp):
@@ -116,6 +124,8 @@ def preprocess_species_pie(darb_dict, sp):
     return pie
     pie.render('pie.html')
     exit()
+
+# Function to preprocess ANI graph data
 
 
 def preprocess_ani_graph(outlier_dict, sp: Species):
@@ -208,10 +218,14 @@ def preprocess_ani_graph(outlier_dict, sp: Species):
 #     return scatter3D
 #     scatter3D.render("scatter3d.html")
 
+# Function to calculate edges for customized histogram bins
+
 
 def calculate_edges(min_val, max_val, num_bins):
     edges = np.linspace(min_val, max_val, num_bins + 1).tolist()
     return sorted([round(_, 5) for _ in edges])
+
+# Function to calculate logarithmic edges for customized histogram bins
 
 
 def calculate_logedges(min_val, max_val, num_bins):
@@ -220,6 +234,8 @@ def calculate_logedges(min_val, max_val, num_bins):
     return sorted(edges)
     # edges = np.linspace(min_val, max_val, num_bins + 1).tolist()
     # return sorted([round(_, 5) for _ in edges])
+
+# Function to calculate counts for customized histogram bins
 
 
 def calculate_counts(data, edges):
@@ -235,6 +251,8 @@ def calculate_counts(data, edges):
                 result[edges[-2]] += 1
     return list(result.values())
 
+# Function to format edges for x-axis labels in customized histograms
+
 
 def edges_for_xaxis(edges):
     xaxis = []
@@ -244,6 +262,8 @@ def edges_for_xaxis(edges):
         else:
             xaxis.append(f'[{edges[i]},{edges[i+1]})')
     return xaxis
+
+# Function to postprocess attribute lines for visualization
 
 
 def postprocess_attr_line(benchmark_stat: dict, para_id, attr_name, ofh):
@@ -314,6 +334,8 @@ def postprocess_attr_line(benchmark_stat: dict, para_id, attr_name, ofh):
     return line
     line.render('test_attr.html')
 
+# Function to postprocess MCI bar chart data
+
 
 def postprocess_mci_bar(benchmark_stat, iter_list):
     from pyecharts.charts import Bar
@@ -355,6 +377,8 @@ def postprocess_mci_bar(benchmark_stat, iter_list):
     return bar
     bar.render('mci_bar.html')
 
+# Function to preprocess benchmark bar chart data
+
 
 def preprocess_benchmark_bar(benchmark_stat, outdir):
     from pyecharts.charts import Bar
@@ -383,6 +407,8 @@ def preprocess_benchmark_bar(benchmark_stat, outdir):
     )
     bar.render(f'{outdir}/cluster_component.html')
     return bar
+
+# Function to preprocess half core line chart data
 
 
 def preprocess_half_core_line(benchmark_stat, sp):
@@ -437,6 +463,8 @@ def preprocess_half_core_line(benchmark_stat, sp):
     return line
     line.render("half_count.html")
 
+# Function to preprocess gene completeness bar chart data
+
 
 def preprocess_gene_completeness_bar(genome_attr_dict, sp):
     from pyecharts.charts import Bar
@@ -447,10 +475,12 @@ def preprocess_gene_completeness_bar(genome_attr_dict, sp):
         complete = genome_attr_dict[strain]['total_gene_num']
         incomplete = genome_attr_dict[strain]['value_incomplete']
         total = complete+incomplete
+        completeness = round(Decimal(complete) /
+                             Decimal(total), 2) if total > 0 else 0
         complete_list.append(
-            {"value": complete, "percent": complete/total})
+            {"value": complete, "percent": completeness})
         incomplete_list.append(
-            {"value": incomplete, "percent": incomplete/total})
+            {"value": incomplete, "percent": 1 - completeness})
         strain_name = sp.strain_dict[strain].strain_name
         species_list.append(strain_name)
     bar = Bar(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))
@@ -493,6 +523,8 @@ def preprocess_gene_completeness_bar(genome_attr_dict, sp):
     return bar
     bar.render('gene_completeness.html')
     exit()
+
+# Function to preprocess gene length box plot data
 
 
 def preprocess_gene_length_box(genome_attr_dict, sp: Species):
@@ -566,6 +598,8 @@ def preprocess_gene_length_box(genome_attr_dict, sp: Species):
     return box
     box.render('gene_length.html')
 
+# Function to preprocess genome content bar chart data
+
 
 def preprocess_genome_content_bar(genome_attr_dict, sp):
     from pyecharts.charts import Bar
@@ -624,6 +658,8 @@ def preprocess_genome_content_bar(genome_attr_dict, sp):
     return bar
     bar.render('genome_content.html')
 
+# Function to preprocess gene code heatmap data
+
 
 def preprocess_gene_code_heatmap(sp):
     from pyecharts.charts import HeatMap
@@ -659,6 +695,8 @@ def preprocess_gene_code_heatmap(sp):
     return heat
     heat.render("gene_code_heatmap.html")
 
+# Function to postprocess new clusters box plot data
+
 
 def postprocess_newclusters_box(pan_profile):
     '''
@@ -693,6 +731,8 @@ def postprocess_newclusters_box(pan_profile):
 
     return boxplot
     boxplot.render('pangenome_newclusters.boxplot.html')
+
+# Function to postprocess pangenome profile box plot data
 
 
 def postprocess_profile_box(pan_profile):
@@ -730,6 +770,8 @@ def postprocess_profile_box(pan_profile):
 
     return boxplot
     boxplot.render('pangenome_profile.boxplot.html')
+
+# Function to postprocess group frequency line chart data
 
 
 def postprocess_group_freq(group_freq):
@@ -803,6 +845,8 @@ def postprocess_group_freq(group_freq):
     lineplot.overlap(pie)
     return lineplot
     lineplot.render('pangenome_groupfreq.lineplot.html')
+
+# Function to postprocess paralog distribution scatter plot data
 
 
 def postprocess_stat_para(para_dict: dict):
@@ -910,6 +954,7 @@ def postprocess_stat_para(para_dict: dict):
 #     return scatter
 #     scatter.render('postprocess_pan_dinuq.html')
 
+# Function to preprocess draw vector data
 def preprocess_draw_vector(**kwargs):
     outdir = kwargs['outdir']
     single_file = kwargs['single_file']
@@ -928,6 +973,8 @@ def preprocess_draw_vector(**kwargs):
     single_file = '--single_file' if single_file else ''
     run_command(
         f"Rscript {sfw} -a {input_prep} -b {input_code} -o {outdir} --ani_thre {ani_threshold} {single_file}")
+
+# Function to postprocess draw vector data
 
 
 def postprocess_draw_vector(**kwargs):
@@ -964,6 +1011,7 @@ def postprocess_draw_vector(**kwargs):
         logger.error(f'Invalid target: {target}')
 
 
+# Function to postprocess draw plots
 def postprocess_draw(**kwargs):
     '''
     Draw postprocess plot
@@ -1053,6 +1101,8 @@ def postprocess_draw(**kwargs):
     finally:
         os.remove(fname)
     return output_html
+
+# Function to preprocess draw plots
 
 
 def preprocess_draw(outlier_dict, outdir, sp, genome_attr_dict):
