@@ -25,7 +25,7 @@ from pgap2.utils.generate_tree import generate_tree
 from pgap2.utils.gene_retriever import retrieve_gene
 from pgap2.utils.arrangement_detector import merge_by_synteny
 from pgap2.utils.data_loader import file_parser, get_file_dict
-from pgap2.utils.tools import merge_node, shortest_path_length_with_max_length, get_similarity, merge_judge, check_min_falen, check_gcode
+from pgap2.utils.tools import merge_node, shortest_path_length_with_max_length, get_similarity, merge_judge, check_min_falen, check_gcode, find_final_node
 
 """
 main function for partitioning pangenome data into clusters based on identity and synteny.
@@ -444,12 +444,6 @@ def similarity_partition(tree: Tree, G: nx.Graph, nodes, search_distance, pre_co
 
 def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str = 'strict', radius: int = 3, context_sim: float = 0, flank: int = 5, disable: bool = True, step: int = 4):
 
-    def find_final_node(node, mapping):
-        # If the node points to itself, it is returned
-        while mapping[node] != node:
-            node = mapping[node]
-        return node
-
     search_distance = radius*2+1
     root_leaf = tree.root_leaf
 
@@ -586,11 +580,19 @@ def get_expect_identity(tree: Tree, G: Pangenome, pg: Pangenome):
     return round(max_in_range, 5)
 
 
-def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str, falen: int, threads: int, orth_id: float, para_id: float, dup_id: float, id_attr_key: str, type_filter: str, coverage: float, LD: float, AS: float, AL: float, context_similirity: float, accurate: bool, exhaust_orth: bool, flank: int, disable: bool, annot: bool, gcode: int, retrieve: bool, radius: int, sensitivity: int, ins: bool):
+def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str, falen: int, threads: int, orth_id: float, para_id: float, dup_id: float, id_attr_key: str, type_filter: str, max_targets: int, coverage: float, LD: float, AS: float, AL: float, context_similirity: float, accurate: bool, exhaust_orth: bool, flank: int, disable: bool, annot: bool, gcode: int, retrieve: bool, radius: int, sensitivity: int, ins: bool):
 
     decode_status = False
     file_dict = get_file_dict(indir)
     if os.path.exists(f'{outdir}/preprocess.pkl'):
+        '''
+        Found a previous preprocess.pkl file, loading...
+        This file contains the parameters and file structure of the previous run.
+        If the parameters are not match, it will raise a ValueError.
+        If the file structure has changed, it will warn the user and reload the file structure from the current input directory.
+        If the file structure is the same, it will load the pangenome and tree from the previous run.
+        If the pangenome has invalid genes, it will warn the user and continue to the next step.
+        '''
         logger.info(f'Found {outdir}/preprocess.pkl')
         logger.info(f'Loding...')
         with open(f'{outdir}/preprocess.pkl', 'rb') as fh:
@@ -671,6 +673,11 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
                     f'Previous file parameters is not match, start partition from the begining')
 
     if decode_status is False:
+        '''
+        Load strain from input directory
+        If the previous preprocess.pkl file is not found or the parameters are not match,
+        it will load the strain from the input directory and create a new pangenome object.
+        '''
         logger.info(f'Load strain from {indir}')
         pg = file_parser(
             indir=indir, outdir=outdir, annot=annot, threads=threads, disable=disable, retrieve=retrieve, falen=falen, gcode=gcode, id_attr_key=id_attr_key, type_filter=type_filter, prefix='partition')
@@ -682,7 +689,7 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
             f'Create distane tree with {pg.strain_num} strains')
 
         tree = generate_tree(
-            input_file=file_prot, orth_list=[dup_id, orth_id], outdir=pg.outdir, evalue=evalue, aligner=aligner, falen=falen, disable=disable, threads=threads, coverage=coverage, ID=para_id, LD=LD, AS=AS, AL=AL, clust_method=clust_method)
+            input_file=file_prot, orth_list=[dup_id, orth_id], outdir=pg.outdir, evalue=evalue, aligner=aligner, falen=falen, disable=disable, threads=threads, max_targets=max_targets, coverage=coverage, ID=para_id, LD=LD, AS=AS, AL=AL, clust_method=clust_method)
 
         logger.info(
             f'To save the complete information of this project for breakpoint resume...')
@@ -696,6 +703,9 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
         pickle_preprocess.load('tree', main_data=tree)
         pickle_preprocess.pickle_()
 
+    '''
+    load necessary parameters and file paths used to quick downstream analysis
+    '''
     pg.orth_id = orth_id
     pg.para_id = para_id
     pg.dup_id = dup_id
@@ -707,6 +717,8 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
     pg.LD = LD
     pg.AL = AL
     pg.AS = AS
+
+    # -----------------------------------partition step-----------------------------------#
 
     logger.info('Get the gene primal clust result by mcl')
     mcl(pg, tree)
@@ -795,7 +807,7 @@ def launch(args: argparse.Namespace):
          id_attr_key=args.id_attr_key, type_filter=args.type_filter,
          coverage=0.98,
          #  coverage=args.coverage,
-         LD=args.LD, AS=args.AS, AL=args.AL,
+         LD=args.LD, AS=args.AS, AL=args.AL, max_targets=args.max_targets,
          # notused parameters, set a default value and will discard in the next release if dont use for sure
          context_similirity=0, flank=5,
          accurate=args.accurate,
@@ -870,6 +882,8 @@ def partition_cmd(subparser: _SubParsersAction):
     #                                  default=0, help='The context similarity threshold of gene synteny.')
     # subparser_partition.add_argument('--flank', '-l', required=False, type=int,
     #                                  default=5, help='The flank region of gene synteny.')
+    subparser_partition.add_argument('--max_targets', required=False, type=int,
+                                     default=2000, help='The maximum targets for each query in alignment. Improves accuracy for large-scale analyses, but increases runtime and memory usage.')
     subparser_partition.add_argument('--LD', required=False, type=float,
                                      default=0.6, help='Minimum gene length difference proportion between two genes.')
     subparser_partition.add_argument('--AS', required=False, type=float,

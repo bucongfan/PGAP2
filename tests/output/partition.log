@@ -1,0 +1,36 @@
+2025-07-17 15:22:45.817 | INFO     | pgap2.utils.supply:set_verbosity_level:126 - Please check the intact log in partition.log.
+2025-07-17 15:22:45.817 | INFO     | pgap2.utils.supply:check_dependency:91 - Dependency cdhit is checked: /opt/anaconda3/envs/pgap2/bin/cd-hit
+2025-07-17 15:22:45.818 | INFO     | pgap2.utils.supply:check_dependency:91 - Dependency mcl is checked: /opt/anaconda3/envs/pgap2/bin/mcl
+2025-07-17 15:22:45.818 | INFO     | pgap2.utils.supply:check_dependency:91 - Dependency mcxdeblast is checked: /opt/anaconda3/envs/pgap2/bin/mcxdeblast
+2025-07-17 15:22:45.819 | INFO     | pgap2.utils.supply:check_dependency:91 - Dependency diamond is checked: /opt/anaconda3/envs/pgap2/bin/diamond
+2025-07-17 15:22:45.819 | WARNING  | pgap2.utils.data_loader:get_file_dict:646 - Skip because [Readme_input.md] is not recognized.
+2025-07-17 15:22:45.819 | INFO     | pgap2.utils.partition:main:596 - Found /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/output/preprocess.pkl
+2025-07-17 15:22:45.819 | INFO     | pgap2.utils.partition:main:597 - Loding...
+2025-07-17 15:22:45.842 | INFO     | pgap2.utils.partition:main:600 - Check the previous file parameters...
+2025-07-17 15:22:45.842 | INFO     | pgap2.utils.partition:main:654 - Load previous file structure from /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/output/pgap2.pkl
+2025-07-17 15:22:45.846 | WARNING  | pgap2.utils.partition:main:663 - 0 invalid gene count: 6
+2025-07-17 15:22:45.847 | WARNING  | pgap2.utils.partition:main:663 - 1 invalid gene count: 5
+2025-07-17 15:22:45.847 | WARNING  | pgap2.utils.partition:main:663 - 2 invalid gene count: 379
+2025-07-17 15:22:45.847 | INFO     | pgap2.utils.partition:main:666 - Total invalid gene count: 390. Check it in log file: /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/output/preprocess.log
+2025-07-17 15:22:45.848 | INFO     | pgap2.utils.partition:main:723 - Get the gene primal clust result by mcl
+2025-07-17 15:22:46.926 | INFO     | pgap2.utils.partition:main:725 - Load the gene length information
+2025-07-17 15:22:46.954 | INFO     | pgap2.utils.partition:main:727 - Create synteny network
+2025-07-17 15:22:46.954 | INFO     | pgap2.utils.partition:generate_network:154 - ---- Adding high confidence nodes as the network's backbone...
+2025-07-17 15:22:47.000 | INFO     | pgap2.utils.partition:generate_network:174 - ---- Connecting adjacent nodes as the backbone edges...
+2025-07-17 15:22:47.014 | INFO     | pgap2.utils.partition:generate_network:188 - ---- Attempting to split potential paralogous genes based on synteny...
+2025-07-17 15:22:47.019 | INFO     | pgap2.utils.partition:generate_network:262 - ---- Updating the paralogous nodes...
+2025-07-17 15:22:47.030 | INFO     | pgap2.utils.partition:main:733 - Build index
+2025-07-17 15:22:47.045 | INFO     | pgap2.utils.partition:main:736 - Load expect identity: 0.476
+2025-07-17 15:22:47.045 | INFO     | pgap2.utils.partition:main:738 - Clean up the distance graph according to paralogous genes
+2025-07-17 15:22:47.095 | INFO     | pgap2.utils.partition:main:740 - Merge by gene similarity
+2025-07-17 15:22:47.473 | INFO     | pgap2.utils.partition:main:749 - Double check through gene synteny
+2025-07-17 15:22:47.515 | INFO     | pgap2.utils.partition:main:757 - Reload the gene annotation
+2025-07-17 15:22:47.549 | INFO     | pgap2.utils.partition:main:776 - Organize the results
+2025-07-17 15:22:47.681 | INFO     | pgap2.utils.partition:main:786 - Dump the gene content matrix
+2025-07-17 15:22:47.681 | INFO     | pgap2.lib.pangenome:dump_csv:118 - Dump csv matrix to /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/output/pgap2.partition.gene_content.csv
+2025-07-17 15:22:47.699 | INFO     | pgap2.utils.partition:main:788 - Dump the gene map graph
+2025-07-17 15:22:47.732 | INFO     | pgap2.utils.partition:main:794 - To save the basic results of this project for downstream visulization...
+2025-07-17 15:22:47.732 | INFO     | pgap2.lib.pklcheck:pickle_:42 - Pickle the data to /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/output/basic.pkl
+2025-07-17 15:22:47.732 | INFO     | pgap2.lib.pklcheck:pickle_:44 - Object: basic
+2025-07-17 15:22:47.732 | INFO     | pgap2.lib.pklcheck:pickle_:45 - -----------------
+2025-07-17 15:22:47.749 | SUCCESS  | pgap2.main:main:35 - Total time used: 1.95s

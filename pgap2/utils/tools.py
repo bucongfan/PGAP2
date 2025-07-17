@@ -196,6 +196,13 @@ def get_identity_with_name(conA, conB, seqA, seqB, nucl=True):
     return ((conA, conB, pwid))
 
 
+def find_final_node(node, mapping):
+    # If the node points to itself, it is returned
+    while mapping[node] != node:
+        node = mapping[node]
+    return node
+
+
 def get_similarity(conA, conB):
     if 0 in (len(conA), len(conB)):
         return 0

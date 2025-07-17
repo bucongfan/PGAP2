@@ -1,0 +1,2859 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PGAP2 Postprocess Stat</title>
+            <script type="text/javascript" src="https://assets.pyecharts.org/assets/v5/echarts.min.js"></script>
+        <script type="text/javascript" src="https://assets.pyecharts.org/assets/v5/jquery.min.js"></script>
+        <script type="text/javascript" src="https://assets.pyecharts.org/assets/v5/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="https://assets.pyecharts.org/assets/v5/ResizeSensor.js"></script>
+
+            <link rel="stylesheet"  href="https://assets.pyecharts.org/assets/v5/jquery-ui.css">
+
+</head>
+<body >
+    <style>.box {  } </style>
+        
+    <div class="box">
+                <div id="PGAP2_postprocess_group_freq_line" class="chart-container" style="position: absolute; width: 685px; height: 408px; top: 33.5px; left: 53px;"></div>
+    <script>
+        var chart_PGAP2_postprocess_group_freq_line = echarts.init(
+            document.getElementById('PGAP2_postprocess_group_freq_line'), 'white', {renderer: 'canvas'});
+        var option_PGAP2_postprocess_group_freq_line = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "color": [
+        "#73c0df",
+        "#5470c6",
+        "#91cc75",
+        "#fac858",
+        "#ee6666",
+        "#73c0de",
+        "#3ba272",
+        "#fc8452",
+        "#9a60b4",
+        "#ea7ccc"
+    ],
+    "series": [
+        {
+            "type": "line",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": true,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "0.0",
+                    0
+                ],
+                [
+                    "0.05",
+                    0
+                ],
+                [
+                    "0.1",
+                    0
+                ],
+                [
+                    "0.15",
+                    0
+                ],
+                [
+                    "0.2",
+                    0
+                ],
+                [
+                    "0.25",
+                    0
+                ],
+                [
+                    "0.3",
+                    985
+                ],
+                [
+                    "0.35",
+                    0
+                ],
+                [
+                    "0.4",
+                    0
+                ],
+                [
+                    "0.45",
+                    0
+                ],
+                [
+                    "0.5",
+                    0
+                ],
+                [
+                    "0.55",
+                    0
+                ],
+                [
+                    "0.6",
+                    0
+                ],
+                [
+                    "0.65",
+                    768
+                ],
+                [
+                    "0.7",
+                    0
+                ],
+                [
+                    "0.75",
+                    0
+                ],
+                [
+                    "0.8",
+                    0
+                ],
+                [
+                    "0.85",
+                    0
+                ],
+                [
+                    "0.9",
+                    0
+                ],
+                [
+                    "0.95",
+                    0
+                ],
+                [
+                    "1.0",
+                    3167
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "margin": 8
+            },
+            "logBase": 10,
+            "lineStyle": {
+                "show": true,
+                "width": 1,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 1,
+                "color": "#73c0de"
+            },
+            "zlevel": 0,
+            "z": 0,
+            "markArea": {
+                "silent": false,
+                "label": {
+                    "show": true,
+                    "margin": 8
+                },
+                "data": [
+                    [
+                        {
+                            "name": "Cloud",
+                            "xAxis": "0.0",
+                            "label": {
+                                "show": false,
+                                "margin": 8
+                            },
+                            "itemStyle": {
+                                "color": "red",
+                                "opacity": 0.1
+                            }
+                        },
+                        {
+                            "xAxis": "0.15"
+                        }
+                    ],
+                    [
+                        {
+                            "name": "Shell",
+                            "xAxis": "0.15",
+                            "label": {
+                                "show": false,
+                                "margin": 8
+                            },
+                            "itemStyle": {
+                                "color": "yellow",
+                                "opacity": 0.1
+                            }
+                        },
+                        {
+                            "xAxis": "0.95"
+                        }
+                    ],
+                    [
+                        {
+                            "name": "Core",
+                            "xAxis": "0.95",
+                            "label": {
+                                "show": false,
+                                "margin": 8
+                            },
+                            "itemStyle": {
+                                "color": "blue",
+                                "opacity": 0.1
+                            }
+                        },
+                        {
+                            "xAxis": "1.0"
+                        }
+                    ]
+                ]
+            },
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        },
+        {
+            "type": "pie",
+            "name": "pan-group",
+            "colorBy": "data",
+            "legendHoverLink": true,
+            "selectedMode": false,
+            "selectedOffset": 10,
+            "clockwise": true,
+            "startAngle": 90,
+            "minAngle": 0,
+            "minShowLabelAngle": 0,
+            "avoidLabelOverlap": true,
+            "stillShowZeroSum": true,
+            "percentPrecision": 2,
+            "showEmptyCircle": true,
+            "emptyCircleStyle": {
+                "color": "lightgray",
+                "borderColor": "#000",
+                "borderWidth": 0,
+                "borderType": "solid",
+                "borderDashOffset": 0,
+                "borderCap": "butt",
+                "borderJoin": "bevel",
+                "borderMiterLimit": 10,
+                "opacity": 1
+            },
+            "data": [
+                {
+                    "name": "Strict core [1.0, 1.0]",
+                    "value": 3167
+                },
+                {
+                    "name": "Core [0.99, 1.0)",
+                    "value": 0
+                },
+                {
+                    "name": "Soft core [0.95, 0.99)",
+                    "value": 0
+                },
+                {
+                    "name": "Shell (0.15, 0.95)",
+                    "value": 1753
+                },
+                {
+                    "name": "Cloud [0.0, 0.15]",
+                    "value": 0
+                }
+            ],
+            "radius": "38%",
+            "center": [
+                "50%",
+                "45%"
+            ],
+            "label": {
+                "show": true,
+                "margin": 8
+            },
+            "labelLine": {
+                "show": true,
+                "showAbove": false,
+                "length": 15,
+                "length2": 15,
+                "smooth": false,
+                "minTurnAngle": 90,
+                "maxSurfaceAngle": 90
+            },
+            "tooltip": {
+                "show": true,
+                "trigger": "item",
+                "triggerOn": "mousemove|click",
+                "axisPointer": {
+                    "type": "line"
+                },
+                "showContent": true,
+                "alwaysShowContent": false,
+                "showDelay": 0,
+                "hideDelay": 100,
+                "enterable": false,
+                "confine": false,
+                "appendToBody": false,
+                "transitionDuration": 0.4,
+                "formatter": "{a} <br/>{b}: {c} ({d}%)",
+                "textStyle": {
+                    "fontSize": 14
+                },
+                "borderWidth": 0,
+                "padding": 5,
+                "order": "seriesAsc"
+            },
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "",
+                "Strict core [1.0, 1.0]",
+                "Core [0.99, 1.0)",
+                "Soft core [0.95, 0.99)",
+                "Shell (0.15, 0.95)",
+                "Cloud [0.0, 0.15]"
+            ],
+            "selected": {
+                "": true
+            },
+            "show": false,
+            "top": "4%",
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 0,
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "axis",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "cross"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "type": "category",
+            "name": "Strain frequency",
+            "show": true,
+            "scale": false,
+            "nameLocation": "middle",
+            "nameGap": 30,
+            "nameTextStyle": {
+                "fontSize": "14"
+            },
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": true,
+                "type": "shadow",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "boundaryGap": false,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "data": [
+                "0.0",
+                "0.05",
+                "0.1",
+                "0.15",
+                "0.2",
+                "0.25",
+                "0.3",
+                "0.35",
+                "0.4",
+                "0.45",
+                "0.5",
+                "0.55",
+                "0.6",
+                "0.65",
+                "0.7",
+                "0.75",
+                "0.8",
+                "0.85",
+                "0.9",
+                "0.95",
+                "1.0"
+            ]
+        }
+    ],
+    "yAxis": [
+        {
+            "type": "value",
+            "name": "Clusters",
+            "show": true,
+            "scale": false,
+            "nameLocation": "middle",
+            "nameGap": 50,
+            "nameTextStyle": {
+                "fontSize": "14"
+            },
+            "gridIndex": 0,
+            "axisTick": {
+                "show": true,
+                "alignWithLabel": false,
+                "inside": false
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
+    "title": [
+        {
+            "show": true,
+            "text": "Strain frequency",
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "toolbox": {
+        "show": true,
+        "orient": "horizontal",
+        "itemSize": 15,
+        "itemGap": 10,
+        "left": "80%",
+        "right": "right",
+        "bottom": "bottom",
+        "feature": {
+            "dataView": {
+                "title": "view the data",
+                "lang": [
+                    "Data view",
+                    "Close",
+                    "Refresh"
+                ]
+            },
+            "saveAsImage": {
+                "type_": "png",
+                "title": "save as png",
+                "pixel_ratio": 5,
+                "name": "pgap2.postprocessing.StrainFrequencyPlot"
+            }
+        }
+    },
+    "axisPointer": {
+        "show": false,
+        "type": "line",
+        "triggerTooltip": true,
+        "triggerOn": "mousemove|click"
+    }
+};
+        chart_PGAP2_postprocess_group_freq_line.setOption(option_PGAP2_postprocess_group_freq_line);
+    </script>
+<br/>                <div id="PGAP2_postprocess_stat_pan_scatter" class="chart-container" style="position: absolute; width: 683px; height: 408px; top: 35px; left: 759px;"></div>
+    <script>
+        var chart_PGAP2_postprocess_stat_pan_scatter = echarts.init(
+            document.getElementById('PGAP2_postprocess_stat_pan_scatter'), 'white', {renderer: 'canvas'});
+        var option_PGAP2_postprocess_stat_pan_scatter = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "color": [
+        "#5470c6",
+        "#91cc75",
+        "#fac858",
+        "#ee6666",
+        "#73c0de",
+        "#3ba272",
+        "#fc8452",
+        "#9a60b4",
+        "#ea7ccc"
+    ],
+    "series": [
+        {
+            "type": "scatter",
+            "name": "Strict_core",
+            "symbolSize": 10,
+            "data": [
+                [
+                    1,
+                    1
+                ],
+                [
+                    3,
+                    3
+                ],
+                [
+                    3,
+                    3
+                ],
+                [
+                    2,
+                    2
+                ],
+                [
+                    2,
+                    2
+                ],
+                [
+                    2,
+                    2
+                ],
+                [
+                    2,
+                    2
+                ],
+                [
+                    3,
+                    3
+                ],
+                [
+                    2,
+                    2
+                ],
+                [
+                    2,
+                    3
+                ],
+                [
+                    2,
+                    2
+                ]
+            ],
+            "label": {
+                "show": false,
+                "margin": 8
+            }
+        },
+        {
+            "type": "scatter",
+            "name": "Core",
+            "symbolSize": 10,
+            "data": [],
+            "label": {
+                "show": false,
+                "margin": 8
+            }
+        },
+        {
+            "type": "scatter",
+            "name": "Soft_core",
+            "symbolSize": 10,
+            "data": [],
+            "label": {
+                "show": false,
+                "margin": 8
+            }
+        },
+        {
+            "type": "scatter",
+            "name": "Shell",
+            "symbolSize": 10,
+            "data": [
+                [
+                    2,
+                    3
+                ],
+                [
+                    1,
+                    9
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    2,
+                    2
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    2
+                ],
+                [
+                    2,
+                    3
+                ],
+                [
+                    1,
+                    12
+                ],
+                [
+                    1,
+                    9
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1
+                ]
+            ],
+            "label": {
+                "show": false,
+                "margin": 8
+            }
+        },
+        {
+            "type": "scatter",
+            "name": "Cloud",
+            "symbolSize": 10,
+            "data": [],
+            "label": {
+                "show": false,
+                "margin": 8
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "Strict_core",
+                "Core",
+                "Soft_core",
+                "Shell",
+                "Cloud"
+            ],
+            "selected": {
+                "Strict_core": true,
+                "Core": true,
+                "Soft_core": true,
+                "Shell": true,
+                "Cloud": true
+            },
+            "show": true,
+            "left": "40%",
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 0,
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "axis",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "cross"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "type": "value",
+            "name": "Paralogous strain",
+            "show": true,
+            "scale": false,
+            "nameLocation": "middle",
+            "nameGap": 30,
+            "nameTextStyle": {
+                "fontSize": "14"
+            },
+            "gridIndex": 0,
+            "axisTick": {
+                "show": true,
+                "alignWithLabel": false,
+                "inside": false
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "data": []
+        }
+    ],
+    "yAxis": [
+        {
+            "type": "value",
+            "name": "Paralogous gene",
+            "show": true,
+            "scale": false,
+            "nameLocation": "middle",
+            "nameGap": 30,
+            "nameTextStyle": {
+                "fontSize": "14"
+            },
+            "gridIndex": 0,
+            "axisTick": {
+                "show": true,
+                "alignWithLabel": false,
+                "inside": false
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
+    "title": [
+        {
+            "show": true,
+            "text": "Paralogs distribution",
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "toolbox": {
+        "show": true,
+        "orient": "horizontal",
+        "itemSize": 15,
+        "itemGap": 10,
+        "left": "80%",
+        "right": "right",
+        "bottom": "bottom",
+        "feature": {
+            "dataView": {
+                "title": "view the data",
+                "lang": [
+                    "Data view",
+                    "Close",
+                    "Refresh"
+                ]
+            },
+            "saveAsImage": {
+                "type_": "png",
+                "title": "save as png",
+                "pixel_ratio": 5,
+                "name": "pgap2.postprocessing.ParaDistributionPlot"
+            }
+        }
+    }
+};
+        chart_PGAP2_postprocess_stat_pan_scatter.setOption(option_PGAP2_postprocess_stat_pan_scatter);
+    </script>
+<br/>                <div id="PGAP2_postprocess_mean_line" class="chart-container" style="position: absolute; width: 687px; height: 366px; top: 864.5px; left: 47px;"></div>
+    <script>
+        var chart_PGAP2_postprocess_mean_line = echarts.init(
+            document.getElementById('PGAP2_postprocess_mean_line'), 'light', {renderer: 'canvas'});
+        var option_PGAP2_postprocess_mean_line = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "series": [
+        {
+            "type": "line",
+            "name": "Strict_core",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "[0.7,0.73)",
+                    2
+                ],
+                [
+                    "[0.73,0.76)",
+                    1
+                ],
+                [
+                    "[0.76,0.79)",
+                    1
+                ],
+                [
+                    "[0.79,0.82)",
+                    2
+                ],
+                [
+                    "[0.82,0.85)",
+                    3
+                ],
+                [
+                    "[0.85,0.88)",
+                    2
+                ],
+                [
+                    "[0.88,0.91)",
+                    3
+                ],
+                [
+                    "[0.91,0.94)",
+                    4
+                ],
+                [
+                    "[0.94,0.97)",
+                    28
+                ],
+                [
+                    "[0.97,1.0]",
+                    27848
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "margin": 8
+            },
+            "logBase": 10,
+            "lineStyle": {
+                "show": true,
+                "width": 2,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "zlevel": 0,
+            "z": 0,
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        },
+        {
+            "type": "line",
+            "name": "Shell",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "[0.7,0.73)",
+                    4
+                ],
+                [
+                    "[0.73,0.76)",
+                    2
+                ],
+                [
+                    "[0.76,0.79)",
+                    2
+                ],
+                [
+                    "[0.79,0.82)",
+                    1
+                ],
+                [
+                    "[0.82,0.85)",
+                    5
+                ],
+                [
+                    "[0.85,0.88)",
+                    3
+                ],
+                [
+                    "[0.88,0.91)",
+                    7
+                ],
+                [
+                    "[0.91,0.94)",
+                    14
+                ],
+                [
+                    "[0.94,0.97)",
+                    44
+                ],
+                [
+                    "[0.97,1.0]",
+                    15737
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "margin": 8
+            },
+            "logBase": 10,
+            "lineStyle": {
+                "show": true,
+                "width": 2,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "zlevel": 0,
+            "z": 0,
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "Strict_core",
+                "Shell"
+            ],
+            "selected": {
+                "Strict_core": true,
+                "Shell": true
+            },
+            "show": true,
+            "left": "40%",
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 0,
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "axis",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "cross"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "type": "category",
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "nameRotate": 45,
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": true,
+                "type": "shadow",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "data": [
+                "[0.7,0.73)",
+                "[0.73,0.76)",
+                "[0.76,0.79)",
+                "[0.79,0.82)",
+                "[0.82,0.85)",
+                "[0.85,0.88)",
+                "[0.88,0.91)",
+                "[0.91,0.94)",
+                "[0.94,0.97)",
+                "[0.97,1.0]"
+            ]
+        }
+    ],
+    "yAxis": [
+        {
+            "type": "log",
+            "show": true,
+            "scale": true,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": false,
+                "type": "line",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
+    "title": [
+        {
+            "show": true,
+            "text": "mean",
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "toolbox": {
+        "show": true,
+        "orient": "horizontal",
+        "itemSize": 15,
+        "itemGap": 10,
+        "left": "80%",
+        "right": 0,
+        "bottom": "bottom",
+        "feature": {
+            "dataView": {
+                "title": "view the data",
+                "lang": [
+                    "Data view",
+                    "Close",
+                    "Refresh"
+                ]
+            },
+            "saveAsImage": {
+                "type_": "png",
+                "title": "save as png",
+                "pixel_ratio": 5,
+                "name": "pgap2.postprocess.uniPlot"
+            }
+        }
+    }
+};
+        chart_PGAP2_postprocess_mean_line.setOption(option_PGAP2_postprocess_mean_line);
+    </script>
+<br/>                <div id="PGAP2_postprocess_uni_line" class="chart-container" style="position: absolute; width: 687px; height: 370px; top: 1258px; left: 46px;"></div>
+    <script>
+        var chart_PGAP2_postprocess_uni_line = echarts.init(
+            document.getElementById('PGAP2_postprocess_uni_line'), 'light', {renderer: 'canvas'});
+        var option_PGAP2_postprocess_uni_line = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "series": [
+        {
+            "type": "line",
+            "name": "Strict_core",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "<0.7",
+                    3168
+                ],
+                [
+                    "[0.7,0.73)",
+                    1
+                ],
+                [
+                    "[0.73,0.76)",
+                    1
+                ],
+                [
+                    "[0.76,0.79)",
+                    1
+                ],
+                [
+                    "[0.79,0.82)",
+                    1
+                ],
+                [
+                    "[0.82,0.85)",
+                    1
+                ],
+                [
+                    "[0.85,0.88)",
+                    1
+                ],
+                [
+                    "[0.88,0.91)",
+                    1
+                ],
+                [
+                    "[0.91,0.94)",
+                    1
+                ],
+                [
+                    "[0.94,0.97)",
+                    1
+                ],
+                [
+                    "[0.97,1.0]",
+                    1
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "margin": 8
+            },
+            "logBase": 10,
+            "lineStyle": {
+                "show": true,
+                "width": 2,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "zlevel": 0,
+            "z": 0,
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        },
+        {
+            "type": "line",
+            "name": "Shell",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "<0.7",
+                    1754
+                ],
+                [
+                    "[0.7,0.73)",
+                    1
+                ],
+                [
+                    "[0.73,0.76)",
+                    1
+                ],
+                [
+                    "[0.76,0.79)",
+                    1
+                ],
+                [
+                    "[0.79,0.82)",
+                    1
+                ],
+                [
+                    "[0.82,0.85)",
+                    1
+                ],
+                [
+                    "[0.85,0.88)",
+                    1
+                ],
+                [
+                    "[0.88,0.91)",
+                    1
+                ],
+                [
+                    "[0.91,0.94)",
+                    1
+                ],
+                [
+                    "[0.94,0.97)",
+                    1
+                ],
+                [
+                    "[0.97,1.0]",
+                    1
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "margin": 8
+            },
+            "logBase": 10,
+            "lineStyle": {
+                "show": true,
+                "width": 2,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "zlevel": 0,
+            "z": 0,
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "Strict_core",
+                "Shell"
+            ],
+            "selected": {
+                "Strict_core": true,
+                "Shell": true
+            },
+            "show": true,
+            "left": "40%",
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 0,
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "axis",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "cross"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "type": "category",
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "nameRotate": 45,
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": true,
+                "type": "shadow",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "data": [
+                "<0.7",
+                "[0.7,0.73)",
+                "[0.73,0.76)",
+                "[0.76,0.79)",
+                "[0.79,0.82)",
+                "[0.82,0.85)",
+                "[0.85,0.88)",
+                "[0.88,0.91)",
+                "[0.91,0.94)",
+                "[0.94,0.97)",
+                "[0.97,1.0]"
+            ]
+        }
+    ],
+    "yAxis": [
+        {
+            "type": "log",
+            "show": true,
+            "scale": true,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": false,
+                "type": "line",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
+    "title": [
+        {
+            "show": true,
+            "text": "uni",
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "toolbox": {
+        "show": true,
+        "orient": "horizontal",
+        "itemSize": 15,
+        "itemGap": 10,
+        "left": "80%",
+        "right": 0,
+        "bottom": "bottom",
+        "feature": {
+            "dataView": {
+                "title": "view the data",
+                "lang": [
+                    "Data view",
+                    "Close",
+                    "Refresh"
+                ]
+            },
+            "saveAsImage": {
+                "type_": "png",
+                "title": "save as png",
+                "pixel_ratio": 5,
+                "name": "pgap2.postprocess.uniPlot"
+            }
+        }
+    }
+};
+        chart_PGAP2_postprocess_uni_line.setOption(option_PGAP2_postprocess_uni_line);
+    </script>
+<br/>                <div id="PGAP2_postprocess_min_line" class="chart-container" style="position: absolute; width: 691px; height: 366px; top: 865.5px; left: 757px;"></div>
+    <script>
+        var chart_PGAP2_postprocess_min_line = echarts.init(
+            document.getElementById('PGAP2_postprocess_min_line'), 'light', {renderer: 'canvas'});
+        var option_PGAP2_postprocess_min_line = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "series": [
+        {
+            "type": "line",
+            "name": "Strict_core",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "[0.7,0.73)",
+                    1
+                ],
+                [
+                    "[0.73,0.76)",
+                    1
+                ],
+                [
+                    "[0.76,0.79)",
+                    1
+                ],
+                [
+                    "[0.79,0.82)",
+                    4
+                ],
+                [
+                    "[0.82,0.85)",
+                    4
+                ],
+                [
+                    "[0.85,0.88)",
+                    1
+                ],
+                [
+                    "[0.88,0.91)",
+                    5
+                ],
+                [
+                    "[0.91,0.94)",
+                    3
+                ],
+                [
+                    "[0.94,0.97)",
+                    39
+                ],
+                [
+                    "[0.97,1.0]",
+                    30956
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "margin": 8
+            },
+            "logBase": 10,
+            "lineStyle": {
+                "show": true,
+                "width": 2,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "zlevel": 0,
+            "z": 0,
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        },
+        {
+            "type": "line",
+            "name": "Shell",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "[0.7,0.73)",
+                    4
+                ],
+                [
+                    "[0.73,0.76)",
+                    2
+                ],
+                [
+                    "[0.76,0.79)",
+                    2
+                ],
+                [
+                    "[0.79,0.82)",
+                    1
+                ],
+                [
+                    "[0.82,0.85)",
+                    5
+                ],
+                [
+                    "[0.85,0.88)",
+                    4
+                ],
+                [
+                    "[0.88,0.91)",
+                    8
+                ],
+                [
+                    "[0.91,0.94)",
+                    13
+                ],
+                [
+                    "[0.94,0.97)",
+                    43
+                ],
+                [
+                    "[0.97,1.0]",
+                    15797
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "margin": 8
+            },
+            "logBase": 10,
+            "lineStyle": {
+                "show": true,
+                "width": 2,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "zlevel": 0,
+            "z": 0,
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "Strict_core",
+                "Shell"
+            ],
+            "selected": {
+                "Strict_core": true,
+                "Shell": true
+            },
+            "show": true,
+            "left": "40%",
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 0,
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "axis",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "cross"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "type": "category",
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "nameRotate": 45,
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": true,
+                "type": "shadow",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "data": [
+                "[0.7,0.73)",
+                "[0.73,0.76)",
+                "[0.76,0.79)",
+                "[0.79,0.82)",
+                "[0.82,0.85)",
+                "[0.85,0.88)",
+                "[0.88,0.91)",
+                "[0.91,0.94)",
+                "[0.94,0.97)",
+                "[0.97,1.0]"
+            ]
+        }
+    ],
+    "yAxis": [
+        {
+            "type": "log",
+            "show": true,
+            "scale": true,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": false,
+                "type": "line",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
+    "title": [
+        {
+            "show": true,
+            "text": "min",
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "toolbox": {
+        "show": true,
+        "orient": "horizontal",
+        "itemSize": 15,
+        "itemGap": 10,
+        "left": "80%",
+        "right": 0,
+        "bottom": "bottom",
+        "feature": {
+            "dataView": {
+                "title": "view the data",
+                "lang": [
+                    "Data view",
+                    "Close",
+                    "Refresh"
+                ]
+            },
+            "saveAsImage": {
+                "type_": "png",
+                "title": "save as png",
+                "pixel_ratio": 5,
+                "name": "pgap2.postprocess.uniPlot"
+            }
+        }
+    }
+};
+        chart_PGAP2_postprocess_min_line.setOption(option_PGAP2_postprocess_min_line);
+    </script>
+<br/>                <div id="PGAP2_postprocess_var_line" class="chart-container" style="position: absolute; width: 693px; height: 371px; top: 1258px; left: 757px;"></div>
+    <script>
+        var chart_PGAP2_postprocess_var_line = echarts.init(
+            document.getElementById('PGAP2_postprocess_var_line'), 'light', {renderer: 'canvas'});
+        var option_PGAP2_postprocess_var_line = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "series": [
+        {
+            "type": "line",
+            "name": "Strict_core",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "[1e-06,3.96337225573839e-06)",
+                    3106
+                ],
+                [
+                    "[3.96337225573839e-06,1.5708319637556816e-05)",
+                    13
+                ],
+                [
+                    "[1.5708319637556816e-05,6.22579182357632e-05)",
+                    17
+                ],
+                [
+                    "[6.22579182357632e-05,0.0002467513058356531)",
+                    17
+                ],
+                [
+                    "[0.0002467513058356531,0.000977967279616246)",
+                    9
+                ],
+                [
+                    "[0.000977967279616246,0.003876048383050977)",
+                    4
+                ],
+                [
+                    "[0.003876048383050977,0.015362222623283892)",
+                    2
+                ],
+                [
+                    "[0.015362222623283892,0.060886206931600004)",
+                    5
+                ],
+                [
+                    "[0.060886206931600004,0.24131470330984994)",
+                    1
+                ],
+                [
+                    "[0.24131470330984994,0.95642]",
+                    12
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "margin": 8
+            },
+            "logBase": 10,
+            "lineStyle": {
+                "show": true,
+                "width": 2,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "zlevel": 0,
+            "z": 0,
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        },
+        {
+            "type": "line",
+            "name": "Shell",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "[1e-06,3.96337225573839e-06)",
+                    1750
+                ],
+                [
+                    "[3.96337225573839e-06,1.5708319637556816e-05)",
+                    1
+                ],
+                [
+                    "[1.5708319637556816e-05,6.22579182357632e-05)",
+                    1
+                ],
+                [
+                    "[6.22579182357632e-05,0.0002467513058356531)",
+                    1
+                ],
+                [
+                    "[0.0002467513058356531,0.000977967279616246)",
+                    3
+                ],
+                [
+                    "[0.000977967279616246,0.003876048383050977)",
+                    1
+                ],
+                [
+                    "[0.003876048383050977,0.015362222623283892)",
+                    1
+                ],
+                [
+                    "[0.015362222623283892,0.060886206931600004)",
+                    2
+                ],
+                [
+                    "[0.060886206931600004,0.24131470330984994)",
+                    1
+                ],
+                [
+                    "[0.24131470330984994,0.95642]",
+                    2
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "margin": 8
+            },
+            "logBase": 10,
+            "lineStyle": {
+                "show": true,
+                "width": 2,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "zlevel": 0,
+            "z": 0,
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "Strict_core",
+                "Shell"
+            ],
+            "selected": {
+                "Strict_core": true,
+                "Shell": true
+            },
+            "show": true,
+            "left": "40%",
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 0,
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "axis",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "cross"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "type": "category",
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "nameRotate": 45,
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": true,
+                "type": "shadow",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "data": [
+                "[1e-06,3.96337225573839e-06)",
+                "[3.96337225573839e-06,1.5708319637556816e-05)",
+                "[1.5708319637556816e-05,6.22579182357632e-05)",
+                "[6.22579182357632e-05,0.0002467513058356531)",
+                "[0.0002467513058356531,0.000977967279616246)",
+                "[0.000977967279616246,0.003876048383050977)",
+                "[0.003876048383050977,0.015362222623283892)",
+                "[0.015362222623283892,0.060886206931600004)",
+                "[0.060886206931600004,0.24131470330984994)",
+                "[0.24131470330984994,0.95642]"
+            ]
+        }
+    ],
+    "yAxis": [
+        {
+            "type": "log",
+            "show": true,
+            "scale": true,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": false,
+                "type": "line",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
+    "title": [
+        {
+            "show": true,
+            "text": "var",
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "toolbox": {
+        "show": true,
+        "orient": "horizontal",
+        "itemSize": 15,
+        "itemGap": 10,
+        "left": "80%",
+        "right": 0,
+        "bottom": "bottom",
+        "feature": {
+            "dataView": {
+                "title": "view the data",
+                "lang": [
+                    "Data view",
+                    "Close",
+                    "Refresh"
+                ]
+            },
+            "saveAsImage": {
+                "type_": "png",
+                "title": "save as png",
+                "pixel_ratio": 5,
+                "name": "pgap2.postprocess.uniPlot"
+            }
+        }
+    }
+};
+        chart_PGAP2_postprocess_var_line.setOption(option_PGAP2_postprocess_var_line);
+    </script>
+<br/>                <div id="PGAP2_postprocess_profile_box" class="chart-container" style="position: absolute; width: 687px; height: 362px; top: 464.5px; left: 51px;"></div>
+    <script>
+        var chart_PGAP2_postprocess_profile_box = echarts.init(
+            document.getElementById('PGAP2_postprocess_profile_box'), 'white', {renderer: 'canvas'});
+        var option_PGAP2_postprocess_profile_box = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "color": [
+        "#5470c6",
+        "#91cc75",
+        "#fac858",
+        "#ee6666",
+        "#73c0de",
+        "#3ba272",
+        "#fc8452",
+        "#9a60b4",
+        "#ea7ccc"
+    ],
+    "series": [
+        {
+            "type": "boxplot",
+            "name": "Core genome",
+            "boxWidth": [
+                7,
+                50
+            ],
+            "selected_mode": false,
+            "data": [
+                [
+                    3812,
+                    3812,
+                    3857,
+                    4353,
+                    4353
+                ],
+                [
+                    3333,
+                    3333,
+                    3465,
+                    3471,
+                    3471
+                ],
+                [
+                    3167,
+                    3167,
+                    3167,
+                    3167,
+                    3167
+                ]
+            ],
+            "label": {
+                "show": true,
+                "margin": 8
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8
+                }
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "margin": 8
+                }
+            }
+        },
+        {
+            "type": "boxplot",
+            "name": "Pan genome",
+            "boxWidth": [
+                7,
+                50
+            ],
+            "selected_mode": false,
+            "data": [
+                [
+                    3812,
+                    3812,
+                    3857,
+                    4353,
+                    4353
+                ],
+                [
+                    4336,
+                    4336,
+                    4694,
+                    4745,
+                    4745
+                ],
+                [
+                    4920,
+                    4920,
+                    4920,
+                    4920,
+                    4920
+                ]
+            ],
+            "label": {
+                "show": true,
+                "margin": 8
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8
+                }
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "margin": 8
+                }
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "Core genome",
+                "Pan genome"
+            ],
+            "selected": {
+                "Core genome": true,
+                "Pan genome": true
+            },
+            "show": true,
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 1,
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "item",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "line"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "type": "category",
+            "name": "Strain number",
+            "show": true,
+            "scale": false,
+            "nameLocation": "middle",
+            "nameGap": 30,
+            "nameTextStyle": {
+                "fontSize": "14"
+            },
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": true,
+                "type": "shadow",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "data": [
+                1,
+                2,
+                3
+            ]
+        }
+    ],
+    "yAxis": [
+        {
+            "type": "value",
+            "name": "Clusters",
+            "show": true,
+            "scale": false,
+            "nameLocation": "middle",
+            "nameGap": 50,
+            "nameTextStyle": {
+                "fontSize": "14"
+            },
+            "gridIndex": 0,
+            "axisTick": {
+                "show": false,
+                "alignWithLabel": false,
+                "inside": false
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "min": 3167,
+            "minInterval": 0,
+            "splitLine": {
+                "show": false,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
+    "title": [
+        {
+            "show": true,
+            "text": "Pangenome curve",
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "toolbox": {
+        "show": true,
+        "orient": "horizontal",
+        "itemSize": 15,
+        "itemGap": 10,
+        "left": "80%",
+        "right": "right",
+        "bottom": "bottom",
+        "feature": {
+            "dataView": {
+                "title": "view the data",
+                "lang": [
+                    "Data view",
+                    "Close",
+                    "Refresh"
+                ]
+            },
+            "saveAsImage": {
+                "type_": "png",
+                "title": "save as png",
+                "pixel_ratio": 5,
+                "name": "pgap2.postprocessing.PanGenomeCurvePlot"
+            }
+        }
+    }
+};
+        chart_PGAP2_postprocess_profile_box.setOption(option_PGAP2_postprocess_profile_box);
+    </script>
+<br/>                <div id="PGAP2_postprocess_new_clusters_box" class="chart-container" style="position: absolute; width: 685px; height: 365px; top: 464px; left: 757px;"></div>
+    <script>
+        var chart_PGAP2_postprocess_new_clusters_box = echarts.init(
+            document.getElementById('PGAP2_postprocess_new_clusters_box'), 'white', {renderer: 'canvas'});
+        var option_PGAP2_postprocess_new_clusters_box = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "color": [
+        "#5470c6",
+        "#91cc75",
+        "#fac858",
+        "#ee6666",
+        "#73c0de",
+        "#3ba272",
+        "#fc8452",
+        "#9a60b4",
+        "#ea7ccc"
+    ],
+    "series": [
+        {
+            "type": "boxplot",
+            "boxWidth": [
+                7,
+                50
+            ],
+            "selected_mode": false,
+            "data": [
+                [
+                    888,
+                    888,
+                    888,
+                    888,
+                    888
+                ],
+                [
+                    175,
+                    175,
+                    175,
+                    175,
+                    175
+                ]
+            ],
+            "label": {
+                "show": true,
+                "margin": 8
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8
+                }
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "margin": 8
+                }
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                ""
+            ],
+            "selected": {
+                "": true
+            },
+            "show": true,
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 1,
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "item",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "line"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "type": "category",
+            "name": "Strain number",
+            "show": true,
+            "scale": false,
+            "nameLocation": "middle",
+            "nameGap": 30,
+            "nameTextStyle": {
+                "fontSize": "14"
+            },
+            "gridIndex": 0,
+            "axisPointer": {
+                "show": true,
+                "type": "shadow",
+                "triggerTooltip": true,
+                "triggerOn": "mousemove|click"
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "data": [
+                2,
+                3
+            ]
+        }
+    ],
+    "yAxis": [
+        {
+            "type": "value",
+            "name": "New Gene Cluster Number",
+            "show": true,
+            "scale": false,
+            "nameLocation": "middle",
+            "nameGap": 50,
+            "nameTextStyle": {
+                "fontSize": "14"
+            },
+            "gridIndex": 0,
+            "axisTick": {
+                "show": false,
+                "alignWithLabel": false,
+                "inside": false
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "min": 175,
+            "minInterval": 0,
+            "splitLine": {
+                "show": false,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
+    "title": [
+        {
+            "show": true,
+            "text": "New clusters",
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "toolbox": {
+        "show": true,
+        "orient": "horizontal",
+        "itemSize": 15,
+        "itemGap": 10,
+        "left": "80%",
+        "right": "right",
+        "bottom": "bottom",
+        "feature": {
+            "dataView": {
+                "title": "view the data",
+                "lang": [
+                    "Data view",
+                    "Close",
+                    "Refresh"
+                ]
+            },
+            "saveAsImage": {
+                "type_": "png",
+                "title": "save as png",
+                "pixel_ratio": 5,
+                "name": "pgap2.postprocessing.NewClustersPlot"
+            }
+        }
+    }
+};
+        chart_PGAP2_postprocess_new_clusters_box.setOption(option_PGAP2_postprocess_new_clusters_box);
+    </script>
+<br/>    </div>
+    <script>
+            $('#PGAP2_postprocess_group_freq_line').css('border-style', 'dashed').css('border-width', '0px');$("#PGAP2_postprocess_group_freq_line>div:nth-child(1)").width("100%").height("100%");
+            new ResizeSensor(jQuery('#PGAP2_postprocess_group_freq_line'), function() { chart_PGAP2_postprocess_group_freq_line.resize()});
+            $('#PGAP2_postprocess_stat_pan_scatter').css('border-style', 'dashed').css('border-width', '0px');$("#PGAP2_postprocess_stat_pan_scatter>div:nth-child(1)").width("100%").height("100%");
+            new ResizeSensor(jQuery('#PGAP2_postprocess_stat_pan_scatter'), function() { chart_PGAP2_postprocess_stat_pan_scatter.resize()});
+            $('#PGAP2_postprocess_mean_line').css('border-style', 'dashed').css('border-width', '0px');$("#PGAP2_postprocess_mean_line>div:nth-child(1)").width("100%").height("100%");
+            new ResizeSensor(jQuery('#PGAP2_postprocess_mean_line'), function() { chart_PGAP2_postprocess_mean_line.resize()});
+            $('#PGAP2_postprocess_uni_line').css('border-style', 'dashed').css('border-width', '0px');$("#PGAP2_postprocess_uni_line>div:nth-child(1)").width("100%").height("100%");
+            new ResizeSensor(jQuery('#PGAP2_postprocess_uni_line'), function() { chart_PGAP2_postprocess_uni_line.resize()});
+            $('#PGAP2_postprocess_min_line').css('border-style', 'dashed').css('border-width', '0px');$("#PGAP2_postprocess_min_line>div:nth-child(1)").width("100%").height("100%");
+            new ResizeSensor(jQuery('#PGAP2_postprocess_min_line'), function() { chart_PGAP2_postprocess_min_line.resize()});
+            $('#PGAP2_postprocess_var_line').css('border-style', 'dashed').css('border-width', '0px');$("#PGAP2_postprocess_var_line>div:nth-child(1)").width("100%").height("100%");
+            new ResizeSensor(jQuery('#PGAP2_postprocess_var_line'), function() { chart_PGAP2_postprocess_var_line.resize()});
+            $('#PGAP2_postprocess_profile_box').css('border-style', 'dashed').css('border-width', '0px');$("#PGAP2_postprocess_profile_box>div:nth-child(1)").width("100%").height("100%");
+            new ResizeSensor(jQuery('#PGAP2_postprocess_profile_box'), function() { chart_PGAP2_postprocess_profile_box.resize()});
+            $('#PGAP2_postprocess_new_clusters_box').css('border-style', 'dashed').css('border-width', '0px');$("#PGAP2_postprocess_new_clusters_box>div:nth-child(1)").width("100%").height("100%");
+            new ResizeSensor(jQuery('#PGAP2_postprocess_new_clusters_box'), function() { chart_PGAP2_postprocess_new_clusters_box.resize()});
+            var charts_id = ['PGAP2_postprocess_group_freq_line','PGAP2_postprocess_stat_pan_scatter','PGAP2_postprocess_mean_line','PGAP2_postprocess_uni_line','PGAP2_postprocess_min_line','PGAP2_postprocess_var_line','PGAP2_postprocess_profile_box','PGAP2_postprocess_new_clusters_box'];
+function downloadCfg () {
+    const fileName = 'chart_config.json'
+    let downLink = document.createElement('a')
+    downLink.download = fileName
+
+    let result = []
+    for(let i=0; i<charts_id.length; i++) {
+        chart = $('#'+charts_id[i])
+        result.push({
+            cid: charts_id[i],
+            width: chart.css("width"),
+            height: chart.css("height"),
+            top: chart.offset().top + "px",
+            left: chart.offset().left + "px"
+        })
+    }
+
+    let blob = new Blob([JSON.stringify(result)])
+    downLink.href = URL.createObjectURL(blob)
+    document.body.appendChild(downLink)
+    downLink.click()
+    document.body.removeChild(downLink)
+}
+    </script>
+</body>
+</html>

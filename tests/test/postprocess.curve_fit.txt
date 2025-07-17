@@ -1,0 +1,7 @@
+Optimal parameters for core genes: [2.37370663e+03 8.25294152e-01 2.96739797e+03]
+Optimal parameters for pan genes: [4.01576769e+03 1.87020906e-01]
+Core Gene Fit: y=2373.707*exp(0.825*x)+ 2967.398
+Pan Gene Fit: y=4015.768*x^0.187 
+The pan-genome is open. The pan-genome is open, meaning that the discovery of new genes will continue as more genomes are added.
+The coefficient k is approximately 4015.77, indicating the initial addition rate of new gene clusters per genome.
+Larger values of k suggest a higher initial rate of gene discovery. 

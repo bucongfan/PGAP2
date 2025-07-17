@@ -1,0 +1,37 @@
+2025-07-17 16:46:27.363 | INFO     | pgap2.utils.supply:set_verbosity_level:126 - Please check the intact log in postprocess_stat.log.
+2025-07-17 16:46:27.363 | INFO     | pgap2.utils.supply:check_dependency:91 - Dependency draw_post_profile is checked: /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/pgap2/dependencies/draw_post_profile.r
+2025-07-17 16:46:27.364 | INFO     | pgap2.utils.supply:check_dependency:91 - Dependency draw_post_stat is checked: /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/pgap2/dependencies/draw_post_stat.r
+2025-07-17 16:46:27.364 | INFO     | pgap2.postprocess.stat:main:341 - Loading the basic.pkl...
+2025-07-17 16:46:27.374 | INFO     | pgap2.postprocess.stat:main:348 - Project location     : /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/output
+2025-07-17 16:46:27.374 | INFO     | pgap2.postprocess.stat:main:348 - Genome count         : 3
+2025-07-17 16:46:27.374 | INFO     | pgap2.postprocess.stat:main:348 - Genetic code         : 11
+2025-07-17 16:46:27.374 | INFO     | pgap2.postprocess.stat:main:348 - Ortholog threshold   : 0.98
+2025-07-17 16:46:27.374 | INFO     | pgap2.postprocess.stat:main:348 - Paralog threshold    : 0.7
+2025-07-17 16:46:27.374 | INFO     | pgap2.postprocess.stat:main:348 - Duplication threshold: 0.99
+2025-07-17 16:46:27.374 | INFO     | pgap2.postprocess.stat:main:348 - Profile file         : /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/output/pgap2.partition.gene_content.csv
+2025-07-17 16:46:27.374 | INFO     | pgap2.postprocess.stat:main:348 - PAV file             : /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/output/pgap2.partition.gene_content.pav
+2025-07-17 16:46:27.374 | INFO     | pgap2.postprocess.stat:main:348 - Cluster number       : 4920
+2025-07-17 16:46:27.375 | INFO     | pgap2.postprocess.stat:main:353 - Reading the pangenome information...
+2025-07-17 16:46:27.944 | INFO     | pgap2.postprocess.stat:get_rarefaction:206 - Start rarefaction analysis with 1 threads
+2025-07-17 16:46:27.944 | INFO     | pgap2.postprocess.stat:get_rarefaction:210 - 3 strains were found in file
+2025-07-17 16:46:27.944 | INFO     | pgap2.postprocess.stat:get_rarefaction:211 - Loaded 4920 gene clusters
+2025-07-17 16:46:27.944 | WARNING  | pgap2.postprocess.stat:get_rarefaction:219 - You assigned 100 strains, but only 3 strains were found.
+2025-07-17 16:46:27.944 | WARNING  | pgap2.postprocess.stat:get_rarefaction:221 - All 3 strains will be used.
+2025-07-17 16:46:27.945 | INFO     | pgap2.postprocess.stat:get_rarefaction:230 - Sampling 100 strains 1 times.
+2025-07-17 16:46:28.571 | INFO     | pgap2.postprocess.stat:main:361 - Starting rarefaction curve fitting.
+2025-07-17 16:46:28.572 | INFO     | pgap2.postprocess.stat:fit_rerefaction:142 - Fitting core gene data.
+2025-07-17 16:46:28.576 | INFO     | pgap2.postprocess.stat:fit_rerefaction:145 - Optimal parameters for core genes: [2.37370663e+03 8.25294152e-01 2.96739797e+03]
+2025-07-17 16:46:28.576 | INFO     | pgap2.postprocess.stat:fit_rerefaction:148 - Fitting pan gene data.
+2025-07-17 16:46:28.577 | INFO     | pgap2.postprocess.stat:fit_rerefaction:151 - Optimal parameters for pan genes: [4.01576769e+03 1.87020906e-01]
+2025-07-17 16:46:28.577 | INFO     | pgap2.postprocess.stat:log_pan_genome_state:112 - The pan-genome is open. The pan-genome is open, meaning that the discovery of new genes will continue as more genomes are added.
+2025-07-17 16:46:28.577 | INFO     | pgap2.postprocess.stat:log_pan_genome_state:117 - The coefficient k is approximately 4015.77, indicating the initial addition rate of new gene clusters per genome.
+Larger values of k suggest a higher initial rate of gene discovery. 
+2025-07-17 16:46:28.577 | INFO     | pgap2.postprocess.stat:main:367 - Generate the interactive report...
+2025-07-17 16:46:28.633 | INFO     | pgap2.postprocess.stat:main:370 - Interactive report at /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/test/postprocess_stat.html
+2025-07-17 16:46:28.634 | INFO     | pgap2.postprocess.stat:main:372 - Draw the vector report...
+2025-07-17 16:46:31.503 | INFO     | pgap2.postprocess.stat:main:378 - Vector report at /Users/bucongfan/core/PGAP2/conda_pgap2/github/PGAP2/tests/test:
+2025-07-17 16:46:31.504 | INFO     | pgap2.postprocess.stat:main:420 - [1/3] pgap2.postprocess_stat.pdf
+2025-07-17 16:46:31.504 | INFO     | pgap2.postprocess.stat:main:422 - [2/3] pgap2.postprocess_stat_para.pdf
+2025-07-17 16:46:31.504 | INFO     | pgap2.postprocess.stat:main:424 - [3/3] pgap2.postprocess_profile.pdf
+2025-07-17 16:46:31.504 | SUCCESS  | pgap2.postprocess.stat:main:432 - Done
+2025-07-17 16:46:31.506 | SUCCESS  | pgap2.main:main:35 - Total time used: 4.16s

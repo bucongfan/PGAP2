@@ -176,7 +176,7 @@ def run_mmseq2(data, data_type: str, id: float, coverage: float, outdir: str, th
     return mydict, f'{outdir}/seq.clst.rep'
 
 
-def run_alignment(input_file: str, outdir: str, threads: int = 1, identity: float = 0.7, evalue=1E-6, aligner: str = 'diamond') -> str:
+def run_alignment(input_file: str, outdir: str, threads: int = 1, max_targets: int = 2000, evalue=1E-6, aligner: str = 'diamond') -> str:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -188,7 +188,7 @@ def run_alignment(input_file: str, outdir: str, threads: int = 1, identity: floa
 
         # run diamond blastp
         diamond_result = os.path.join(outdir, 'diamond.tsv')
-        run_command(f'{sfw.diamond} blastp -q {input_file} -d {diamond_db} -p {threads} -e {evalue}  --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen -k 2000 -o {diamond_result} &>/dev/null')
+        run_command(f'{sfw.diamond} blastp -q {input_file} -d {diamond_db} -p {threads} -e {evalue} -k {max_targets} -o {diamond_result} --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen  &>/dev/null')
         return diamond_result
     elif aligner == 'blastp':
         # make blast database
@@ -199,11 +199,11 @@ def run_alignment(input_file: str, outdir: str, threads: int = 1, identity: floa
         # run blastp
         blast_result = os.path.join(outdir, 'blast.tsv')
         run_command(
-            f'{sfw.blastp} -query {input_file} -db {blast_db} -num_threads {threads} -out {blast_result} -evalue {evalue} -max_target_seqs 2000 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen"')
+            f'{sfw.blastp} -query {input_file} -db {blast_db} -num_threads {threads} -out {blast_result} -evalue {evalue} -max_target_seqs {max_targets} -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen"')
         return blast_result
 
 
-def generate_tree(input_file, orth_list: list, outdir: str, coverage: float, evalue: float, falen: int, disable: bool = False, threads: int = 1, ID: int = 0, LD: int = 0.7, AL: float = 0, AS: float = 0, aligner='diamond', clust_method='cdhit') -> Tree:
+def generate_tree(input_file, orth_list: list, outdir: str, coverage: float, evalue: float, falen: int, disable: bool = False, threads: int = 1, max_targets: int = 2000, ID: int = 0, LD: int = 0.7, AL: float = 0, AS: float = 0, aligner='diamond', clust_method='cdhit') -> Tree:
     falen -= 1  # l is the length of the word, so the actual length of the word is l+1
     orth_tree = nx.DiGraph()
     bar = tqdm(range(len(orth_list)),
@@ -294,7 +294,7 @@ def generate_tree(input_file, orth_list: list, outdir: str, coverage: float, eva
             f'{sfw.mmseqs2} convert2fasta {input_file} {input_file}.fasta')
         input_file = f'{input_file}.fasta'
     alignment_result = run_alignment(
-        input_file=input_file, outdir=outdir, threads=threads, evalue=evalue, aligner=aligner)
+        input_file=input_file, outdir=outdir, threads=threads, evalue=evalue, aligner=aligner, max_targets=max_targets)
     logger.info(f'- Loading the ortholog node distance graph...')
     edges = []
     filtered_alignment_result = f'{outdir}/{aligner}.filtered.result'
@@ -302,7 +302,7 @@ def generate_tree(input_file, orth_list: list, outdir: str, coverage: float, eva
     with open(alignment_result, 'r') as f:
         lines = f.readlines()
 
-    # 分割文件
+    # split the lines into chunks for parallel processing
     num_threads = threads
     chunk_size = len(lines) // num_threads
     chunks = [lines[i:i + chunk_size]
@@ -312,7 +312,7 @@ def generate_tree(input_file, orth_list: list, outdir: str, coverage: float, eva
         results = executor.map(
             partial(process_lines, ID=ID, LD=LD, AL=AL, AS=AS), chunks)
 
-    # 收集所有结果
+    # collect all results
     final_lines = []
     edges = []
     for result, edge in results:

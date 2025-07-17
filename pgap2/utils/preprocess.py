@@ -205,7 +205,7 @@ def find_outlier_from_cloud(genome_attr):
     return outlier
 
 
-def main(indir, outdir, orth_id, para_id, dup_id, id_attr_key, type_filter, evalue, aligner, clust_method, accurate, coverage, nodraw, single_file, LD, AS, AL, marker_file, ani_thre, annot, threads, disable, retrieve, falen, gcode):
+def main(indir, outdir, orth_id, para_id, dup_id, id_attr_key, type_filter, max_targets, evalue, aligner, clust_method, accurate, coverage, nodraw, single_file, LD, AS, AL, marker_file, ani_thre, annot, threads, disable, retrieve, falen, gcode):
     logger.debug(f'----------------')
     file_dict = get_file_dict(indir=indir)
     decode_status = False
@@ -289,7 +289,7 @@ def main(indir, outdir, orth_id, para_id, dup_id, id_attr_key, type_filter, eval
         pg.load_annot_file(file_annot)
         pg.load_prot_file(file_prot)
         tree = generate_tree(
-            input_file=file_prot, orth_list=[dup_id, orth_id], outdir=pg.outdir, coverage=coverage, LD=LD, AS=AS, AL=AL, falen=falen, disable=disable, threads=threads, evalue=evalue, aligner=aligner, clust_method=clust_method)
+            input_file=file_prot, orth_list=[dup_id, orth_id], outdir=pg.outdir, max_targets=max_targets, coverage=coverage, LD=LD, AS=AS, AL=AL, falen=falen, disable=disable, threads=threads, evalue=evalue, aligner=aligner, clust_method=clust_method)
 
     sp = Species(marker_file=marker_file,
                  strain_dict=pg.strain_dict, ani=ani_thre, outdir=outdir)
@@ -419,7 +419,7 @@ def launch(args: argparse.Namespace):
         os.mkdir(outdir)
     main(indir=indir, outdir=outdir,
          orth_id=args.orth_id, para_id=args.para_id, dup_id=args.dup_id, accurate=args.accurate,
-         id_attr_key=args.id_attr_key, type_filter=args.type_filter,
+         id_attr_key=args.id_attr_key, type_filter=args.type_filter, max_targets=args.max_targets,
          LD=args.LD, AS=args.AS, AL=args.AL,
          evalue=args.evalue,
          aligner=args.aligner, clust_method=args.clust_method,
@@ -475,6 +475,8 @@ def preprocess_cmd(subparser: _SubParsersAction):
                                       default=20, help='protein length of throw_away_sequences, at least 11')
     subparser_preprocess.add_argument('--accurate', '-a', required=False,
                                       action='store_true', default=False, help='Apply bidirection check for paralogous gene partition.')
+    subparser_preprocess.add_argument('--max_targets', required=False, type=int,
+                                      default=2000, help='The maximum targets for each query in alignment. Improves accuracy for large-scale analyses, but increases runtime and memory usage.')
     subparser_preprocess.add_argument('--LD', required=False, type=float,
                                       default=0.6, help='Minimum gene length difference proportion between two genes.')
     subparser_preprocess.add_argument('--AS', required=False, type=float,
