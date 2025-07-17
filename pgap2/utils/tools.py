@@ -156,6 +156,11 @@ def bbh_check(pg: Pangenome, tree: Tree, para_clust_a, para_clust_b):
 
 
 def calculate_pwid(sA, sB, nucl=True):
+    '''
+    Will only used in --acurate/-a to calculate the pairwise identity for given sequences.
+    Uses edlib to calculate the pairwise identity.
+    Although his description of identity is different from that of diamond, in the accurate mode, all sequences are compared at the same level
+    '''
     if nucl:
         additional_equalities = [
             ('A', 'N'), ('C', 'N'), ('G', 'N'), ('T', 'N')]
