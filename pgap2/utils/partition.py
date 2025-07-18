@@ -882,7 +882,7 @@ def partition_cmd(subparser: _SubParsersAction):
     #                                  default=0, help='The context similarity threshold of gene synteny.')
     # subparser_partition.add_argument('--flank', '-l', required=False, type=int,
     #                                  default=5, help='The flank region of gene synteny.')
-    subparser_partition.add_argument('--max_targets', required=False, type=int,
+    subparser_partition.add_argument('--max_targets', '-k', required=False, type=int,
                                      default=2000, help='The maximum targets for each query in alignment. Improves accuracy for large-scale analyses, but increases runtime and memory usage.')
     subparser_partition.add_argument('--LD', required=False, type=float,
                                      default=0.6, help='Minimum gene length difference proportion between two genes.')

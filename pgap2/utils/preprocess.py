@@ -475,7 +475,7 @@ def preprocess_cmd(subparser: _SubParsersAction):
                                       default=20, help='protein length of throw_away_sequences, at least 11')
     subparser_preprocess.add_argument('--accurate', '-a', required=False,
                                       action='store_true', default=False, help='Apply bidirection check for paralogous gene partition.')
-    subparser_preprocess.add_argument('--max_targets', required=False, type=int,
+    subparser_preprocess.add_argument('--max_targets', '-k', required=False, type=int,
                                       default=2000, help='The maximum targets for each query in alignment. Improves accuracy for large-scale analyses, but increases runtime and memory usage.')
     subparser_preprocess.add_argument('--LD', required=False, type=float,
                                       default=0.6, help='Minimum gene length difference proportion between two genes.')
