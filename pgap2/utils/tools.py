@@ -323,7 +323,7 @@ def test_expect_identity(tree: Tree, G: nx.Graph, u, v, identity):
         else:
             need_merge = False
     if not need_merge:
-        logger.debug(
+        logger.trace(
             '[Diversity] reject merge {} and {} -> {}/{}/{}'.format(u, v, identity, max_u, max_v))
     return need_merge
 
@@ -550,20 +550,23 @@ def test_connectedness(tree: Tree, G: nx.Graph, u, v, sensitivity='moderate'):
             raise ValueError(
                 "Invalid sensitivity level. Choose from 'soft', 'moderate', or 'strict'.")
     if not flag:
-        logger.debug(
+        logger.trace(
             '[Connectedness] reject merge {} and {} under the {} sensitivity mode'.format(u, v, sensitivity))
     return flag
 
 
 def merge_judge(tree: Tree, G: nx.Graph, pg: Pangenome, u, v, identity, context_sim=0, flank=5, sensitivity='moderate'):
     need_merge = False
+    logger.trace(f'[fine analysis] sensitivity...')
     need_merge = test_connectedness(tree, G, u, v, sensitivity)
     if need_merge:
         if G.nodes[u]['strains'].intersection(G.nodes[v]['strains']):
+            logger.trace(f'[fine analysis] paralog bbh...')
             need_merge = test_paralog_bbh(
                 G, pg, tree, u, v, context_sim, flank)
     if need_merge:
         # must be the last step of merge judge, because it will change the graph attr max_id
+        logger.trace(f'[fine analysis] expect identity...')
         need_merge = test_expect_identity(tree, G, u, v, identity)
     return need_merge
 
@@ -623,7 +626,7 @@ def test_paralog_bbh(G: nx.Graph, pg: Pangenome, tree: Tree, clust_a, clust_b, c
                         tree.pan_judge_dict[(
                             a, b)] = need_merge
                 if not need_merge:
-                    logger.debug(
+                    logger.trace(
                         '[BBH] reject merge {} and {} -> {}/{}/{}'.format(clust_a, clust_b, para_id, clust_a_orth_mci, clust_b_orth_mci))
                     break
 

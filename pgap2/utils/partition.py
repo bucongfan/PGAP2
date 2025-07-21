@@ -469,8 +469,11 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str
             if len(exists_nodes) < 2:
                 continue
 
+            logger.trace(
+                f'Process {len(exists_nodes)} nodes in {main_nodes} with search distance {search_distance}...')
             need_merge_nodes, merge_node_attr = similarity_partition(
                 tree, G, exists_nodes, search_distance, pre_compute, pre_changed_nodes)
+            logger.trace(f'Found {len(need_merge_nodes)} merge candidates...')
 
             if not need_merge_nodes:
                 continue
@@ -480,8 +483,9 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str
                 sorted_edges = sorted(
                     cor_attr.items(), key=lambda x: (-x[1][0], x[1][1]))
                 logger.trace(
-                    f'Process {len(clusters)} nodes with {len(sorted_edges)} edges')
-                chacned_result = {}
+                    f'Process {len(sorted_edges)} nodes itertively')
+
+                changed_result = {}
                 for (u, v), (identity, distance) in sorted_edges:
                     u = find_final_node(u, split_clust_map)
                     v = find_final_node(v, split_clust_map)
@@ -491,8 +495,8 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str
                     u_i = len(G.nodes[u]['repre_nodes'])
                     v_i = len(G.nodes[v]['repre_nodes'])
                     flag = False
-                    if (u, v) in chacned_result:
-                        pre_u_i, pre_v_i, pre_need_merge = chacned_result[(
+                    if (u, v) in changed_result:
+                        pre_u_i, pre_v_i, pre_need_merge = changed_result[(
                             u, v)]
                         if u_i == pre_u_i and v_i == pre_v_i:
                             need_merge = pre_need_merge
@@ -501,8 +505,8 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str
                     if not flag:
                         need_merge = merge_judge(
                             tree, G, pg, u, v, identity, context_sim, flank, sensitivity)
-                        chacned_result[(u, v)] = (u_i, v_i, need_merge)
-                        chacned_result[(v, u)] = (v_i, u_i, need_merge)
+                        changed_result[(u, v)] = (u_i, v_i, need_merge)
+                        changed_result[(v, u)] = (v_i, u_i, need_merge)
 
                     if need_merge:
                         u, v = (u, v) if G.nodes[u]['length'] > G.nodes[v]['length'] else (
