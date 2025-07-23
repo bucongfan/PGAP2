@@ -71,7 +71,7 @@ def select_repre_node(G: nx.Graph, tree: Tree, each_gene, para_repre, para_conte
 
     if len(max_pool) == 1:
         return max_pool[0]
-    elif len(max_pool) > 1:
+    elif len(max_pool) > 1:  # multiple representatives has similar context
         clust_099 = tree.ortho_para[each_gene]
         for each_repre in max_pool:
             clust_099_ref = tree.ortho_para[each_repre]
@@ -117,7 +117,7 @@ def get_paralogs_repre(members):
     # Find the gene that meets the most occurrences
     for element in filtered_elements:
         if element[1] == max_count:
-            paralog_repre = {}
+            paralog_repre = defaultdict(list)
             this_count = 0
             for each_gene in members:
                 strain_index, _ = each_gene.split(':', 1)
@@ -191,21 +191,24 @@ def generate_network(pg: Pangenome, tree: Tree):
 
     for repre_node, clusts in tqdm(para_dict.items(), unit=' paralog', desc=tqdm_.step(3), disable=pg.disable_tqdm):
 
+        # seperate paralogs and other clusters with signle strain
         para_clusts, other_clusts = classify_paralogs(clusts)
         para_context = {}
         for each_clust in clusts:
             para_context[each_clust] = tree.get_context(each_clust, flank=10)
-        logger.trace(
+        logger.debug(
             f'---- Splitting the paralogous clusts of {repre_node} with {len(clusts)} nodes...')
         while True:
             split_clusts = para_clusts
             para_clusts = []
             has_para = False
             for para_clust in split_clusts:
+                # get the most strain representative
                 para_repre = get_paralogs_repre(para_clust)
                 if para_repre:
                     has_para = True
                 else:
+                    # until all paralogs are processed
                     para_clusts.append(para_clust)
                     continue
                 for each_gene in para_clust:
@@ -221,7 +224,7 @@ def generate_network(pg: Pangenome, tree: Tree):
                     else:
                         para_repre[max_repre].append(each_gene)
                 para_clusts.extend(para_repre.values())
-            if not has_para:
+            if not has_para:  # after all paralogs are processed, try to assign the other clusters to the splitted paralogous clusters
                 para_repre = defaultdict(list)
                 para_repre_map = {}
                 for each_clust in para_clusts:
@@ -243,6 +246,8 @@ def generate_network(pg: Pangenome, tree: Tree):
                         para_repre[max_repre].append(each_other_clust)
                 para_clusts = para_repre.values()
                 break
+        logger.debug(
+            f'{len(split_clusts)} paralogs split into {len(para_clusts)} clusters')
         for each_clust in para_clusts:
             if len(each_clust) > 1:
                 target_node = max(each_clust_len := {
@@ -250,6 +255,7 @@ def generate_network(pg: Pangenome, tree: Tree):
                 G = merge_node(G, pg, None, sources=each_clust,
                                target=target_node)
             else:
+                # node member (through clustering) that cannot be merged through synteny but they always have very high identity
                 target_node = each_clust[0]
             relabel_dict.update({target_node: f'{repre_node}_{target_node}'})
             G.nodes[target_node]['repre_nodes'] = [

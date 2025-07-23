@@ -135,7 +135,7 @@ class Tree(nx.DiGraph):
         context = []
 
         i = 1  # begin with the first gene index
-        gene_index = int(gene_index)  # convert gene index to integer
+        gene_index = int(gene_index)
         has_upper = True
         has_lower = True
         # continue searching until enough unique ancestors are collected for both upstream and downstream
