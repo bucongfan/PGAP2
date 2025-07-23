@@ -82,6 +82,14 @@ class Pangenome():
     def strain_name(self):
         return [_ for _ in self.strain_dict]
 
+    def load_hconf(self, hconf_thre=1):
+        """
+        Load the hconf threshold for pan-genome analysis.
+        """
+        self.hconf_count_thre = int(len(self.strain_dict) * hconf_thre)
+        logger.info(
+            f'Load hconf threshold: {self.hconf_thre} which is {self.hconf_count_thre} strains.')
+
     def init_pan_temp(self):
         self.one_pan = [""] * self.strain_num
         self.one_pan_symbol = [""] * self.strain_num

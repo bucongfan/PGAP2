@@ -557,16 +557,13 @@ def test_connectedness(tree: Tree, G: nx.Graph, u, v, sensitivity='moderate'):
 
 def merge_judge(tree: Tree, G: nx.Graph, pg: Pangenome, u, v, identity, context_sim=0, flank=5, sensitivity='moderate'):
     need_merge = False
-    logger.trace(f'[fine analysis] sensitivity...')
     need_merge = test_connectedness(tree, G, u, v, sensitivity)
     if need_merge:
         if G.nodes[u]['strains'].intersection(G.nodes[v]['strains']):
-            logger.trace(f'[fine analysis] paralog bbh...')
             need_merge = test_paralog_bbh(
                 G, pg, tree, u, v, context_sim, flank)
     if need_merge:
         # must be the last step of merge judge, because it will change the graph attr max_id
-        logger.trace(f'[fine analysis] expect identity...')
         need_merge = test_expect_identity(tree, G, u, v, identity)
     return need_merge
 

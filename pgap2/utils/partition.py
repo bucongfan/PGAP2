@@ -448,7 +448,7 @@ def similarity_partition(tree: Tree, G: nx.Graph, nodes, search_distance, pre_co
     return need_merge_nodes, merge_node_attr
 
 
-def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str = 'strict', radius: int = 3, context_sim: float = 0, flank: int = 5, disable: bool = True, step: int = 4):
+def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, fast: bool = False, sensitivity: str = 'strict', radius: int = 3, context_sim: float = 0, flank: int = 5, disable: bool = True, step: int = 4):
 
     search_distance = radius*2+1
     root_leaf = tree.root_leaf
@@ -485,43 +485,57 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, sensitivity: str
                 continue
 
             for clusters, cor_attr in zip(need_merge_nodes, merge_node_attr):
-                split_clust_map = {_: _ for _ in clusters}
-                sorted_edges = sorted(
-                    cor_attr.items(), key=lambda x: (-x[1][0], x[1][1]))
-                logger.trace(
-                    f'Process {len(sorted_edges)} nodes itertively')
+                if fast:
+                    longest_node = max(
+                        clusters, key=lambda x: G.nodes[x]['length'])
+                    G = merge_node(G, pg, tree, clusters,
+                                   target=longest_node)
+                    merge_event = True
+                    for v in clusters:
+                        if v != longest_node:
+                            changed_nodes.update(set([longest_node, v]))
+                            removed_nodes.add(v)
+                else:
+                    split_clust_map = {_: _ for _ in clusters}
+                    sorted_edges = sorted(
+                        cor_attr.items(), key=lambda x: (-x[1][0], x[1][1]))
+                    logger.trace(
+                        f'Process {len(sorted_edges)} nodes itertively')
 
-                changed_result = {}
-                for (u, v), (identity, distance) in sorted_edges:
-                    u = find_final_node(u, split_clust_map)
-                    v = find_final_node(v, split_clust_map)
+                    changed_result = {}
+                    for (u, v), (identity, distance) in sorted_edges:
+                        u = find_final_node(u, split_clust_map)
+                        v = find_final_node(v, split_clust_map)
 
-                    if u == v:
-                        continue
-                    u_i = len(G.nodes[u]['repre_nodes'])
-                    v_i = len(G.nodes[v]['repre_nodes'])
-                    flag = False
-                    if (u, v) in changed_result:
-                        pre_u_i, pre_v_i, pre_need_merge = changed_result[(
-                            u, v)]
-                        if u_i == pre_u_i and v_i == pre_v_i:
-                            need_merge = pre_need_merge
-                            flag = True
+                        if u == v:
+                            continue
+                        u_i = len(G.nodes[u]['repre_nodes'])
+                        v_i = len(G.nodes[v]['repre_nodes'])
+                        flag = False
+                        if (u, v) in changed_result:
+                            pre_u_i, pre_v_i, pre_need_merge = changed_result[(
+                                u, v)]
+                            if u_i == pre_u_i and v_i == pre_v_i:
+                                need_merge = pre_need_merge
+                                flag = True
 
-                    if not flag:
-                        need_merge = merge_judge(
-                            tree, G, pg, u, v, identity, context_sim, flank, sensitivity)
-                        changed_result[(u, v)] = (u_i, v_i, need_merge)
-                        changed_result[(v, u)] = (v_i, u_i, need_merge)
+                        if not flag:
+                            logger.trace(
+                                f'[Fine analysis] Checking {u} and {v} with identity {identity}, context_sim {context_sim}, flank {flank}, sensitivity {sensitivity}')
+                            # Check if the nodes need
+                            need_merge = merge_judge(
+                                tree, G, pg, u, v, identity, context_sim, flank, sensitivity)
+                            changed_result[(u, v)] = (u_i, v_i, need_merge)
+                            changed_result[(v, u)] = (v_i, u_i, need_merge)
 
-                    if need_merge:
-                        u, v = (u, v) if G.nodes[u]['length'] > G.nodes[v]['length'] else (
-                            v, u)
-                        G = merge_node(G, pg, tree, [u, v], target=u)
-                        removed_nodes.add(v)
-                        split_clust_map[v] = u
-                        merge_event = True
-                        changed_nodes.update(set([u, v]))
+                        if need_merge:
+                            u, v = (u, v) if G.nodes[u]['length'] > G.nodes[v]['length'] else (
+                                v, u)
+                            G = merge_node(G, pg, tree, [u, v], target=u)
+                            removed_nodes.add(v)
+                            split_clust_map[v] = u
+                            merge_event = True
+                            changed_nodes.update(set([u, v]))
     if pg.retrieve:
         logger.info(f'---- Retrieving genes from the removed nodes...')
         tree.set_removed_nodes(removed_nodes)
@@ -563,7 +577,7 @@ def get_expect_identity(tree: Tree, G: Pangenome, pg: Pangenome):
             strain_all.update(tree.leaf_member_strains[clust])
         if not need_next:
             continue
-        if len(strain_all) >= len(pg.strain_dict) and len(clusts) > 1:
+        if len(strain_all) >= pg.hconf_count_thre and len(clusts) > 1:
             subgraph = tree.distance_graph.subgraph(clusts)
             if not is_complete_graph(subgraph):
                 continue
@@ -590,7 +604,7 @@ def get_expect_identity(tree: Tree, G: Pangenome, pg: Pangenome):
     return round(max_in_range, 5)
 
 
-def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str, falen: int, threads: int, orth_id: float, para_id: float, dup_id: float, id_attr_key: str, type_filter: str, max_targets: int, coverage: float, LD: float, AS: float, AL: float, context_similirity: float, accurate: bool, exhaust_orth: bool, flank: int, disable: bool, annot: bool, gcode: int, retrieve: bool, radius: int, sensitivity: int, ins: bool):
+def main(indir: str, outdir: str, evalue: float, hconf_thre: float, aligner: str, clust_method: str, falen: int, fast_mode: bool, threads: int, orth_id: float, para_id: float, dup_id: float, id_attr_key: str, type_filter: str, max_targets: int, coverage: float, LD: float, AS: float, AL: float, context_similirity: float, accurate: bool, exhaust_orth: bool, flank: int, disable: bool, annot: bool, gcode: int, retrieve: bool, radius: int, sensitivity: int, ins: bool):
 
     decode_status = False
     file_dict = get_file_dict(indir)
@@ -727,6 +741,7 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
     pg.LD = LD
     pg.AL = AL
     pg.AS = AS
+    pg.load_hconf(hconf_thre=hconf_thre)
 
     # -----------------------------------partition step-----------------------------------#
 
@@ -751,7 +766,7 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
 
     G, pg, tree = merge_by_similarity(G=G, pg=pg, tree=tree,
                                       sensitivity=sensitivity,
-                                      radius=radius,
+                                      radius=radius, fast=fast_mode,
                                       context_sim=context_similirity,
                                       flank=flank,
                                       disable=disable,)
@@ -772,7 +787,7 @@ def main(indir: str, outdir: str, evalue: float, aligner: str, clust_method: str
         G, pg, tree = retrieve_gene(G, pg, tree)
         G, pg, tree = merge_by_similarity(G=G, pg=pg, tree=tree,
                                           sensitivity=sensitivity,
-                                          radius=radius,
+                                          radius=radius, fast=fast_mode,
                                           context_sim=context_similirity,
                                           flank=flank,
                                           disable=disable, step=10)
@@ -815,7 +830,7 @@ def launch(args: argparse.Namespace):
          aligner=args.aligner, clust_method=args.clust_method,
          orth_id=args.orth_id, para_id=args.para_id, dup_id=args.dup_id,
          id_attr_key=args.id_attr_key, type_filter=args.type_filter,
-         coverage=0.98,
+         coverage=0.98, fast_mode=args.fast_mode, hconf_thre=args.hconf_thre,
          #  coverage=args.coverage,
          LD=args.LD, AS=args.AS, AL=args.AL, max_targets=args.max_targets,
          # notused parameters, set a default value and will discard in the next release if dont use for sure
@@ -874,12 +889,16 @@ def partition_cmd(subparser: _SubParsersAction):
                                      default='CDS', help="Only for gff file as input, feature type (3rd column) to include, Only lines matching these types will be processed.")
     subparser_partition.add_argument("--id-attr-key", required=False, type=str,
                                      default='ID', help="Only for gff file as input, Attribute key to extract from the 9th column as the record ID (e.g., 'ID', 'gene', 'locus_tag').")
+    subparser_partition.add_argument('--hconf_thre', required=False, type=float,
+                                     default=1, help='The threshold to define high confidence cluster which is used to evaluate the cluster diversity. Loose this value when your input is too large or too diverse, such as 0.95.')
     subparser_partition.add_argument('--exhaust_orth', '-e', required=False, action='store_true',
                                      default=False, help='Try to split every paralogs gene exhausted')
     subparser_partition.add_argument('--sensitivity', '-s', required=False, type=str,
                                      default='strict', choices=('soft', 'moderate', 'strict'), help='The degree of connectedness between each node of clust.')
     subparser_partition.add_argument('--ins', '-n', required=False,
                                      action='store_true', default=False, help='Ignore the influence of insertion sequence.')
+    subparser_partition.add_argument('--fast', '-f', dest='fast_mode', required=False,
+                                     action='store_true', default=False, help='Do not apply fine feature analysis just partition according to the gene identity and synteny.')
     subparser_partition.add_argument('--accurate', '-a', required=False,
                                      action='store_true', default=False, help='Apply bidirection check for paralogous gene partition (useless if exhaust_orth asigned).')
     subparser_partition.add_argument('--retrieve', '-r', required=False,
