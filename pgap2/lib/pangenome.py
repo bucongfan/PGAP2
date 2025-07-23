@@ -88,7 +88,7 @@ class Pangenome():
         """
         self.hconf_count_thre = int(len(self.strain_dict) * hconf_thre)
         logger.info(
-            f'Load hconf threshold: {self.hconf_thre} which is {self.hconf_count_thre} strains.')
+            f'Load hconf threshold: {hconf_thre} which is {self.hconf_count_thre} strains.')
 
     def init_pan_temp(self):
         self.one_pan = [""] * self.strain_num
