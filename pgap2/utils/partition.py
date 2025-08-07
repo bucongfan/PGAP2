@@ -51,6 +51,7 @@ output:
 
 
 def select_repre_node(G: nx.Graph, tree: Tree, each_gene, para_repre, para_context):
+    # Select the representative node for each gene based on the context similarity
     child_context = para_context[each_gene]
     max_similarity = 0
     # max_repre = None
@@ -103,6 +104,7 @@ def classify_paralogs(members):
 
 
 def get_paralogs_repre(members):
+    # Find a paralogous gene that has the most occurrences in the members
     most_common_elements = Counter([member.split(':')[0]
                                     for member in members]).most_common()
     # Filter out
