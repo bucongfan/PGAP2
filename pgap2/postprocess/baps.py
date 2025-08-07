@@ -141,7 +141,7 @@ def baps_cmd(subparser: _SubParsersAction):
     subparser_postprocess.add_argument(
         '--disable', required=False, action='store_true', default=False, help='Disable progress bar')
     subparser_postprocess.add_argument(
-        '--threads', '-t', required=False, default=8, help='threads used in parallel', type=int)
+        '--threads', '-t', required=False, default=1, help='threads used in parallel', type=int)
     subparser_postprocess.add_argument('--msa_method', required=False, default='mafft', choices=(
         'mafft', 'muscle', 'tcoffee'), help='The method of multiple sequence alignment.')
     subparser_postprocess.add_argument('--tree_method', required=False, default='fasttree', choices=(

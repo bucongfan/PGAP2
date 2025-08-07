@@ -904,7 +904,7 @@ def partition_cmd(subparser: _SubParsersAction):
     subparser_partition.add_argument('--retrieve', '-r', required=False,
                                      action='store_true', default=False, help='Retrieve gene that may lost with annotations')
     subparser_partition.add_argument(
-        '--threads', '-t', required=False, default=8, help='threads used in parallel', type=int)
+        '--threads', '-t', required=False, default=1, help='threads used in parallel', type=int)
     # subparser_partition.add_argument('--coverage', required=False, type=float,
     #                                  default=0.98, help='Length difference for cdhit cluster.')
     # subparser_partition.add_argument('--context_similirity', '-s', required=False, type=float,
@@ -924,7 +924,7 @@ def partition_cmd(subparser: _SubParsersAction):
     subparser_partition.add_argument('--aligner', required=False, type=str,
                                      default='diamond', choices=('diamond', 'blastp'), help='The aligner used to pairwise alignment.')
     subparser_partition.add_argument('--clust_method', required=False, type=str,
-                                     default='cdhit', choices=('cdhit', 'mmseqs2'), help='The method used to cluster the genes.')
+                                     default='mmseqs2', choices=('cdhit', 'mmseqs2'), help='The method used to cluster the genes.')
     subparser_partition.add_argument('--radius', required=False, type=int,
                                      default=3, help='The radius of search region.')
     subparser_partition.add_argument('--min_falen', '-m', required=False, type=check_min_falen,

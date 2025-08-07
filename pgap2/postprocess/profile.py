@@ -134,7 +134,7 @@ def profile_cmd(subparser: _SubParsersAction):
     subparser_postprocess.add_argument(
         '--method', required=False, choices=['TR', 'DG'], default='TR', help='Sampling method. TR: total random; DG: diversity guided')
     subparser_postprocess.add_argument(
-        '--threads', '-t', required=False, type=int, default=4, help='Number of threads')
+        '--threads', '-t', required=False, type=int, default=1, help='Number of threads')
     subparser_postprocess.add_argument(
         '--disable', required=False, action='store_true', default=False, help='Disable progress bar')
     subparser_postprocess.add_argument(

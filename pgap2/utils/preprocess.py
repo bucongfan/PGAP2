@@ -510,5 +510,5 @@ def preprocess_cmd(subparser: _SubParsersAction):
     subparser_preprocess.add_argument(
         '--disable', required=False, action='store_true', default=False, help='Disable progress bar')
     subparser_preprocess.add_argument(
-        '--threads', '-t', required=False, default=8, help='threads used in parallel', type=int)
+        '--threads', '-t', required=False, default=1, help='threads used in parallel', type=int)
     subparser_preprocess.set_defaults(func=preprocess_portal)
