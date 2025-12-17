@@ -46,3 +46,6 @@ pgap2/utils/postprocess.py
 pgap2/utils/preprocess.py
 pgap2/utils/supply.py
 pgap2/utils/tools.py
+tests/test_main.py
+tests/test_post.py
+tests/test_prep.py

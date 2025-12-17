@@ -35,7 +35,8 @@ def is_numeric_pd(pav: pd.DataFrame):
         try:
             pd.to_numeric(value)
             return True
-        except ValueError:
+        except ValueError as e:
+            logger.debug(f"ValueError encountered: {e}")
             return False
 
 

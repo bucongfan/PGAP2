@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: PGAP2
-Version: 1.0.4
+Version: 1.0.6
 Summary: PGAP2: a comprehensive pan-genome analysis pipeline for prokaryotic genomes
 Author-email: bucongfan <bucf@big.ac.cn>
 Maintainer-email: bucongfan <bucf@big.ac.cn>
@@ -87,7 +87,7 @@ Or sometimes you only want to carry out a specific function, such as partioning 
 pip install pgap2
 ```
 
-Or via source file:
+Or via source file to get the latest version:
 
 ```bash
 git clone https://github.com/bucongfan/PGAP2

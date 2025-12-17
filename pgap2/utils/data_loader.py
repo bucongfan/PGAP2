@@ -61,8 +61,8 @@ def extract_attr_from_prodigal(file):
     complete_gene = 0
     total_score = []
     gene_dict = {}
-    stat_tmp = {'total_gene_num': 0, 'score': 0.0,
-                'value_complete': 0, 'value_incomplete': 0, 'score_list': []}
+    # stat_tmp = {'total_gene_num': 0, 'score': 0.0,
+    #             'value_complete': 0, 'value_incomplete': 0, 'score_list': []}
     this_seq_id = 'ERROR_WHEN_SAW_ME'
     this_seq_num = 'ERROR_WHEN_SAW_ME'
     gene_num = 0
@@ -104,22 +104,22 @@ def extract_attr_from_prodigal(file):
                 if partial == '00':
                     complete_gene += 1
 
-    most_score = np.median(total_score)
-    portion_complete = complete_gene/total_gene
-    co = round(portion_complete*most_score, 3)
-    logger.debug(
-        f"{file} co:{co} portion_complete:{portion_complete} median:{most_score} ")
+    # most_score = np.median(total_score)
+    # portion_complete = complete_gene/total_gene
+    # co = round(portion_complete*most_score, 3)
+    # logger.debug(
+    #     f"{file} co:{co} portion_complete:{portion_complete} median:{most_score} ")
 
     logger.debug(f'Reading the annotation result of {file}...')
     logger.debug(f'#Total gene: {total_gene}')
     logger.debug(f'#Complete gene: {complete_gene}')
-    logger.debug(f'coefficient: {co}')
-    stat_tmp['score'] = co
-    stat_tmp['total_gene_num'] = total_gene
-    stat_tmp['value_complete'] = complete_gene
-    stat_tmp['value_incomplete'] = total_gene-complete_gene
-    stat_tmp['score_list'] = total_score
-    return co, stat_tmp, gene_dict
+    # logger.debug(f'coefficient: {co}')
+    # stat_tmp['score'] = co
+    # stat_tmp['total_gene_num'] = total_gene
+    # stat_tmp['value_complete'] = complete_gene
+    # stat_tmp['value_incomplete'] = total_gene-complete_gene
+    # stat_tmp['score_list'] = total_score
+    return gene_dict
 
 
 def fa_parser(genome_file, strain_name, temp_out, strain_index: int, annot: bool, partial: bool = False, retrieve: bool = False, falen: int = 10, gcode: int = 11):
@@ -130,8 +130,8 @@ def fa_parser(genome_file, strain_name, temp_out, strain_index: int, annot: bool
     in_seq_handle.close()
 
     run_command(
-        f"{sfw.prodigal} -i {genome_file} -o {temp_out}/{strain_name}.prodigal", verbose=True)
-    co, stat_dict, gene_dict = extract_attr_from_prodigal(
+        f"{sfw.prodigal} -i {genome_file} -o {temp_out}/{strain_name}.prodigal")
+    gene_dict = extract_attr_from_prodigal(
         f'{temp_out}/{strain_name}.prodigal',)
 
     prot_file = f'{temp_out}/{strain_name}.prot'
@@ -155,14 +155,11 @@ def fa_parser(genome_file, strain_name, temp_out, strain_index: int, annot: bool
                     gene_index = 0
                     good_gene_num.append(0)
             contig_name_map[contig_name] = contig_index
-            for gene in gene_dict[contig_name]:
-                feature = gene_dict[contig_name].get(gene, None)
-                assert feature is not None, f'Cannot find the feature of {gene} in {contig_name}'
+            for feature in gene_dict[contig_name]:
                 if re.match(r'pgap2_\S+_\d+', feature.id):
                     logger.warning(
                         f"Cannot find right Gene ID in {feature.id} through feature 'Parent=XXX', replace it with CDS id {feature.id}, that may cause some problem when that gene have multiple exons.")
-                else:
-                    feature.id = gene
+
                 id_name = feature.id
                 nucl_fa = feature.extract(seq_dict[contig_name].seq)
                 gene_name = feature.qualifiers.get('gene', '')

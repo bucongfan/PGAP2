@@ -302,6 +302,8 @@ def get_pan_group(pav: pd.DataFrame, outdir: str, step=0.05):
         assert group_freq in x_index, logger.error(
             f'group_freq: {group_freq} not in x: {x}')
         y[x_index[group_freq]] += 1
+        if strain_num == 0:
+            print(f'Warning: strain_num is 0 for index {index}')
         pangroup = pan_judger(strain_num, total_strain_num)
         pan_group[pangroup] += 1
 

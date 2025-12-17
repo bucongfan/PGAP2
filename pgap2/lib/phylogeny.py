@@ -104,20 +104,28 @@ class Phylogeny():
         os.makedirs(outdir_cds, exist_ok=True)
         outdir_prot = os.path.join(wd, '01.gene_prot')
         os.makedirs(outdir_prot, exist_ok=True)
-        for cluster, seqs in tqdm(self.basic.used_cluster.items(), desc=tqdm_.step(1)):
-            path_cds = os.path.join(outdir_cds, f'{cluster}.fa')
-            path_prot = os.path.join(outdir_prot, f'{cluster}.fa')
-            if os.path.exists(path_cds) and os.path.exists(path_prot) and os.path.getsize(path_cds) > 0 and os.path.getsize(path_prot) > 0:
-                logger.debug(
-                    f"File already exists {path_cds} and {path_prot}. Skip.")
-            else:
-                with open(path_cds, 'w') as fh_cds, open(path_prot, 'w') as fh_prot:
-                    for seq in seqs:
-                        SeqIO.write(seq, fh_cds, 'fasta')
-                        protein_seq = seq.translate(to_stop=True)
-                        protein_record = SeqRecord(
-                            protein_seq.seq, id=seq.id, description=seq.description)
-                        SeqIO.write(protein_record, fh_prot, 'fasta')
+        if os.path.exists(f'{outdir_cds}_DONE') and os.path.exists(f'{outdir_prot}_DONE'):
+            logger.warning(
+                f"Step 1 already finished. Skip.")
+        else:
+            for cluster, seqs in tqdm(self.basic.used_cluster.items(), desc=tqdm_.step(1)):
+                path_cds = os.path.join(outdir_cds, f'{cluster}.fa')
+                path_prot = os.path.join(outdir_prot, f'{cluster}.fa')
+                if os.path.exists(path_cds) and os.path.exists(path_prot) and os.path.getsize(path_cds) > 0 and os.path.getsize(path_prot) > 0:
+                    logger.debug(
+                        f"File already exists {path_cds} and {path_prot}. Skip.")
+                else:
+                    with open(path_cds, 'w') as fh_cds, open(path_prot, 'w') as fh_prot:
+                        for seq in seqs:
+                            SeqIO.write(seq, fh_cds, 'fasta')
+                            protein_seq = seq.translate(to_stop=True)
+                            protein_record = SeqRecord(
+                                protein_seq.seq, id=seq.id, description=seq.description)
+                            SeqIO.write(protein_record, fh_prot, 'fasta')
+            with open(f'{outdir_cds}_DONE', 'w') as fh:
+                fh.write('DONE\n')
+            with open(f'{outdir_prot}_DONE', 'w') as fh:
+                fh.write('DONE\n')
         self.sequence_cds_path = outdir_cds
         self.sequence_prot_path = outdir_prot
         self.results_file.append(outdir_cds)
@@ -146,25 +154,28 @@ class Phylogeny():
     def _generate_msa_commands(self, prot_align_outdir):
         add_paras = self.add_paras_dict[2]
         commands = []
-        for cluster in self.basic.used_cluster:
-            expected_output = os.path.join(
-                prot_align_outdir, cluster + '.aln.fa')
-            input_prot = os.path.join(self.sequence_prot_path, cluster + '.fa')
-            if self.msa_method == 'mafft':
-                # cline = MafftCommandline(
-                #     input=input_prot, auto=True, thread=1, quiet=True)
-                cline = f'{sfw.mafft} --auto --thread 1 {input_prot} {add_paras}'
-            elif self.msa_method == 'muscle':
-                # cline = MuscleCommandline(
-                #     input=input_prot, out=expected_output, quiet=True)
-                cline = f'{sfw.muscle} -in {input_prot} -out {expected_output} -quiet {add_paras}'
-            elif self.msa_method == 'tcoffee':
-                # cline = TCoffeeCommandline(
-                #     infile=input_prot, output='fasta', outfile=expected_output, quiet=True)
-                # print(str(cline))
-                cline = f'{sfw.tcoffee} {input_prot} -output fasta -outfile {expected_output} -quiet {add_paras}'
-            commands.append((self.msa_method, cluster,
-                            expected_output, str(cline)))
+        with open(f'{prot_align_outdir}.work.sh', 'w') as fh:
+            for cluster in self.basic.used_cluster:
+                expected_output = os.path.join(
+                    prot_align_outdir, cluster + '.aln.fa')
+                input_prot = os.path.join(
+                    self.sequence_prot_path, cluster + '.fa')
+                if self.msa_method == 'mafft':
+                    # cline = MafftCommandline(
+                    #     input=input_prot, auto=True, thread=1, quiet=True)
+                    cline = f'{sfw.mafft} --auto --thread 1 {input_prot} {add_paras}'
+                elif self.msa_method == 'muscle':
+                    # cline = MuscleCommandline(
+                    #     input=input_prot, out=expected_output, quiet=True)
+                    cline = f'{sfw.muscle} -in {input_prot} -out {expected_output} -quiet {add_paras}'
+                elif self.msa_method == 'tcoffee':
+                    # cline = TCoffeeCommandline(
+                    #     infile=input_prot, output='fasta', outfile=expected_output, quiet=True)
+                    # print(str(cline))
+                    cline = f'{sfw.tcoffee} {input_prot} -output fasta -outfile {expected_output} -quiet {add_paras}'
+                commands.append((self.msa_method, cluster,
+                                expected_output, str(cline)))
+                fh.write(f'{str(cline)}\n')
         return commands
 
     def msa(self, wd):
@@ -243,7 +254,9 @@ class Phylogeny():
         if os.path.exists(output) and os.path.getsize(output) > 0:
             logger.debug(f"File already exists {output}. Skip.")
         else:
-            cline = '{} {} --output {} --codon --quiet {}'.format(
+            # cline = '{} {} --output {} --codon --quiet {}'.format(
+            #         trimmer, codon_aln, output, add_paras)
+            cline = '{} {} --output {} --co {}'.format(
                     trimmer, codon_aln, output, add_paras)
             process = subprocess.run(
                 cline, shell=True, capture_output=True, text=True)
@@ -487,7 +500,7 @@ class Phylogeny():
         recombination_outdir = os.path.join(wd, '08.mask_recombination')
         os.makedirs(recombination_outdir, exist_ok=True)
         add_paras = self.add_paras_dict[8]
-        cmd = f'{sfw.maskrc} {add_paras} --aln {self.first_aln} --out {recombination_outdir}/maskrc.aln --regions {recombination_outdir}/recombinant_regions.txt --svg {recombination_outdir}/recombinant_regions.svg {self.recombination_prefix}'
+        cmd = f'python {sfw.maskrc} {add_paras} --aln {self.first_aln} --out {recombination_outdir}/maskrc.aln --regions {recombination_outdir}/recombinant_regions.txt --svg {recombination_outdir}/recombinant_regions.svg {self.recombination_prefix}'
 
         self.results_file.append(f'{recombination_outdir}/maskrc.aln')
         self.results_file.append(
@@ -549,7 +562,7 @@ class Phylogeny():
         clustering_outdir = os.path.join(wd, '10.genetic_clustering')
         os.makedirs(clustering_outdir, exist_ok=True)
         add_paras = self.add_paras_dict[10]
-        cmd = f'python {sfw.fastbaps} {add_paras} --input {self.maskrc_aln} --phylogeny {self.masked_tree} --out {clustering_outdir}/fastbaps_clusters.csv --threads {self.threads} --levels {self.fastbaps_levels} --prior {self.fastbaps_prior}'
+        cmd = f'Rscript {sfw.fastbaps} {add_paras} --input {self.maskrc_aln} --phylogeny {self.masked_tree} --out {clustering_outdir}/fastbaps_clusters.csv --threads {self.threads} --levels {self.fastbaps_levels} --prior {self.fastbaps_prior}'
         subprocess.run(cmd, shell=True, check=True)
         logger.info(f'Run [{cmd}]')
 
