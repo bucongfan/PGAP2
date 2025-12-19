@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 
+from ete3 import Tree
 from Bio import SeqIO
 from Bio import AlignIO
 from Bio.Seq import Seq
@@ -532,15 +533,15 @@ class Phylogeny():
         if self.tree_method == 'raxml':
             cmd = f'{sfw.raxml} --msa {self.maskrc_aln} --model GTR+G --prefix {tree_path} --all --bs-trees 100 --redo {add_paras}'
             best_tree = os.path.join(
-                tree_outdir, 'core_gene_alignment'+'.raxml.bestTree')
+                tree_outdir, 'reconstructed_tree'+'.raxml.bestTree')
         elif self.tree_method == 'fasttree':
             cmd = f'{sfw.fasttree} -gtr -gamma -nt -out {tree_path}.treefile {self.maskrc_aln} {add_paras} 2> {tree_path}.log'
             best_tree = os.path.join(
-                tree_outdir, 'core_gene_alignment'+'.treefile')
+                tree_outdir, 'reconstructed_tree'+'.treefile')
         elif self.tree_method == 'iqtree':
             cmd = f'{sfw.iqtree} -s {self.maskrc_aln} -m GTR+G -pre {tree_path} -bb 1000 -redo -nt AUTO {add_paras}'
             best_tree = os.path.join(
-                tree_outdir, 'core_gene_alignment'+'.treefile')
+                tree_outdir, 'reconstructed_tree'+'.treefile')
 
         self.results_file.append(best_tree)
         finished_status = self.check_before_run(cmd, tree_outdir)
@@ -551,10 +552,20 @@ class Phylogeny():
             with open(os.path.join(tree_outdir, 'work.sh'), 'w') as f:
                 f.write(cmd)
             subprocess.run(cmd, shell=True, check=True)
+        # build root use midpoint
+        tree = Tree(best_tree)
+        mid = tree.get_midpoint_outgroup()
+        tree.set_outgroup(mid)
 
+        root_tree_path = os.path.join(
+            tree_outdir, 'reconstructed_tree.rooted.treefile')
+        tree.write(format=1, outfile=root_tree_path)
+        logger.info(
+            f'The tree was rooted using midpoint rooting and saved to {root_tree_path}.')
+        self.results_file.append(root_tree_path)
         _tqdm.update(1)
         _tqdm.close()
-        return best_tree
+        return root_tree_path
 
     def genetic_clustering(self, wd):
         # This is the last step of baps, so we don't need to check before run
@@ -566,8 +577,8 @@ class Phylogeny():
         subprocess.run(cmd, shell=True, check=True)
         logger.info(f'Run [{cmd}]')
 
-        self.results_file.append(f'{clustering_outdir}/fastbaps')
-        return f'{clustering_outdir}/fastbaps'
+        self.results_file.append(f'{clustering_outdir}/fastbaps_clusters.csv')
+        return f'{clustering_outdir}/fastbaps_clusters.csv'
 
     def start_at(self, step: int):
         wd = f'{self.outdir}/postprocess_phylogeny'

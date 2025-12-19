@@ -2,7 +2,7 @@
 
 
 ## Citation 
-Please cite me if PGAP2 helped you in any way. ORZ
+Please cite me if PGAP2 helped you in any way:
 
 Bu, C., Zhang, H., Zhang, F. et al. *PGAP2: A comprehensive toolkit for prokaryotic pan-genome analysis based on fine-grained feature networks*. Nat Commun **16**, 9865 (2025). [https://doi.org/10.1038/s41467-025-64846-5](https://doi.org/10.1038/s41467-025-64846-5)
 
@@ -13,7 +13,7 @@ PGAP2 (Pan-Genome Analysis Pipeline 2) is an ultra-fast and comprehensive toolki
 ### Basic usage
 The input directory contains all the genome and annotation files.
 
-PGAP2 supports multiple input formats: GFF files in the same format as those output by Prokka, GFF files with their corresponding genome FASTA files in separate files, GenBank flat files (GBFF), or just genome FASTA files (with `--reannot` required).
+PGAP2 supports multiple input formats: GFF files in the same format as those output by Prokka, GFF files with their corresponding genome FASTA files in separate files, GenBank flat files (GBFF), or just genome FASTA files (with `--annot` required).
 
 Different formats of input files can be mixed in one input directory. PGAP2 will recognize and process them based on their prefixes and suffixes.
 
