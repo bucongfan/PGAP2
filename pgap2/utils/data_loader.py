@@ -499,6 +499,7 @@ def pool_file_parser(file_dict_with_index, falen, retrieve, annot, temp_out, gco
                                                                          temp_out, strain_index, annot, retrieve=retrieve, falen=falen, gcode=gcode, read_type=type_filter, read_attr=id_attr_key)
 
     elif ('fa' in file_dict) and annot:
+        gffa_file = file_dict['fa']
         good_gene_num, bad_gene_num, annot_file, prot_file = fa_parser(gffa_file, strain_name,
                                                                        temp_out, strain_index, annot, retrieve=retrieve, falen=falen, gcode=gcode)
     else:
