@@ -150,6 +150,8 @@ class Tree(nx.DiGraph):
 
             # check upper gene ancestor
             if has_upper and upper_g in self.member_leaf:
+                if '_' in self.member_leaf[upper_g]:
+                    print(1111)
                 ancestor = self.ancestor(self.member_leaf[upper_g])
                 if ancestor not in context:
                     unique_ancestors_up.add(ancestor)
@@ -161,6 +163,8 @@ class Tree(nx.DiGraph):
 
             # check lower gene ancestor
             if has_lower and lower_g in self.member_leaf:
+                if '_' in self.member_leaf[lower_g]:
+                    print(2222)
                 ancestor = self.ancestor(self.member_leaf[lower_g])
                 if ancestor not in context:
                     unique_ancestors_down.add(ancestor)

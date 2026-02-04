@@ -447,6 +447,13 @@ def preprocess_portal(args):
     elif args.aligner == 'blast':
         sfw.check_dependency("blastp")
         sfw.check_dependency("makeblastdb")
+
+    if args.retrieve:
+        sfw.check_dependency("miniprot")
+        sfw.check_dependency("seqtk")
+    if args.annot:
+        sfw.check_dependency("prodigal")
+
     tqdm_.set_total_step(5)
     launch(args)
 

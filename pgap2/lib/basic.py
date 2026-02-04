@@ -17,10 +17,11 @@ It does not contain any analysis methods itself, serving only as a data carrier.
 
 
 class Basic():
-    def __init__(self, pg: Pangenome) -> None:
+    def __init__(self, pg: Pangenome, params: dict = None) -> None:
         self.outdir = pg.outdir
         self.strain_num = pg.strain_num
         self.strain_dict = pg.strain_dict
+        self.params = params
 
         self.gcode = pg.gcode
         self.orth_id: float = pg.orth_id

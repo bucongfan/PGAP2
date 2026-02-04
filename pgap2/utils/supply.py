@@ -35,6 +35,7 @@ class _Externals():
     def __init__(self) -> None:
         self.externals = {
             'cdhit': 'cd-hit',
+            'cdhit_2d': 'cd-hit-2d',
             'mmseqs2': 'mmseqs',
             'muscle': 'muscle',
             'mafft': 'mafft',

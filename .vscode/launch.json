@@ -12,11 +12,15 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
-                "prep",
+                "add",
                 "-i",
-                "/Users/bucongfan/core/PGAP2/low_quality/input",
+                "/Users/bucongfan/core/PGAP2/conda_pgap2/input_1",
+                "-p",
+                "/Users/bucongfan/core/PGAP2/conda_pgap2/output2",
                 "-o",
-                "/Users/bucongfan/core/PGAP2/low_quality/output_prep",
+                "/Users/bucongfan/core/PGAP2/conda_pgap2/output2_add",
+                "-t",
+                "12",
             ]
         }
     ]

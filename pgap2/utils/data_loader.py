@@ -4,6 +4,7 @@ import gzip
 import shutil
 import zipfile
 import tempfile
+import shlex
 
 import numpy as np
 
@@ -57,6 +58,16 @@ def set_logger(logger_):
 
 
 def extract_attr_from_prodigal(file):
+    # Compile regex patterns outside the loop
+    re_def = re.compile(r'DEFINITION\s+.*seqhdr=')
+    re_def_id = re.compile(r'DEFINITION.*seqhdr="(.*)";version')
+    re_def_num = re.compile(r'DEFINITION.*seqnum=(\d+);seqlen')
+    re_cds = re.compile(r'\s+CDS\s+(\S+)\s*$')
+    re_comp = re.compile(r'complement')
+    re_coords = re.compile(r'CDS\s+.*?(\d+).*?(\d+)')
+    re_note = re.compile(r'\s+\/note=')
+    re_score = re.compile(r'.*partial=(\d+).*score=(.*?);cscore')
+
     total_gene = 0
     complete_gene = 0
     total_score = []
@@ -69,22 +80,21 @@ def extract_attr_from_prodigal(file):
     with open(file) as fh:
         for line in fh:
             line = line.strip('\n')
-            if re.match(r'DEFINITION\s+.*seqhdr=', line):
+            if re_def.match(line):
                 try:
-                    this_seq_id = re.findall(
-                        r'DEFINITION.*seqhdr="(.*)";version', line)[0]
-                    this_seq_num = re.findall(
-                        r'DEFINITION.*seqnum=(\d+);seqlen', line)[0]
+                    this_seq_id = re_def_id.findall(line)[0]
+                    this_seq_num = re_def_num.findall(line)[0]
                     gene_num = 0
-                except:
+                except Exception:
                     logger.error(
                         f'Cannot find the correct header from prodigal result {file}')
-            elif re.match(r'\s+CDS\s+(\S+)\s*$', line):
+            elif re_cds.match(line):
                 gene_num += 1
                 strand, start, end = '', 0, 0
-                strand = -1 if re.match(r'complement', line) else 1
-                start = re.findall(r'CDS\s+.*?(\d+).*?(\d+)', line)[0][0]
-                end = re.findall(r'CDS\s+.*?(\d+).*?(\d+)', line)[0][1]
+                strand = -1 if re_comp.match(line) else 1
+                coords = re_coords.findall(line)[0]
+                start = coords[0]
+                end = coords[1]
                 geneid = f'{this_seq_num}_{gene_num}'
                 # biopython FeatureLocation is 0-based coordination.
                 start = int(start)-1
@@ -94,12 +104,11 @@ def extract_attr_from_prodigal(file):
                     gene_dict[this_seq_id] = []
                 gene_dict[this_seq_id].append(per)
 
-            elif re.match(r'\s+\/note=', line):
+            elif re_note.match(line):
                 total_gene += 1
-                partial = re.match(
-                    r'.*partial=(\d+).*score=(.*?);cscore', line.strip()).group(1)
-                score = re.match(
-                    r'.*partial=(\d+).*score=(.*?);cscore', line.strip()).group(2)
+                match = re_score.match(line.strip())
+                partial = match.group(1)
+                score = match.group(2)
                 total_score.append(float(score))
                 if partial == '00':
                     complete_gene += 1
@@ -125,12 +134,13 @@ def extract_attr_from_prodigal(file):
 def fa_parser(genome_file, strain_name, temp_out, strain_index: int, annot: bool, partial: bool = False, retrieve: bool = False, falen: int = 10, gcode: int = 11):
     logger.debug(f'Reding genome file: {genome_file}')
     in_seq_file = genome_file
-    in_seq_handle = open(in_seq_file)
-    seq_dict = SeqIO.to_dict(SeqIO.parse(in_seq_handle, "fasta"))
-    in_seq_handle.close()
+    with open(in_seq_file) as in_seq_handle:
+        seq_dict = SeqIO.to_dict(SeqIO.parse(in_seq_handle, "fasta"))
 
+    safe_genome_file = shlex.quote(genome_file)
+    safe_out_file = shlex.quote(f"{temp_out}/{strain_name}.prodigal")
     run_command(
-        f"{sfw.prodigal} -i {genome_file} -o {temp_out}/{strain_name}.prodigal")
+        f"{sfw.prodigal} -i {safe_genome_file} -o {safe_out_file}")
     gene_dict = extract_attr_from_prodigal(
         f'{temp_out}/{strain_name}.prodigal',)
 
@@ -194,8 +204,10 @@ def fa_parser(genome_file, strain_name, temp_out, strain_index: int, annot: bool
         SeqIO.write(records, genome_file, 'fasta')
 
     if retrieve:
+        safe_mpi = shlex.quote(f"{strain_index_path}/ref.mpi")
+        safe_genome_ref = shlex.quote(genome_file)
         run_command(
-            f"{sfw.miniprot} -t 1 -d {strain_index_path}/ref.mpi {genome_file}")
+            f"{sfw.miniprot} -t 1 -d {safe_mpi} {safe_genome_ref}")
 
     return good_gene_num, bad_gene_num, annot_file, prot_file
 
@@ -210,8 +222,8 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
         good_gene_num, bad_gene_num, annot_file, prot_fh = fa_parser(genome_file=output_file, strain_name=strain_name,
                                                                      temp_out=temp_out, strain_index=strain_index, annot=True, partial=partial, falen=falen)
     else:
-        in_seq_handle = open(gbf_file)
-        seq_dict = SeqIO.to_dict(SeqIO.parse(in_seq_handle, "genbank"))
+        with open(gbf_file) as in_seq_handle:
+            seq_dict = SeqIO.to_dict(SeqIO.parse(in_seq_handle, "genbank"))
 
         annot_file = f'{temp_out}/{strain_name}.annot'
         prot_file = f'{temp_out}/{strain_name}.prot'
@@ -275,8 +287,6 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
                         bad_gene_num += 1
                         logger.debug(
                             f'[Skip unregular gene] {id_name} from {strain_name}: {e}')
-        in_seq_handle.close()
-
         if os.path.exists(f'{temp_out}/../../genome_index/'):
             dir_index = strain_index // 1000
             strain_index_path = f'{temp_out}/../../genome_index/{dir_index}/{strain_index}'
@@ -288,8 +298,10 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
             SeqIO.write(records, genome_file, 'fasta')
 
         if retrieve:
+            safe_mpi = shlex.quote(f"{strain_index_path}/ref.mpi")
+            safe_genome_ref = shlex.quote(genome_file)
             run_command(
-                f"{sfw.miniprot} -t 1 -d {strain_index_path}/ref.mpi {genome_file}")
+                f"{sfw.miniprot} -t 1 -d {safe_mpi} {safe_genome_ref}")
 
     return good_gene_num, bad_gene_num, annot_file, prot_file
 
@@ -475,8 +487,10 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
                 seq_dict, contig_name_map, f'{strain_index_path}/ref.fa')
 
         if retrieve:
+            safe_mpi = shlex.quote(f"{strain_index_path}/ref.mpi")
+            safe_genome_ref = shlex.quote(genome_file)
             run_command(
-                f"{sfw.miniprot} -t 1 -d {strain_index_path}/ref.mpi {genome_file}")
+                f"{sfw.miniprot} -t 1 -d {safe_mpi} {safe_genome_ref}")
     return good_gene_num, bad_gene_num, annot_file, prot_file
 
 
@@ -534,7 +548,7 @@ def process_file(file_pair):
     return prot_lines, annot_lines
 
 
-def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_attr_key: str = 'ID', type_filter: str = 'CDS', retrieve: bool = False, falen: int = 11, gcode: int = 11, prefix='partition') -> Pangenome:
+def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_attr_key: str = 'ID', type_filter: str = 'CDS', retrieve: bool = False, falen: int = 11, gcode: int = 11, prefix='partition', start_index: int = 0, run_type: str = 'total') -> Pangenome:
     temp_out = tempfile.mkdtemp(dir=outdir)
     if retrieve or prefix == 'preprocess':
         genome_index_path = f'{outdir}/genome_index'
@@ -566,7 +580,7 @@ def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_a
 
     with get_context('fork').Pool(processes=threads, initializer=set_logger, initargs=(logger,)) as p:
         total_bad_gene_num = 0
-        for good_gene_num, bad_gene_num, strain_name, strain_index, annot_file, prot_file in p.imap_unordered(partial(pool_file_parser, falen=falen, retrieve=retrieve, annot=annot, temp_out=temp_out, gcode=gcode, id_attr_key=id_attr_key, type_filter=type_filter), enumerate(file_dict.items())):
+        for good_gene_num, bad_gene_num, strain_name, strain_index, annot_file, prot_file in p.imap_unordered(partial(pool_file_parser, falen=falen, retrieve=retrieve, annot=annot, temp_out=temp_out, gcode=gcode, id_attr_key=id_attr_key, type_filter=type_filter), enumerate(file_dict.items(), start=start_index)):
             if bad_gene_num is None:
                 continue
             if bad_gene_num > 0:
@@ -599,7 +613,7 @@ def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_a
     for i in range(0, len(per_file_list), batch_size):
         batch = per_file_list[i:i + batch_size]
 
-        with open(f'{outdir}/total.involved_prot.fa', 'a') as prot_fh, open(f'{outdir}/total.involved_annot.tsv', 'a') as annot_fh:
+        with open(f'{outdir}/{run_type}.involved_prot.fa', 'a') as prot_fh, open(f'{outdir}/{run_type}.involved_annot.tsv', 'a') as annot_fh:
             if i == 0:  # Write header only once
                 annot_fh.write(
                     f'#Gene_index\tStrain\tContig\tLocation\tLength\tGene_ID\tGene_name\tProduct_name\tNucleotide_sequence\tProtein_sequence\n')
@@ -615,9 +629,9 @@ def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_a
                         annot_fh.write(line)
 
     logger.info(
-        f'Check the total involved protein sequence in {outdir}/total.involved_prot.fa')
+        f'Check the total involved protein sequence in {outdir}/{run_type}.involved_prot.fa')
     logger.info(
-        f'Check the total annotation in {outdir}/total.involved_annot.tsv')
+        f'Check the total annotation in {outdir}/{run_type}.involved_annot.tsv')
     # shutil.rmtree(temp_out)  # clean up the temporary directory
 
     return pg
@@ -655,9 +669,8 @@ def get_file_dict(indir):
 
     if len(file_dict) == 0:
         logger.error(f'No file found in {indir}')
-        logger.error(
+        raise FileNotFoundError(
             f'PGAP2 can only understand {list(support_format.keys())} file, please check the input directory {indir}')
-        exit(1)
 
     # sort and put it into the OrderedDict
     file_dict = OrderedDict(sorted(file_dict.items(), key=lambda x: x[0]))

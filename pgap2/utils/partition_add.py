@@ -22,7 +22,7 @@ from pgap2.lib.pangenome import Pangenome
 
 from pgap2.utils.supply import sfw, tqdm_
 from pgap2.utils.supply import set_verbosity_level, run_command
-from pgap2.utils.generate_tree import generate_tree
+from pgap2.utils.generate_tree import merge_tree, generate_tree
 from pgap2.utils.gene_retriever import retrieve_gene
 from pgap2.utils.arrangement_detector import merge_by_synteny
 from pgap2.utils.data_loader import file_parser, get_file_dict
@@ -49,6 +49,64 @@ output:
 - partition.log: Running log
 
 """
+
+
+def merge_pangenome(previous_pg: Pangenome, new_pg: Pangenome) -> Pangenome:
+    """
+    Merge a new pangenome with the previous pangenome.
+
+    This function combines the strain information from both pangenomes,
+    ensuring that the new genome's strain indices continue from where 
+    the previous pangenome ended.
+
+    Args:
+        previous_pg: The existing pangenome object with previous strains
+        new_pg: The new pangenome object containing newly added strain(s)
+
+    Returns:
+        Pangenome: A merged pangenome object containing all strains
+    """
+    logger.info(
+        f'Merging pangenomes: {previous_pg.strain_num} previous strains + {new_pg.strain_num} new strain(s)')
+
+    # Create a new merged pangenome with the same configuration as previous
+    merged_pg = Pangenome(
+        outdir=new_pg.outdir,  # Use new output directory
+        threads=new_pg.threads,
+        gcode=new_pg.gcode,
+        disable=new_pg.disable_tqdm
+    )
+
+    # Copy all strains from previous pangenome
+    for strain_index, strain in previous_pg.strain_dict.items():
+        merged_pg.load_strain(strain)
+
+    # Add all strains from new pangenome (they should already have correct indices)
+    for strain_index, strain in new_pg.strain_dict.items():
+        merged_pg.load_strain(strain)
+        logger.debug(
+            f'Added new strain: {strain.strain_name} (index: {strain_index})')
+
+    # Merge total gene numbers
+    merged_pg.total_gene_num = previous_pg.total_gene_num + new_pg.total_gene_num
+
+    # Copy other important attributes from previous pangenome
+    merged_pg.orth_id = previous_pg.orth_id
+    merged_pg.para_id = previous_pg.para_id
+    merged_pg.dup_id = previous_pg.dup_id
+    merged_pg.accurate = previous_pg.accurate
+    merged_pg.exhaust_orth = previous_pg.exhaust_orth
+    merged_pg.retrieve = previous_pg.retrieve
+    merged_pg.evalue = previous_pg.evalue
+    merged_pg.aligner = previous_pg.aligner
+    merged_pg.LD = previous_pg.LD
+    merged_pg.AL = previous_pg.AL
+    merged_pg.AS = previous_pg.AS
+
+    logger.info(
+        f'Merged pangenome: {merged_pg.strain_num} total strains, {merged_pg.total_gene_num} total genes')
+
+    return merged_pg
 
 
 def select_repre_node(G: nx.Graph, tree: Tree, each_gene, para_repre, para_context):
@@ -79,12 +137,16 @@ def select_repre_node(G: nx.Graph, tree: Tree, each_gene, para_repre, para_conte
             clust_099_ref = tree.ortho_para[each_repre]
             if clust_099 == clust_099_ref:
                 return each_repre
-        # Choose the largest one
-        repre_with_max_len = max(
-            tmp_len := {k: G.nodes[k]['length'] for k in max_pool}, key=tmp_len.get)
-        logger.trace(
-            f'Conflict in {each_gene} with {max_pool}, choose {repre_with_max_len}')
-        return repre_with_max_len
+        try:
+            # Choose the largest one
+            repre_with_max_len = max(
+                tmp_len := {k: G.nodes[k]['length'] for k in max_pool}, key=tmp_len.get)
+            logger.trace(
+                f'Conflict in {each_gene} with {max_pool}, choose {repre_with_max_len}')
+            return repre_with_max_len
+        except:
+            logger.trace(f'Would only occur in add mode')
+            return None
     elif len(max_pool) == 0:
         return None
 
@@ -598,11 +660,490 @@ def get_expect_identity(tree: Tree, G: Pangenome, pg: Pangenome):
     return round(max_in_range, 5)
 
 
-def main(indir: str, outdir: str, evalue: float, hconf_thre: float, aligner: str, clust_method: str, falen: int, fast_mode: bool, threads: int, orth_id: float, para_id: float, dup_id: float, id_attr_key: str, type_filter: str, max_targets: int, coverage: float, LD: float, AS: float, AL: float, context_similarity: float, accurate: bool, exhaust_orth: bool, flank: int, disable: bool, annot: bool, gcode: int, retrieve: bool, radius: int, sensitivity: int, ins: bool):
+def merge_files(previous_file: str, current_file: str, output_file: str, skip_header: bool = False) -> str:
+    """
+    Merge the previous file with the current file.
 
-    params = locals().copy()
+    Args:
+        previous_file: Path to the previous file
+        current_file: Path to the current (new) file
+        output_file: Path to the output merged file
+        skip_header: If True, skip the first line (header) of the current file when appending
+
+    Returns:
+        str: Path to the merged file
+    """
+    logger.info(f'Merging files:')
+    logger.info(f'  Previous: {previous_file}')
+    logger.info(f'  Current:  {current_file}')
+
+    with open(output_file, 'w') as out_fh:
+        # Write previous file content first
+        with open(previous_file, 'r') as fh:
+            out_fh.write(fh.read())
+
+        # Append current file content
+        with open(current_file, 'r') as fh:
+            if skip_header:
+                # Skip header line
+                next(fh, None)
+            out_fh.write(fh.read())
+
+    logger.info(f'  Merged:   {output_file}')
+
+    return output_file
+
+
+def build_mcl_member_dict(mcl_result_file: str) -> dict:
+    """
+    Build a dictionary mapping each gene to its MCL cluster ID.
+
+    Args:
+        mcl_result_file: Path to the MCL result file
+
+    Returns:
+        dict: {gene_id: mcl_cluster_id}
+    """
+    member_to_mcl = {}
+    with open(mcl_result_file, 'r') as fh:
+        for cluster_id, line in enumerate(fh):
+            genes = line.strip().split('\t')
+            for gene in genes:
+                member_to_mcl[gene] = cluster_id
+    return member_to_mcl
+
+
+def formate_tree(tree: Tree, previous_tree: Tree):
+    logger.info('---- Formatting tree leaves to match previous run...')
+    prev_member_leaf = previous_tree.member_leaf
+    if not prev_member_leaf:
+        logger.warning(
+            'Previous tree has no member_leaf mapping; skip formatting')
+        assert False, 'Previous tree has no member_leaf mapping; cannot format current tree.'
+
+    if not tree.leaf_member:
+        tmp_leaf_member = defaultdict(set)
+        for member, leaf in tree.member_leaf.items():
+            tmp_leaf_member[leaf].add(member)
+        tree.leaf_member = tmp_leaf_member
+
+    leaf_map = {}
+    target_sources = defaultdict(list)
+    for leaf, members in tree.leaf_member.items():
+        prev_counts = Counter(
+            prev_member_leaf[member] for member in members if member in prev_member_leaf)
+        if prev_counts:
+            target, _ = prev_counts.most_common(1)[0]
+            if len(prev_counts) > 1:
+                logger.warning(
+                    f'[w1] Leaf {leaf} maps to multiple previous leaves {dict(prev_counts)}; using {target}')
+            leaf_map[leaf] = target
+        else:
+            # only occurs when new gene as a singleton
+            logger.warning(
+                f'[w2] Leaf {leaf} has no members in previous tree; keeping as is')
+            leaf_map[leaf] = leaf
+        target_sources[leaf_map[leaf]].append(leaf)
+
+    for target, sources in target_sources.items():  # target is a node in previous tree
+        if len(sources) > 1:
+            logger.warning(
+                f'Multiple current leaves {sources} map to previous leaf {target}; merging')
+
+    new_leaf_member = defaultdict(set)
+    for leaf, members in tree.leaf_member.items():
+        target = leaf_map.get(leaf, leaf)
+        new_leaf_member[target].update(members)
+
+    new_member_leaf = {}
+    for leaf, members in new_leaf_member.items():
+        for member in members:
+            new_member_leaf[member] = leaf
+
+    new_leaf_member_strains = defaultdict(set)
+    for leaf, members in new_leaf_member.items():
+        new_leaf_member_strains[leaf] = {int(m.split(':')[0]) for m in members}
+
+    def merge_graph(graph: nx.Graph, mapping: dict) -> nx.Graph:
+        new_graph = nx.Graph()
+        for node, data in graph.nodes(data=True):
+            target = mapping.get(node, node)
+            if target not in new_graph:
+                new_graph.add_node(target, **data)
+            else:
+                for key, value in data.items():
+                    if key in ('members', 'strains') and isinstance(value, (set, list, tuple)):
+                        new_graph.nodes[target].setdefault(
+                            key, set()).update(value)
+                    elif key not in new_graph.nodes[target]:
+                        new_graph.nodes[target][key] = value
+        for u, v, edata in graph.edges(data=True):
+            tu, tv = mapping.get(u, u), mapping.get(v, v)
+            if tu == tv:
+                continue
+            if new_graph.has_edge(tu, tv):
+                if 'weight' in edata:
+                    prev = new_graph[tu][tv].get('weight', edata['weight'])
+                    new_graph[tu][tv]['weight'] = max(prev, edata['weight'])
+            else:
+                new_graph.add_edge(tu, tv, **edata)
+        return new_graph
+
+    if tree.distance_graph:
+        tree.distance_graph = merge_graph(tree.distance_graph, leaf_map)
+    if hasattr(tree, 'raw_distance_graph') and tree.raw_distance_graph:
+        tree.raw_distance_graph = merge_graph(
+            tree.raw_distance_graph, leaf_map)
+
+    ortho_tree = tree.orth_identity_tree
+    if ortho_tree and ortho_tree.number_of_nodes() > 0:
+        for leaf, target in list(leaf_map.items()):
+            if leaf == target or leaf not in ortho_tree.nodes:
+                continue
+            if target in ortho_tree.nodes:
+                for key in ('members', 'strains'):
+                    if key in ortho_tree.nodes[leaf]:
+                        ortho_tree.nodes[target].setdefault(key, set()).update(
+                            ortho_tree.nodes[leaf][key])
+                if 'members' in ortho_tree.nodes[target] and 'strains' in ortho_tree.nodes[target]:
+                    ortho_tree.nodes[target]['has_para'] = len(
+                        ortho_tree.nodes[target]['members']) != len(ortho_tree.nodes[target]['strains'])
+                parents = list(ortho_tree.predecessors(leaf))
+                for parent in parents:
+                    if not ortho_tree.has_edge(parent, target):
+                        ortho_tree.add_edge(parent, target)
+                    if ortho_tree.has_edge(parent, leaf):
+                        ortho_tree.remove_edge(parent, leaf)
+                ortho_tree.remove_node(leaf)
+            else:
+                nx.relabel_nodes(ortho_tree, {leaf: target}, copy=False)
+        tree.orth_identity_tree = ortho_tree
+
+    new_leaf_root = {}
+    next_root = max(previous_tree.leaf_root.values(), default=-1) + 1
+    for leaf in new_leaf_member:
+        if leaf in previous_tree.leaf_root:
+            new_leaf_root[leaf] = previous_tree.leaf_root[leaf]
+        else:
+            new_leaf_root[leaf] = next_root
+            next_root += 1
+
+    tree.member_leaf = new_member_leaf
+    tree.leaf_member = new_leaf_member
+    tree.leaf_member_strains = new_leaf_member_strains
+    tree.leaf_root = new_leaf_root
+
+    root_leaf = defaultdict(set)
+    for leaf, root in new_leaf_root.items():
+        root_leaf[root].add(leaf)
+    tree.root_leaf = root_leaf
+
+    tree.ortho_para = {}
+    if tree.orth_identity_tree and tree.orth_identity_tree.number_of_nodes() > 0:
+        for node in tree.orth_identity_tree.nodes:
+            if tree.orth_identity_tree.out_degree(node) == 0 and 'members' in tree.orth_identity_tree.nodes[node]:
+                for member in tree.orth_identity_tree.nodes[node]['members']:
+                    tree.ortho_para[member] = node
+
+
+def merge_network(G: nx.Graph, pg: Pangenome, tree: Tree, new_strain_index: int, mcl_result_file: str) -> tuple:
+    """
+    Merge a new genome into the existing network G.
+
+    This function:
+    1. Creates individual nodes for each new gene
+    2. Connects new nodes based on gene adjacency
+    3. Merges new nodes with existing nodes based on MCL clustering and synteny
+
+    Merge rules:
+    - If a MCL cluster has only one new gene and one or more old nodes:
+      - If one old node: merge directly
+      - If multiple old nodes (split): use synteny to choose the best match
+    - If a MCL cluster has multiple new genes: do not merge (keep separate)
+
+    Args:
+        G: Existing network graph
+        pg: Pangenome object (contains all strains including the new one)
+        tree: Tree object with MCL clustering info
+        new_strain_index: Index of the newly added strain
+        mcl_result_file: Path to the MCL result file
+
+    Returns:
+        tuple: (G, tree) - Updated graph and tree
+    """
+    logger.info(
+        f'---- Merging new genome (strain index: {new_strain_index}) into the network...')
+
+    # Get the new strain's gene information
+    new_strain = pg.strain_dict[new_strain_index]
+    gene_num = new_strain.gene_num
+
+    # Step 1: Create nodes for new genes
+    logger.info(f'---- Creating nodes for new genes...')
+    new_nodes = []
+    new_member2node = {}  # new gene -> its node name
+
+    for contig_index, gene_count in enumerate(gene_num):
+        for gene_index in range(gene_count):
+            gene_id = f'{new_strain_index}:{contig_index}:{gene_index}'
+            falen = pg.falen.get(gene_id, 0)
+            new_nodes.append((gene_id, {
+                'length': falen,
+                'members': {gene_id},
+                'strains': {new_strain_index},
+                'has_para': False,
+                'repre_nodes': [gene_id]
+            }))
+            new_member2node[gene_id] = gene_id
+
+    G.add_nodes_from(new_nodes)
+    logger.info(f'     Added {len(new_nodes)} new gene nodes')
+
+    # Step 2: Add edges between adjacent new genes
+    logger.info(f'---- Connecting adjacent new genes...')
+    new_edges = []
+    for contig_index, gene_count in enumerate(gene_num):
+        if gene_count > 1:
+            prev_gene = f'{new_strain_index}:{contig_index}:0'
+            for gene_index in range(1, gene_count):
+                curr_gene = f'{new_strain_index}:{contig_index}:{gene_index}'
+                new_edges.append((prev_gene, curr_gene))
+                prev_gene = curr_gene
+    G.add_edges_from(new_edges)
+    logger.info(f'     Added {len(new_edges)} edges between new genes')
+
+    # Step 3: Build mapping from leaf -> old nodes / new genes using tree members
+    logger.info(
+        f'---- Building leaf-to-node mapping based on tree members...')
+
+    leaf_to_old_nodes = defaultdict(set)
+    for node in list(G.nodes()):
+        if node in new_member2node:
+            continue
+        for member in G.nodes[node].get('members', set()):
+            if member not in tree.member_leaf:
+                continue
+            if int(member.split(':')[0]) == new_strain_index:
+                continue
+            leaf_to_old_nodes[tree.member_leaf[member]].add(node)
+
+    leaf_to_new_genes = defaultdict(list)
+    for gene_id in new_member2node:
+        leaf = tree.member_leaf.get(gene_id)
+        if leaf is None:
+            assert False, f'New gene {gene_id} not found in tree.member_leaf'
+        leaf_to_new_genes[leaf].append(gene_id)
+
+    # Step 4: Merge new nodes with old nodes based on leaf membership
+    logger.info(
+        f'---- Merging new nodes with existing nodes based on leaf membership...')
+
+    merged_count = 0
+    skipped_multi_new = 0
+    skipped_no_old = 0
+    relabel_dict = {}
+    split_result_map = defaultdict(list)
+
+    for leaf, new_genes in leaf_to_new_genes.items():
+        if len(new_genes) == 0:
+            assert False, f'Leaf {leaf} has no new genes'
+        if len(new_genes) > 1:
+            logger.debug(
+                f'Leaf {leaf}: {len(new_genes)} new genes, skipping merge')
+            skipped_multi_new += 1
+            for new_gene in new_genes:
+                new_node = f'{leaf}_{new_gene}'
+                relabel_dict[new_gene] = new_node
+                G.nodes[new_gene]['repre_nodes'] = [new_node]
+                split_result_map[leaf].append(new_node)
+            continue
+
+        old_nodes = leaf_to_old_nodes.get(leaf, set())
+        if not old_nodes:
+            logger.debug(
+                f'Leaf {leaf}: no old nodes, new gene stays as singleton')
+            skipped_no_old += 1
+            assert False, f'Leaf {leaf} has no old nodes'
+
+        new_gene = new_genes[0]
+        target_node = None
+        if len(old_nodes) > 1:
+            logger.debug(
+                f'Leaf {leaf}: multiple old nodes found, using synteny to select best match')
+            rep_to_node = {}
+            para_repre = []
+            para_context = {}
+
+            for old_node in old_nodes:
+                members = list(G.nodes[old_node].get('members', set()))
+                repre = members[0] if members else old_node
+                rep_to_node[repre] = old_node
+                para_repre.append(repre)
+                para_context[repre] = tree.get_context(repre, flank=10)
+
+            para_context[new_gene] = tree.get_context(new_gene, flank=10)
+            best_repre = select_repre_node(
+                G, tree, new_gene, para_repre, para_context)
+            if best_repre is not None:
+                target_node = rep_to_node.get(best_repre)
+
+        if target_node is None:
+            target_node = max(
+                old_nodes, key=lambda n: G.nodes[n].get('length', 0))
+        G = merge_node(
+            G, pg, tree, [target_node, new_gene], target=target_node)
+        merged_count += 1
+        logger.debug(f'Merged {new_gene} into {target_node}')
+
+    if relabel_dict:
+        nx.relabel_nodes(G, relabel_dict, copy=False)
+        merged_split_map = defaultdict(list)
+        if hasattr(tree, '_split_result_map_reverse'):
+            for child, parent in tree._split_result_map_reverse.items():
+                merged_split_map[parent].append(child)
+        for parent, children in split_result_map.items():
+            merged_split_map[parent].extend(children)
+        tree.load_split_result_map(merged_split_map)
+    logger.info(f'     Merged: {merged_count} new genes')
+    logger.info(
+        f'     Skipped (multiple new genes in MCL cluster): {skipped_multi_new}')
+    logger.info(f'     Skipped (no old nodes): {skipped_no_old}')
+
+    # Step 5: Update tree structures for remaining new singleton nodes
+    logger.info(f'---- Updating tree structures for new nodes...')
+
+    # Rebuild member_leaf from final G (members are always base genes)
+    member_leaf = {}
+    leaf_member = {}
+    for node in G.nodes():
+        assert 'members' in G.nodes[node], f'Node {node} missing members attribute'
+        for member in G.nodes[node].get('members', set()):
+            member_leaf[member] = node
+
+    # Rebuild leaf_root from final G and orth_identity_tree
+    leaf_root = {}
+    for node in G.nodes():
+        if node in tree.leaf_root:
+            leaf_root[node] = tree.leaf_root[node]
+        elif '_' in node:
+            father = node.split('_')[0]
+            leaf_root[node] = tree.leaf_root.get(father, father)
+        else:
+            members = G.nodes[node].get('members', set())
+            for member in members:
+                if member in tree.leaf_root:
+                    leaf_root[node] = tree.leaf_root[member]
+                    break
+            else:
+                print(G.nodes[node])
+                assert False, f'Node {node} not found in tree.leaf_root'
+
+    tree.member_leaf = member_leaf
+    tree.leaf_root = leaf_root
+
+    # Rebuild root_leaf/leaf_member/leaf_member_strains to match generate_network
+    root_leaf = defaultdict(set)
+    for node in tree.leaf_root:
+        root_leaf[tree.leaf_root[node]].add(node)
+    tree.root_leaf = root_leaf
+
+    leaf_member = defaultdict(set)
+    leaf_member_strains = defaultdict(set)
+    for member in tree.member_leaf:
+        leaf_member[tree.member_leaf[member]].add(member)
+        leaf_member_strains[tree.member_leaf[member]].add(
+            int(member.split(':')[0]))
+    tree.leaf_member = leaf_member
+    tree.leaf_member_strains = leaf_member_strains
+
+    return G, tree
+
+
+def main(indir: str, outdir: str, previous_dir: str, aligner: str, clust_method: str, falen: int, threads: int, id_attr_key: str, type_filter: str, annot: bool, gcode: int, retrieve: bool, disable: bool):
+
+    # Load previous parameters
+    logger.info(f'Loading parameters from {previous_dir}/basic.pkl')
+    with open(f'{previous_dir}/basic.pkl', 'rb') as fh:
+        previous: PklCheck = pickle.load(fh)
+        basic = previous.data_dump('basic')
+        params = basic.params
+
+    # Log current arguments
+    logger.info('Current arguments:')
+    current_args = {
+        'aligner': aligner,
+        'clust_method': clust_method,
+        'falen': falen,
+        'threads': threads,
+        'id_attr_key': id_attr_key,
+        'type_filter': type_filter,
+        'annot': annot,
+        'gcode': gcode,
+        'retrieve': retrieve,
+        'disable': disable
+    }
+    for k, v in current_args.items():
+        logger.info(f'{k}: {v}')
+
+    # Check for consistency
+    check_keys = ['aligner', 'clust_method', 'falen',
+                  'id_attr_key', 'type_filter', 'annot', 'gcode', 'retrieve']
+    for key in check_keys:
+        if key in params and params[key] != current_args[key]:
+            logger.warning(
+                f"Parameter mismatch: {key} (Previous: {params[key]}, Current: {current_args[key]})")
+
+    evalue = params['evalue']
+    hconf_thre = params['hconf_thre']
+    fast_mode = params['fast_mode']
+    orth_id = params['orth_id']
+    para_id = params['para_id']
+    dup_id = params['dup_id']
+    max_targets = params['max_targets']
+    coverage = params.get('coverage', 0.98)
+    LD = params['LD']
+    AS = params['AS']
+    AL = params['AL']
+    context_similarity = params.get('context_similarity', 0)
+    accurate = params['accurate']
+    exhaust_orth = params['exhaust_orth']
+    flank = params.get('flank', 5)
+    radius = params.get('radius', 3)
+    sensitivity = params.get('sensitivity', 'strict')
+    ins = params.get('ins', False)
+
+    logger.info('Inherited parameters:')
+    inherited_params = {
+        'evalue': evalue, 'hconf_thre': hconf_thre, 'fast_mode': fast_mode,
+        'orth_id': orth_id, 'para_id': para_id, 'dup_id': dup_id,
+        'max_targets': max_targets, 'coverage': coverage,
+        'LD': LD, 'AS': AS, 'AL': AL,
+        'context_similarity': context_similarity, 'accurate': accurate,
+        'exhaust_orth': exhaust_orth, 'flank': flank,
+        'radius': radius, 'sensitivity': sensitivity, 'ins': ins
+    }
+    for k, v in inherited_params.items():
+        logger.info(f'{k}: {v}')
+
     decode_status = False
     file_dict = get_file_dict(indir)
+
+    # Validate that only one genome is being added
+    if len(file_dict) != 1:
+        logger.error(
+            f'The "add" command is designed to add only ONE genome at a time.')
+        logger.error(f'Found {len(file_dict)} genome(s) in {indir}:')
+        for strain_name in file_dict.keys():
+            logger.error(f'  - {strain_name}')
+        logger.error(
+            f'Please ensure the input directory contains exactly one genome file.')
+        logger.error(
+            f'If you want to add multiple genomes, add them one by one, or use the "main" command to start a new analysis.')
+        raise ValueError(
+            f'Invalid input: expected 1 genome, found {len(file_dict)} genomes in {indir}')
+
+    logger.info(f'Validated input: exactly 1 genome to be added from {indir}')
+
     if os.path.exists(f'{outdir}/preprocess.pkl'):
         '''
         Found a previous preprocess.pkl file, loading...
@@ -687,6 +1228,14 @@ def main(indir: str, outdir: str, evalue: float, hconf_thre: float, aligner: str
 
                     for _ in tqdm([dup_id, orth_id], unit=f" clust iteration", disable=disable, desc=tqdm_.step(2)):
                         ...
+
+                    # Get the new strain index (it's the last one added)
+                    # Load previous_dir pangenome to get the original strain count
+                    with open(f'{previous_dir}/preprocess.pkl', 'rb') as prev_fh:
+                        prev_pkl: PklCheck = pickle.load(prev_fh)
+                        prev_pg = prev_pkl.data_dump('pangenome')
+                        start_strain_index = prev_pg.strain_num
+                        logger.info(f'New strain index: {start_strain_index}')
             else:
                 logger.warning(
                     f'Previous file parameters is not match, start partition from the begining')
@@ -697,19 +1246,52 @@ def main(indir: str, outdir: str, evalue: float, hconf_thre: float, aligner: str
         If the previous preprocess.pkl file is not found or the parameters are not match,
         it will load the strain from the input directory and create a new pangenome object.
         '''
+        # load single genome
         logger.info(f'Load strain from {indir}')
-        pg = file_parser(
-            indir=indir, outdir=outdir, annot=annot, threads=threads, disable=disable, retrieve=retrieve, falen=falen, gcode=gcode, id_attr_key=id_attr_key, type_filter=type_filter, prefix='partition')
-        file_prot = f'{outdir}/total.involved_prot.fa'
-        logger.info(f'Total gene invovled in this project in: {file_prot}')
-        pg.load_annot_file(f'{outdir}/total.involved_annot.tsv')
-        pg.load_prot_file(file_prot)
+
+        # Load previous pangenome to get the starting strain index
+        with open(f'{previous_dir}/preprocess.pkl', 'rb') as fh:
+            previous_pkl: PklCheck = pickle.load(fh)
+            previous_pg = previous_pkl.data_dump('pangenome')
+            previous_tree = previous_pkl.data_dump('tree')
+            start_strain_index = previous_pg.strain_num
+            logger.info(f'Starting strain index: {start_strain_index}')
+
+        # Parse new genome with correct starting index
+        new_pg = file_parser(
+            indir=indir, outdir=outdir, annot=annot, threads=1, disable=disable,
+            retrieve=retrieve, falen=falen, gcode=gcode, id_attr_key=id_attr_key,
+            type_filter=type_filter, prefix='partition', start_index=start_strain_index, run_type='add')
+        # Merge previous pangenome with new pangenome
+        pg = merge_pangenome(previous_pg, new_pg)
+
+        file_prot = f'{outdir}/add.involved_prot.fa'
+        file_annot = f'{outdir}/add.involved_annot.tsv'
+
+        # Merge protein and annotation files
+        merged_prot = merge_files(
+            previous_file=f'{previous_dir}/total.involved_prot.fa',
+            current_file=file_prot,
+            output_file=f'{outdir}/total.involved_prot.fa',
+            skip_header=False
+        )
+        merged_annot = merge_files(
+            previous_file=f'{previous_dir}/total.involved_annot.tsv',
+            current_file=file_annot,
+            output_file=f'{outdir}/total.involved_annot.tsv',
+            skip_header=True  # Skip header in new annot file
+        )
+
+        pg.load_annot_file(merged_annot)
+        pg.load_prot_file(merged_prot)
         logger.info(
             f'Create distane tree with {pg.strain_num} strains')
-
+        logger.info(
+            f'Clustering with orth_id: {orth_id}, para_id: {para_id}, dup_id: {dup_id}')
         tree = generate_tree(
-            input_file=file_prot, orth_list=[dup_id, orth_id], outdir=pg.outdir, evalue=evalue, aligner=aligner, falen=falen, disable=disable, threads=threads, max_targets=max_targets, coverage=coverage, ID=para_id, LD=LD, AS=AS, AL=AL, clust_method=clust_method)
+            input_file=merged_prot, orth_list=[dup_id, orth_id], outdir=pg.outdir, evalue=evalue, aligner=aligner, falen=falen, disable=disable, threads=threads, max_targets=max_targets, coverage=coverage, ID=para_id, LD=LD, AS=AS, AL=AL, clust_method=clust_method)
 
+        logger.info(f'Pangenome and tree loaded successfully.')
         logger.info(
             f'To save the complete information of this project for breakpoint resume...')
         pickle_preprocess = PklCheck(outdir=outdir, name='preprocess')
@@ -721,6 +1303,10 @@ def main(indir: str, outdir: str, evalue: float, hconf_thre: float, aligner: str
                                                                      'annot': annot, 'falen': falen})
         pickle_preprocess.load('tree', main_data=tree)
         pickle_preprocess.pickle_()
+
+    with open(f'{previous_dir}/graph.pkl', 'rb') as fh:
+        previous_G: PklCheck = pickle.load(fh)
+        previous_G = previous_G.data_dump('graph')
 
     '''
     load necessary parameters and file paths used to quick downstream analysis
@@ -738,14 +1324,26 @@ def main(indir: str, outdir: str, evalue: float, hconf_thre: float, aligner: str
     pg.AS = AS
     pg.load_hconf(hconf_thre=hconf_thre)
 
+    with open(f'{previous_dir}/preprocess.pkl', 'rb') as fh:
+        previous_pkl: PklCheck = pickle.load(fh)
+        previous_tree = previous_pkl.data_dump('tree')
     # -----------------------------------partition step-----------------------------------#
-
-    logger.info('Get the gene primal clust result by mcl')
-    mcl(pg, tree)
+    # logger.info('Get the gene primal clust result by mcl')
+    mcl(pg, tree)  # add distance graph to tree
+    formate_tree(tree, previous_tree)
+    # reformat_tree(tree, previous_tree)
+    mcl_result_file = f'{pg.outdir}/mcl.result'
     logger.info('Load the gene length information')
     pg.reload_nucl_file(tree)
     logger.info('Create synteny network')
-    G, tree = generate_network(pg=pg, tree=tree)
+    G, tree = merge_network(
+        G=previous_G,
+        pg=pg,
+        tree=tree,
+        new_strain_index=start_strain_index,
+        mcl_result_file=mcl_result_file
+    )
+    # G, tree = generate_network(pg=pg, tree=tree)
 
     tree.load_para_id(para_id)
     tree.load_orth_id(orth_id)
@@ -810,37 +1408,26 @@ def main(indir: str, outdir: str, evalue: float, hconf_thre: float, aligner: str
     H.add_nodes_from(G.nodes())
     H.add_edges_from(G.edges())
     nx.write_gml(H, f"{outdir}/pgap2.partition.map.gml")
-    pickle_G = PklCheck(outdir=outdir, name='graph')
-    pickle_G.load('graph', main_data=G)
-    pickle_G.pickle_()
 
     logger.info(
         f'To save the basic results of this project for downstream visulization...')
     pickle_basic = PklCheck(outdir=outdir, name='basic')
-    pickle_basic.load('basic', main_data=Basic(pg=pg, params=params))
+    pickle_basic.load('basic', main_data=Basic(pg=pg))
     pickle_basic.pickle_()
     return 0
 
 
 def launch(args: argparse.Namespace):
     main(indir=os.path.abspath(args.indir), outdir=os.path.abspath(args.outdir),
-         falen=args.min_falen, threads=args.threads, evalue=args.evalue,
+         previous_dir=os.path.abspath(args.previous),
          aligner=args.aligner, clust_method=args.clust_method,
-         orth_id=args.orth_id, para_id=args.para_id, dup_id=args.dup_id,
+         falen=args.min_falen, threads=args.threads,
          id_attr_key=args.id_attr_key, type_filter=args.type_filter,
-         coverage=0.98, fast_mode=args.fast_mode, hconf_thre=args.hconf_thre,
-         #  coverage=args.coverage,
-         LD=args.LD, AS=args.AS, AL=args.AL, max_targets=args.max_targets,
-         # notused parameters, set a default value and will discard in the next release if dont use for sure
-         context_similarity=0, flank=5,
-         accurate=args.accurate,
-         exhaust_orth=args.exhaust_orth,
-         gcode=args.gcode,
-         disable=args.disable, annot=args.annot, retrieve=args.retrieve,
-         radius=args.radius, sensitivity=args.sensitivity, ins=args.ins)
+         annot=args.annot, gcode=args.gcode, retrieve=args.retrieve,
+         disable=args.disable)
 
 
-def partition_portal(args):
+def add_portal(args):
     set_verbosity_level(args.outdir, args.verbose,
                         args.debug, 'partition')
 
@@ -869,74 +1456,41 @@ def partition_portal(args):
     launch(args)
 
 
-def partition_cmd(subparser: _SubParsersAction):
+def add_cmd(subparser: _SubParsersAction):
 
-    subparser_partition: ArgumentParser = subparser.add_parser(
-        'main', help='Core functions of PGAP2', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    subparser_partition.add_argument(
+    subparser_add: ArgumentParser = subparser.add_parser(
+        'add', help='Add a single genome to an existing PGAP2 project', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    subparser_add.add_argument(
         '--indir', '-i', required=True, help='Input file contained, same prefix seems as the same strain.',)
-    subparser_partition.add_argument(
+    subparser_add.add_argument(
         '--outdir', '-o', required=False, help='Output directory', default='.',)
-    subparser_partition.add_argument('--dup_id', required=False, type=float,
-                                     default=0.99, help='The maximum identity between the most recent duplication envent.')
-    subparser_partition.add_argument('--orth_id', required=False, type=float,
-                                     default=0.98, help='The maximum identity between the most similar panclusters.')
-    subparser_partition.add_argument('--para_id', required=False, type=float,
-                                     default=0.7, help='Use this identity as the paralogous identity.')
-    subparser_partition.add_argument("--type-filter", required=False, type=str,
-                                     default='CDS', help="Only for gff file as input, feature type (3rd column) to include, Only lines matching these types will be processed.")
-    subparser_partition.add_argument("--id-attr-key", required=False, type=str,
-                                     default='ID', help="Only for gff file as input, Attribute key to extract from the 9th column as the record ID (e.g., 'ID', 'gene', 'locus_tag').")
-    subparser_partition.add_argument('--hconf_thre', required=False, type=float,
-                                     default=1, help='The threshold to define high confidence cluster which is used to evaluate the cluster diversity. Loose this value when your input is too large or too diverse, such as 0.95.')
-    subparser_partition.add_argument('--exhaust_orth', '-e', required=False, action='store_true',
-                                     default=False, help='Try to split every paralogs gene exhausted')
-    subparser_partition.add_argument('--sensitivity', '-s', required=False, type=str,
-                                     default='strict', choices=('soft', 'moderate', 'strict'), help='The degree of connectedness between each node of clust.')
-    subparser_partition.add_argument('--ins', '-n', required=False,
-                                     action='store_true', default=False, help='Ignore the influence of insertion sequence.')
-    subparser_partition.add_argument('--fast', '-f', dest='fast_mode', required=False,
-                                     action='store_true', default=False, help='Do not apply fine feature analysis just partition according to the gene identity and synteny.')
-    subparser_partition.add_argument('--accurate', '-a', required=False,
-                                     action='store_true', default=False, help='Apply bidirection check for paralogous gene partition (useless if exhaust_orth asigned).')
-    subparser_partition.add_argument('--retrieve', '-r', required=False,
-                                     action='store_true', default=False, help='Retrieve gene that may lost with annotations')
-    subparser_partition.add_argument(
-        '--threads', '-t', required=False, default=1, help='threads used in parallel', type=int)
-    # subparser_partition.add_argument('--coverage', required=False, type=float,
-    #                                  default=0.98, help='Length difference for cdhit cluster.')
-    # subparser_partition.add_argument('--context_similirity', '-s', required=False, type=float,
-    #                                  default=0, help='The context similarity threshold of gene synteny.')
-    # subparser_partition.add_argument('--flank', '-l', required=False, type=int,
-    #                                  default=5, help='The flank region of gene synteny.')
-    subparser_partition.add_argument('--max_targets', '-k', required=False, type=int,
-                                     default=2000, help='The maximum targets for each query in alignment. Improves accuracy for large-scale analyses, but increases runtime and memory usage.')
-    subparser_partition.add_argument('--LD', required=False, type=float,
-                                     default=0.6, help='Minimum gene length difference proportion between two genes.')
-    subparser_partition.add_argument('--AS', required=False, type=float,
-                                     default=0.6, help='Coverage for the shorter sequence.')
-    subparser_partition.add_argument('--AL', required=False, type=float,
-                                     default=0.6, help='Coverage for the longer sequence.')
-    subparser_partition.add_argument('--evalue', required=False, type=float,
-                                     default=1E-5, help='The evalue of aligner.')
-    subparser_partition.add_argument('--aligner', required=False, type=str,
-                                     default='diamond', choices=('diamond', 'blastp'), help='The aligner used to pairwise alignment.')
-    subparser_partition.add_argument('--clust_method', required=False, type=str,
-                                     default='mmseqs2', choices=('cdhit', 'mmseqs2'), help='The method used to cluster the genes.')
-    subparser_partition.add_argument('--radius', required=False, type=int,
-                                     default=3, help='The radius of search region.')
-    subparser_partition.add_argument('--min_falen', '-m', required=False, type=check_min_falen,
-                                     default=20, help='protein length of throw_away_sequences, at least 11')
-    subparser_partition.add_argument('--gcode', required=False, type=check_gcode,
-                                     default=11, help='The genetic code of your species.')
-    subparser_partition.add_argument('--annot', required=False,
-                                     action='store_true', default=False, help='Discard original annotation, and re-annote the genome privately using prodigal')
+    subparser_add.add_argument(
+        '--previous', '-p', required=False, help='The previous PGAP2 result directory, used to resume the partition step quickly.', default=None,)
+    subparser_add.add_argument('--aligner', required=False, type=str,
+                               default='diamond', choices=('diamond', 'blastp'), help='The aligner used to pairwise alignment.')
+    subparser_add.add_argument('--clust_method', required=False, type=str,
+                               default='mmseqs2', choices=('cdhit', 'mmseqs2'), help='The method used to cluster the genes.')
 
-    subparser_partition.add_argument(
+    subparser_add.add_argument("--type-filter", required=False, type=str,
+                               default='CDS', help="Only for gff file as input, feature type (3rd column) to include, Only lines matching these types will be processed.")
+    subparser_add.add_argument("--id-attr-key", required=False, type=str,
+                               default='ID', help="Only for gff file as input, Attribute key to extract from the 9th column as the record ID (e.g., 'ID', 'gene', 'locus_tag').")
+    subparser_add.add_argument('--retrieve', '-r', required=False,
+                               action='store_true', default=False, help='Retrieve gene that may lost with annotations')
+    subparser_add.add_argument(
+        '--threads', '-t', required=False, default=1, help='threads used in parallel', type=int)
+    subparser_add.add_argument('--min_falen', '-m', required=False, type=check_min_falen,
+                               default=20, help='protein length of throw_away_sequences, at least 11')
+    subparser_add.add_argument('--gcode', required=False, type=check_gcode,
+                               default=11, help='The genetic code of your species.')
+    subparser_add.add_argument('--annot', required=False,
+                               action='store_true', default=False, help='Discard original annotation, and re-annote the genome privately using prodigal')
+
+    subparser_add.add_argument(
         '--verbose', '-v', required=False, action='store_true', default=False, help='Verbose output')
-    subparser_partition.add_argument(
+    subparser_add.add_argument(
         '--debug', '-D', required=False, action='store_true', default=False, help='Debug mode. Note: very verbose')
-    subparser_partition.add_argument(
+    subparser_add.add_argument(
         '--disable', required=False, action='store_true', default=False, help='Disable progress bar')
 
-    subparser_partition.set_defaults(func=partition_portal)
+    subparser_add.set_defaults(func=add_portal)

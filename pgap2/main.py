@@ -7,6 +7,7 @@ from argparse import ArgumentParser, _SubParsersAction, Namespace, ArgumentDefau
 from pgap2.utils.partition import partition_cmd
 from pgap2.utils.preprocess import preprocess_cmd
 from pgap2.utils.postprocess import postprocess_cmd
+from pgap2.utils.partition_add import add_cmd as partition_add_cmd
 
 from pgap2 import __version__, __author__
 
@@ -24,6 +25,8 @@ def main():
 
     preprocess_cmd(subparser)
     partition_cmd(subparser)
+    partition_add_cmd(subparser)
+    # partition_merge_cmd(subparser)
     postprocess_cmd(subparser)
     args: Namespace = parser.parse_args()
     if hasattr(args, 'func'):
