@@ -113,21 +113,12 @@ def extract_attr_from_prodigal(file):
                 if partial == '00':
                     complete_gene += 1
 
-    # most_score = np.median(total_score)
-    # portion_complete = complete_gene/total_gene
-    # co = round(portion_complete*most_score, 3)
-    # logger.debug(
-    #     f"{file} co:{co} portion_complete:{portion_complete} median:{most_score} ")
-
     logger.debug(f'Reading the annotation result of {file}...')
     logger.debug(f'#Total gene: {total_gene}')
     logger.debug(f'#Complete gene: {complete_gene}')
-    # logger.debug(f'coefficient: {co}')
-    # stat_tmp['score'] = co
-    # stat_tmp['total_gene_num'] = total_gene
-    # stat_tmp['value_complete'] = complete_gene
-    # stat_tmp['value_incomplete'] = total_gene-complete_gene
-    # stat_tmp['score_list'] = total_score
+    if total_gene > 0:
+        logger.debug(
+            f'Average gene score: {np.mean(total_score):.2f} +/- {np.std(total_score):.2f}')
     return gene_dict
 
 
@@ -198,10 +189,19 @@ def fa_parser(genome_file, strain_name, temp_out, strain_index: int, annot: bool
         strain_index_path = f'{temp_out}/../../genome_index/{dir_index}/{strain_index}'
         os.makedirs(strain_index_path, exist_ok=True)
         records = SeqIO.parse(genome_file, 'fasta')
+        updated_records = []
         for record in records:
-            record.id = str(contig_name_map[record.id])
+            if record.id in contig_name_map:
+                record.id = str(contig_name_map[record.id])
+                updated_records.append(record)
+            else:
+                logger.debug(
+                    f'Skipping contig {record.id} from {strain_name}: no valid genes predicted')
         genome_file = f'{strain_index_path}/ref.fa'
-        SeqIO.write(records, genome_file, 'fasta')
+        if updated_records:
+            SeqIO.write(updated_records, genome_file, 'fasta')
+        else:
+            logger.warning(f'No contigs with valid genes for {strain_name}')
 
     if retrieve:
         safe_mpi = shlex.quote(f"{strain_index_path}/ref.mpi")
@@ -292,10 +292,20 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
             strain_index_path = f'{temp_out}/../../genome_index/{dir_index}/{strain_index}'
             os.makedirs(strain_index_path, exist_ok=True)
             records = list(SeqIO.parse(gbf_file, 'genbank'))
+            updated_records = []
             for record in records:
-                record.id = str(contig_name_map[record.id])
+                if record.id in contig_name_map:
+                    record.id = str(contig_name_map[record.id])
+                    updated_records.append(record)
+                else:
+                    logger.debug(
+                        f'Skipping contig {record.id} from {strain_name}: no valid genes predicted')
             genome_file = f'{strain_index_path}/ref.fa'
-            SeqIO.write(records, genome_file, 'fasta')
+            if updated_records:
+                SeqIO.write(updated_records, genome_file, 'fasta')
+            else:
+                logger.warning(
+                    f'No contigs with valid genes for {strain_name}')
 
         if retrieve:
             safe_mpi = shlex.quote(f"{strain_index_path}/ref.mpi")
@@ -360,7 +370,7 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
 
     def parse_attributes(attributes):
         """
-        解析 GFF 第九列的属性字段，返回一个字典。
+        Parse the attributes column of a GFF3 file line into a dictionary.
         """
         attr_dict = {}
         for attr in attributes.split(';'):

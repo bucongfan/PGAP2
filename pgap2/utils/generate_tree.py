@@ -347,8 +347,6 @@ def generate_tree(input_file, orth_list: list, outdir: str, coverage: float, eva
         need_added_node = []
         need_relabeled = {}
         for repre, sub_clusters in mydict.items():
-            if repre == '0:0:11':
-                print(111)
             if i == 0:
                 strains = {int(_.split(':')[0]) for _ in sub_clusters}
                 members = set(sub_clusters)
