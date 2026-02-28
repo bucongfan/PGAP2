@@ -17,7 +17,7 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 from pgap2.lib.pangenome import Pangenome
 from pgap2.lib.tree import Tree
 from pgap2.utils.generate_tree import run_alignment, process_lines
-from pgap2.utils.tools import insert_node, merge_node
+from pgap2.utils.graph_utils import insert_node, merge_node
 from pgap2.utils.supply import run_command
 from pgap2.utils.supply import tqdm_, sfw
 

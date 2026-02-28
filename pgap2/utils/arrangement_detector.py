@@ -2,10 +2,11 @@ import itertools
 import networkx as nx
 
 from tqdm import tqdm
+from collections import defaultdict
 
 from pgap2.lib.pangenome import Pangenome
 from pgap2.lib.tree import Tree
-from pgap2.utils.tools import merge_node, get_similarity, merge_judge
+from pgap2.utils.graph_utils import merge_node, get_similarity, merge_judge
 from pgap2.utils.supply import tqdm_
 
 """
@@ -53,17 +54,74 @@ def get_rearrange_list(G, tree):
     return rearrange_list
 
 
-def merge_by_synteny(G: nx.Graph, pg: Pangenome, tree: Tree, context_sim: float, flank: int, sensitivity: str, ins: bool = False, step: int = 4):
+def _guide_says_merge(G, guide_dict, node_a, node_b):
+    """
+    Use the guide_dict to decide whether two nodes should be merged.
+
+    Returns:
+        True  - all members are old genes and shared a previous cluster → merge.
+        False - all members are old genes but different clusters → don't merge.
+        None  - has new genes, guide cannot decide → normal judgment.
+    """
+    # O(1) short-circuit: if either node has new genes, guide cannot decide
+    if G.nodes[node_a].get('has_new', False) or G.nodes[node_b].get('has_new', False):
+        return None
+
+    members_a = G.nodes[node_a]['members']
+    members_b = G.nodes[node_b]['members']
+
+    clusters_a = set()
+    for m in members_a:
+        c = guide_dict.get(m)
+        if c is None:
+            return None
+        clusters_a.add(c)
+
+    for m in members_b:
+        c = guide_dict.get(m)
+        if c is None:
+            return None
+        if c in clusters_a:
+            return True  # found intersection, merge
+
+    return False
+
+
+def merge_by_synteny(G: nx.Graph, pg: Pangenome, tree: Tree, context_sim: float, flank: int, sensitivity: str, ins: bool = False, step: int = 4, guide_dict: dict = None, new_strain_indices: set = None):
 
     def find_final_node(node, mapping):
         while mapping[node] != node:
             node = mapping[node]
         return node
 
+    use_guide = guide_dict is not None
+
     for _, nodes in tqdm(tree.root_leaf.items(), unit=' node', desc=tqdm_.step(step=step), disable=pg.disable_tqdm):
         if len(nodes) == 1:
             continue
         exists_nodes = [_ for _ in nodes if G.has_node(_)]
+
+        # --- Guide fast path: skip pairwise search for all-old-gene groups ---
+        if use_guide and all(not G.nodes[n].get('has_new', False) for n in exists_nodes):
+            cluster_groups = defaultdict(list)
+            for n in exists_nodes:
+                for m in G.nodes[n]['members']:
+                    c = guide_dict.get(m)
+                    if c is not None:
+                        cluster_groups[c].append(n)
+                        break
+            for cluster_id, group_nodes in cluster_groups.items():
+                unique_nodes = list(dict.fromkeys(group_nodes))
+                alive = [n for n in unique_nodes if G.has_node(n)]
+                if len(alive) < 2:
+                    continue
+                target = max(alive, key=lambda x: G.nodes[x]['length'])
+                G = merge_node(G, pg, tree, alive, target=target)
+                for v in alive:
+                    if v != target and pg.retrieve:
+                        tree.update_removed_nodes(v)
+            continue
+
         need_merge_nodes = {}
         for clust_pair in itertools.combinations(exists_nodes, 2):
             need_merge = False
@@ -98,7 +156,16 @@ def merge_by_synteny(G: nx.Graph, pg: Pangenome, tree: Tree, context_sim: float,
             v_i = len(G.nodes[clust_b]['repre_nodes'])
             flag = False
             need_merge = False
-            if (clust_a, clust_b) in chacned_result:
+
+            # --- Guide-based shortcut for add mode ---
+            if use_guide:
+                guide_result = _guide_says_merge(
+                    G, guide_dict, clust_a, clust_b)
+                if guide_result is not None:
+                    need_merge = guide_result
+                    flag = True
+
+            if (clust_a, clust_b) in chacned_result and not flag:
                 pre_u_i, pre_v_i, pre_need_merge = chacned_result[(
                     clust_a, clust_b)]
                 if u_i == pre_u_i and v_i == pre_v_i:

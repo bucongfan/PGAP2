@@ -4,10 +4,12 @@ from time import time
 from loguru import logger
 from argparse import ArgumentParser, _SubParsersAction, Namespace, ArgumentDefaultsHelpFormatter
 
-from pgap2.utils.partition import partition_cmd
-from pgap2.utils.preprocess import preprocess_cmd
-from pgap2.utils.postprocess import postprocess_cmd
-from pgap2.utils.partition_add import add_cmd as partition_add_cmd
+from pgap2.cli.partition import partition_cmd
+from pgap2.cli.preprocess import preprocess_cmd
+from pgap2.cli.postprocess import postprocess_cmd
+from pgap2.cli.partition_add import add_cmd as partition_add_cmd
+from pgap2.cli.partition_merge import merge_cmd as partition_merge_cmd
+from pgap2.cli.partition_minus import minus_cmd as partition_minus_cmd
 
 from pgap2 import __version__, __author__
 
@@ -26,7 +28,8 @@ def main():
     preprocess_cmd(subparser)
     partition_cmd(subparser)
     partition_add_cmd(subparser)
-    # partition_merge_cmd(subparser)
+    partition_merge_cmd(subparser)
+    partition_minus_cmd(subparser)
     postprocess_cmd(subparser)
     args: Namespace = parser.parse_args()
     if hasattr(args, 'func'):

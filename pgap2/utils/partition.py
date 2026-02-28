@@ -1,6 +1,6 @@
 import os
 import pickle
-import shlex  # Added shlex
+import shlex
 import argparse
 import itertools
 import numpy as np
@@ -12,8 +12,6 @@ from collections import Counter, defaultdict
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components as ccomps
 
-from argparse import ArgumentParser, _SubParsersAction
-
 from pgap2.lib.tree import Tree
 from pgap2.lib.basic import Basic
 from pgap2.lib.pklcheck import PklCheck
@@ -21,12 +19,12 @@ from pgap2.lib.panclust import Panclust
 from pgap2.lib.pangenome import Pangenome
 
 from pgap2.utils.supply import sfw, tqdm_
-from pgap2.utils.supply import set_verbosity_level, run_command
+from pgap2.utils.supply import run_command
 from pgap2.utils.generate_tree import generate_tree
 from pgap2.utils.gene_retriever import retrieve_gene
 from pgap2.utils.arrangement_detector import merge_by_synteny
 from pgap2.utils.data_loader import file_parser, get_file_dict
-from pgap2.utils.tools import merge_node, shortest_path_length_with_max_length, get_similarity, merge_judge, check_min_falen, check_gcode, find_final_node
+from pgap2.utils.graph_utils import merge_node, shortest_path_length_with_max_length, get_similarity, merge_judge, find_final_node
 
 """
 main function for partitioning pangenome data into clusters based on identity and synteny.
@@ -51,8 +49,29 @@ output:
 """
 
 
-def select_repre_node(G: nx.Graph, tree: Tree, each_gene, para_repre, para_context):
+def select_repre_node(G: nx.Graph, tree: Tree, each_gene, para_repre, para_context, guide_dict: dict = None):
     # Select the representative node for each gene based on the context similarity
+    # Guide shortcut: if guide_dict is provided and the gene is an old gene,
+    # prefer the representative that was in the same cluster in the previous run.
+    if guide_dict and each_gene in guide_dict:
+        gene_cluster = guide_dict[each_gene]
+        guided_repre = [
+            r for r in para_repre if r in guide_dict and guide_dict[r] == gene_cluster]
+        if len(guided_repre) == 1:
+            logger.debug(
+                f'Guide dict suggests {guided_repre[0]} as the representative for {each_gene}')
+            return guided_repre[0]
+        elif len(guided_repre) > 1:
+            logger.debug(
+                f'Guide dict has multiple candidates {guided_repre} for {each_gene}, SKIP guide for this gene')
+            # # Multiple candidates from the same old cluster — pick the largest
+            # repre_with_max_len = max(
+            #     tmp_len := {k: G.nodes[k]['length'] for k in guided_repre}, key=tmp_len.get)
+            # logger.info(
+            #     f'Guide dict has multiple candidates {guided_repre} for {each_gene}, choose {repre_with_max_len} based on length')
+            # return repre_with_max_len
+        # If no guided match, fall through to normal logic
+
     child_context = para_context[each_gene]
     max_similarity = 0
     # max_repre = None
@@ -131,7 +150,7 @@ def get_paralogs_repre(members):
                     return paralog_repre
 
 
-def generate_network(pg: Pangenome, tree: Tree):
+def generate_network(pg: Pangenome, tree: Tree, guide_dict: dict = None, new_strain_indices: set = None):
     '''
     Put the index of the gene into the network,
     If the gene is a paralog, it will be split to the single node.
@@ -139,6 +158,8 @@ def generate_network(pg: Pangenome, tree: Tree):
 
     pg: Pangenome object
     tree: nx.DiGraph from trimmed N-rooted fusion tree from iterative cd-hit results
+    guide_dict: optional dict mapping gene_id -> previous cluster name (for add mode)
+    new_strain_indices: optional set of strain indices for newly added genomes
 
     return:
         G: nx.Graph link all the nodes with its real relative distance in the genome
@@ -162,15 +183,21 @@ def generate_network(pg: Pangenome, tree: Tree):
             para_dict[node] = orth_identity_tree.nodes[node]['members']
             for each_gene in para_dict[node]:
                 falen = pg.falen[each_gene]
+                _strain = int(each_gene.split(':')[0])
+                _has_new = bool(
+                    new_strain_indices and _strain in new_strain_indices)
                 nodes.append((each_gene, {'length': falen, 'members': set([
-                    each_gene]), 'strains': set([int(each_gene.split(':')[0])]), 'has_para': False, 'repre_nodes': [each_gene]}))
+                    each_gene]), 'strains': set([_strain]), 'has_para': False, 'has_new': _has_new, 'repre_nodes': [each_gene]}))
                 member2node.update({each_gene: each_gene})
         else:
             member2node.update(
                 {_: node for _ in orth_identity_tree.nodes[node]['members']})
             falen = pg.falen[node]
+            _strains = orth_identity_tree.nodes[node]['strains']
+            _has_new = bool(
+                new_strain_indices and _strains.intersection(new_strain_indices))
             nodes.append(
-                (node, {'length': falen, 'members': orth_identity_tree.nodes[node]['members'], 'strains': orth_identity_tree.nodes[node]['strains'], 'has_para': False, 'repre_nodes': [node]}))
+                (node, {'length': falen, 'members': orth_identity_tree.nodes[node]['members'], 'strains': _strains, 'has_para': False, 'has_new': _has_new, 'repre_nodes': [node]}))
             split_result_map[node].append(node)
     G.add_nodes_from(nodes)
     del pg.falen
@@ -218,7 +245,7 @@ def generate_network(pg: Pangenome, tree: Tree):
                     if each_gene in para_repre:
                         continue
                     max_repre = select_repre_node(
-                        G, tree, each_gene, para_repre, para_context)
+                        G, tree, each_gene, para_repre, para_context, guide_dict=guide_dict)
 
                     if not max_repre:
                         logger.debug(
@@ -238,7 +265,7 @@ def generate_network(pg: Pangenome, tree: Tree):
 
                 for each_other_clust in other_clusts:
                     max_repre = select_repre_node(
-                        G, tree, each_other_clust, para_repre_map.keys(), para_context)
+                        G, tree, each_other_clust, para_repre_map.keys(), para_context, guide_dict=guide_dict)
                     if not max_repre:
                         logger.debug(
                             f'No repre for {each_other_clust}, set as itself')
@@ -440,7 +467,10 @@ def similarity_partition(tree: Tree, G: nx.Graph, nodes, search_distance, pre_co
     return need_merge_nodes, merge_node_attr
 
 
-def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, fast: bool = False, sensitivity: str = 'strict', radius: int = 3, context_sim: float = 0, flank: int = 5, disable: bool = True, step: int = 4):
+def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, fast: bool = False, sensitivity: str = 'strict', radius: int = 3, context_sim: float = 0, flank: int = 5, disable: bool = True, step: int = 4, guide_dict: dict = None, new_strain_indices: set = None):
+
+    from pgap2.utils.arrangement_detector import _guide_says_merge
+    use_guide = guide_dict is not None
 
     search_distance = radius*2+1
     root_leaf = tree.root_leaf
@@ -465,6 +495,38 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, fast: bool = Fal
                     continue
                 exists_nodes.add(node)
             if len(exists_nodes) < 2:
+                continue
+
+            # --- Guide fast path: skip similarity_partition for all-old-gene groups ---
+            if use_guide and all(not G.nodes[n].get('has_new', False) for n in exists_nodes):
+                # Group nodes by their guide cluster
+                cluster_groups = defaultdict(list)
+                for n in exists_nodes:
+                    for m in G.nodes[n]['members']:
+                        c = guide_dict.get(m)
+                        if c is not None:
+                            cluster_groups[c].append(n)
+                            break  # one member is enough to identify the cluster
+                # Merge nodes that belong to the same previous cluster
+                for cluster_id, group_nodes in cluster_groups.items():
+                    # deduplicate, preserve order
+                    unique_nodes = list(dict.fromkeys(group_nodes))
+                    if len(unique_nodes) < 2:
+                        continue
+                    # Filter out already-removed nodes
+                    alive = [
+                        n for n in unique_nodes if n not in removed_nodes and G.has_node(n)]
+                    if len(alive) < 2:
+                        continue
+                    target = max(alive, key=lambda x: G.nodes[x]['length'])
+                    G = merge_node(G, pg, tree, alive, target=target)
+                    merge_event = True
+                    for v in alive:
+                        if v != target:
+                            removed_nodes.add(v)
+                            changed_nodes.update({target, v})
+                logger.debug(
+                    f'Guide-based merging completed for {len(cluster_groups)} clusters in this round.')
                 continue
 
             logger.trace(
@@ -504,7 +566,16 @@ def merge_by_similarity(G: nx.Graph, pg: Pangenome, tree: Tree, fast: bool = Fal
                         u_i = len(G.nodes[u]['repre_nodes'])
                         v_i = len(G.nodes[v]['repre_nodes'])
                         flag = False
-                        if (u, v) in changed_result:
+
+                        # --- Guide-based shortcut for add mode ---
+                        if use_guide:
+                            guide_result = _guide_says_merge(
+                                G, guide_dict, u, v)
+                            if guide_result is not None:
+                                need_merge = guide_result
+                                flag = True
+
+                        if (u, v) in changed_result and not flag:
                             pre_u_i, pre_v_i, pre_need_merge = changed_result[(
                                 u, v)]
                             if u_i == pre_u_i and v_i == pre_v_i:
@@ -820,123 +891,3 @@ def main(indir: str, outdir: str, evalue: float, hconf_thre: float, aligner: str
     pickle_basic.load('basic', main_data=Basic(pg=pg, params=params))
     pickle_basic.pickle_()
     return 0
-
-
-def launch(args: argparse.Namespace):
-    main(indir=os.path.abspath(args.indir), outdir=os.path.abspath(args.outdir),
-         falen=args.min_falen, threads=args.threads, evalue=args.evalue,
-         aligner=args.aligner, clust_method=args.clust_method,
-         orth_id=args.orth_id, para_id=args.para_id, dup_id=args.dup_id,
-         id_attr_key=args.id_attr_key, type_filter=args.type_filter,
-         coverage=0.98, fast_mode=args.fast_mode, hconf_thre=args.hconf_thre,
-         #  coverage=args.coverage,
-         LD=args.LD, AS=args.AS, AL=args.AL, max_targets=args.max_targets,
-         # notused parameters, set a default value and will discard in the next release if dont use for sure
-         context_similarity=0, flank=5,
-         accurate=args.accurate,
-         exhaust_orth=args.exhaust_orth,
-         gcode=args.gcode,
-         disable=args.disable, annot=args.annot, retrieve=args.retrieve,
-         radius=args.radius, sensitivity=args.sensitivity, ins=args.ins)
-
-
-def partition_portal(args):
-    set_verbosity_level(args.outdir, args.verbose,
-                        args.debug, 'partition')
-
-    if args.clust_method == 'mmseqs2':
-        sfw.check_dependency("mmseqs2")
-    elif args.clust_method == 'cdhit':
-        sfw.check_dependency("cdhit")
-
-    sfw.check_dependency("mcl")
-    sfw.check_dependency("mcxdeblast")
-    if args.aligner == 'diamond':
-        sfw.check_dependency("diamond")
-    elif args.aligner == 'blastp':
-        sfw.check_dependency("blastp")
-        sfw.check_dependency("makeblastdb")
-
-    if args.retrieve:
-        sfw.check_dependency("miniprot")
-        sfw.check_dependency("seqtk")
-    if args.annot:
-        sfw.check_dependency("prodigal")
-    if args.retrieve:
-        tqdm_.set_total_step(12)
-    else:
-        tqdm_.set_total_step(7)
-    launch(args)
-
-
-def partition_cmd(subparser: _SubParsersAction):
-
-    subparser_partition: ArgumentParser = subparser.add_parser(
-        'main', help='Core functions of PGAP2', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    subparser_partition.add_argument(
-        '--indir', '-i', required=True, help='Input file contained, same prefix seems as the same strain.',)
-    subparser_partition.add_argument(
-        '--outdir', '-o', required=False, help='Output directory', default='.',)
-    subparser_partition.add_argument('--dup_id', required=False, type=float,
-                                     default=0.99, help='The maximum identity between the most recent duplication envent.')
-    subparser_partition.add_argument('--orth_id', required=False, type=float,
-                                     default=0.98, help='The maximum identity between the most similar panclusters.')
-    subparser_partition.add_argument('--para_id', required=False, type=float,
-                                     default=0.7, help='Use this identity as the paralogous identity.')
-    subparser_partition.add_argument("--type-filter", required=False, type=str,
-                                     default='CDS', help="Only for gff file as input, feature type (3rd column) to include, Only lines matching these types will be processed.")
-    subparser_partition.add_argument("--id-attr-key", required=False, type=str,
-                                     default='ID', help="Only for gff file as input, Attribute key to extract from the 9th column as the record ID (e.g., 'ID', 'gene', 'locus_tag').")
-    subparser_partition.add_argument('--hconf_thre', required=False, type=float,
-                                     default=1, help='The threshold to define high confidence cluster which is used to evaluate the cluster diversity. Loose this value when your input is too large or too diverse, such as 0.95.')
-    subparser_partition.add_argument('--exhaust_orth', '-e', required=False, action='store_true',
-                                     default=False, help='Try to split every paralogs gene exhausted')
-    subparser_partition.add_argument('--sensitivity', '-s', required=False, type=str,
-                                     default='strict', choices=('soft', 'moderate', 'strict'), help='The degree of connectedness between each node of clust.')
-    subparser_partition.add_argument('--ins', '-n', required=False,
-                                     action='store_true', default=False, help='Ignore the influence of insertion sequence.')
-    subparser_partition.add_argument('--fast', '-f', dest='fast_mode', required=False,
-                                     action='store_true', default=False, help='Do not apply fine feature analysis just partition according to the gene identity and synteny.')
-    subparser_partition.add_argument('--accurate', '-a', required=False,
-                                     action='store_true', default=False, help='Apply bidirection check for paralogous gene partition (useless if exhaust_orth asigned).')
-    subparser_partition.add_argument('--retrieve', '-r', required=False,
-                                     action='store_true', default=False, help='Retrieve gene that may lost with annotations')
-    subparser_partition.add_argument(
-        '--threads', '-t', required=False, default=1, help='threads used in parallel', type=int)
-    # subparser_partition.add_argument('--coverage', required=False, type=float,
-    #                                  default=0.98, help='Length difference for cdhit cluster.')
-    # subparser_partition.add_argument('--context_similirity', '-s', required=False, type=float,
-    #                                  default=0, help='The context similarity threshold of gene synteny.')
-    # subparser_partition.add_argument('--flank', '-l', required=False, type=int,
-    #                                  default=5, help='The flank region of gene synteny.')
-    subparser_partition.add_argument('--max_targets', '-k', required=False, type=int,
-                                     default=2000, help='The maximum targets for each query in alignment. Improves accuracy for large-scale analyses, but increases runtime and memory usage.')
-    subparser_partition.add_argument('--LD', required=False, type=float,
-                                     default=0.6, help='Minimum gene length difference proportion between two genes.')
-    subparser_partition.add_argument('--AS', required=False, type=float,
-                                     default=0.6, help='Coverage for the shorter sequence.')
-    subparser_partition.add_argument('--AL', required=False, type=float,
-                                     default=0.6, help='Coverage for the longer sequence.')
-    subparser_partition.add_argument('--evalue', required=False, type=float,
-                                     default=1E-5, help='The evalue of aligner.')
-    subparser_partition.add_argument('--aligner', required=False, type=str,
-                                     default='diamond', choices=('diamond', 'blastp'), help='The aligner used to pairwise alignment.')
-    subparser_partition.add_argument('--clust_method', required=False, type=str,
-                                     default='mmseqs2', choices=('cdhit', 'mmseqs2'), help='The method used to cluster the genes.')
-    subparser_partition.add_argument('--radius', required=False, type=int,
-                                     default=3, help='The radius of search region.')
-    subparser_partition.add_argument('--min_falen', '-m', required=False, type=check_min_falen,
-                                     default=20, help='protein length of throw_away_sequences, at least 11')
-    subparser_partition.add_argument('--gcode', required=False, type=check_gcode,
-                                     default=11, help='The genetic code of your species.')
-    subparser_partition.add_argument('--annot', required=False,
-                                     action='store_true', default=False, help='Discard original annotation, and re-annote the genome privately using prodigal')
-
-    subparser_partition.add_argument(
-        '--verbose', '-v', required=False, action='store_true', default=False, help='Verbose output')
-    subparser_partition.add_argument(
-        '--debug', '-D', required=False, action='store_true', default=False, help='Debug mode. Note: very verbose')
-    subparser_partition.add_argument(
-        '--disable', required=False, action='store_true', default=False, help='Disable progress bar')
-
-    subparser_partition.set_defaults(func=partition_portal)

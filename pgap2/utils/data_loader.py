@@ -219,8 +219,8 @@ def gbf_parser(gbf_file, strain_name, temp_out, strain_index: int, annot: bool, 
         output_file = f'{temp_out}/{strain_name}.genome.fa'
         records = SeqIO.parse(gbf_file, 'genbank')
         SeqIO.write(records, output_file, 'fasta')
-        good_gene_num, bad_gene_num, annot_file, prot_fh = fa_parser(genome_file=output_file, strain_name=strain_name,
-                                                                     temp_out=temp_out, strain_index=strain_index, annot=True, partial=partial, falen=falen)
+        good_gene_num, bad_gene_num, annot_file, prot_file = fa_parser(genome_file=output_file, strain_name=strain_name,
+                                                                       temp_out=temp_out, strain_index=strain_index, annot=True, partial=partial, falen=falen, retrieve=retrieve, gcode=gcode)
     else:
         with open(gbf_file) as in_seq_handle:
             seq_dict = SeqIO.to_dict(SeqIO.parse(in_seq_handle, "genbank"))
@@ -431,7 +431,7 @@ def gffa_parser(gffa_file, fa_file, strain_name, temp_out, strain_index: int, an
         genome_fa = dict_to_fasta(
             seq_dict, None, f'{temp_out}/{strain_name}.genome.fa')
         good_gene_num, bad_gene_num, annot_file, prot_file = fa_parser(genome_file=genome_fa, strain_name=strain_name, temp_out=temp_out,
-                                                                       strain_index=strain_index, annot=True, partial=partial, falen=falen)
+                                                                       strain_index=strain_index, annot=True, partial=partial, falen=falen, retrieve=retrieve, gcode=gcode)
     else:
         annot_file = f'{temp_out}/{strain_name}.annot'
         prot_file = f'{temp_out}/{strain_name}.prot'

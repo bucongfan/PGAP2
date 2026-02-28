@@ -1,8 +1,8 @@
+import math
+import random
+
 import numpy as np
 import pandas as pd
-import random
-import math
-import numpy as np
 
 from loguru import logger
 from itertools import combinations
@@ -111,14 +111,10 @@ class PanGP():
         if not np.isnan(self.known_distance[strain_i][strain_j]):
             diff_cluster_num = self.known_distance[strain_i][strain_j]
         else:
-            # strain_i_name = self.pav.columns[strain_i]
-            strain_i_name = self.pav[:, strain_i]
-            # strain_j_name = self.pav.columns[strain_j]
-            strain_j_name = self.pav[:, strain_j]
-            # set1 = set(self.pav.index[self.pav[strain_i_name] >= 1])
-            set1 = set(np.where(self.pav[:, strain_i_name] >= 1)[0])
-            # set2 = set(self.pav.index[self.pav[strain_j_name] >= 1])
-            set2 = set(np.where(self.pav[:, strain_j_name] >= 1)[0])
+            col_i = self.pav[:, strain_i]
+            col_j = self.pav[:, strain_j]
+            set1 = set(np.where(col_i >= 1)[0])
+            set2 = set(np.where(col_j >= 1)[0])
             diff_cluster_num = len(set1.symmetric_difference(set2))
             self.known_distance[strain_i][strain_j] = diff_cluster_num
             self.known_distance[strain_j][strain_i] = diff_cluster_num

@@ -58,7 +58,7 @@ def test_decode_failure():
 
 
 def test_get_similarity():
-    from pgap2.utils.partition import get_similarity
+    from pgap2.utils.graph_utils import get_similarity
 
     similarity = get_similarity([1, 2, 3, 4, 5, 6], [1, 2, 3])
     assert similarity == 1, "get_similarity did not return the expected similarity value"
@@ -74,7 +74,7 @@ def test_get_similarity():
 
 
 def test_shortest_path_length_with_max_length():
-    from pgap2.utils.partition import shortest_path_length_with_max_length
+    from pgap2.utils.graph_utils import shortest_path_length_with_max_length
     import networkx as nx
     G = nx.Graph()
     G.add_edge(1, 2, weight=1)
@@ -127,7 +127,7 @@ def test_similarity_partition():
 
 
 def test_find_final_node():
-    from pgap2.utils.tools import find_final_node
+    from pgap2.utils.graph_utils import find_final_node
 
     mapping = {1: 1, 2: 1, 3: 2, 4: 4, 5: 5}
     assert find_final_node(
@@ -139,7 +139,7 @@ def test_find_final_node():
 
 
 def test_test_connectedness():
-    from pgap2.utils.tools import test_connectedness
+    from pgap2.utils.graph_utils import test_connectedness
     from pgap2.lib.tree import Tree
     import networkx as nx
     tree = Tree()
@@ -174,7 +174,7 @@ def test_test_connectedness():
 
 
 def test_merge_node():
-    from pgap2.utils.tools import merge_node
+    from pgap2.utils.graph_utils import merge_node
     from pgap2.lib.tree import Tree
     import networkx as nx
     G = nx.Graph()

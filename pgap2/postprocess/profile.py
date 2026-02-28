@@ -6,7 +6,7 @@ from loguru import logger
 from argparse import ArgumentParser, _SubParsersAction
 
 from pgap2.utils.supply import sfw, tqdm_
-from pgap2.utils.tools import detect_separator, is_numeric_pd
+from pgap2.utils.graph_utils import detect_separator, is_numeric_pd
 from pgap2.utils.supply import set_verbosity_level
 from pgap2.utils.draw import postprocess_draw, postprocess_draw_vector
 from pgap2.postprocess.stat import get_pan_group, get_rarefaction, fit_rerefaction

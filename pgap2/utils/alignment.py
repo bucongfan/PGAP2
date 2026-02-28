@@ -43,18 +43,19 @@ def run_pw(seqA, seqB, dna=False):
     return pwid
 
 
-fasta_file = sys.argv[1]
+if __name__ == "__main__":
+    fasta_file = sys.argv[1]
 
-query_id = sys.argv[2]
-target_id = sys.argv[3]
+    query_id = sys.argv[2]
+    target_id = sys.argv[3]
 
-# read the fasta file and find the sequences for the query and target
-target_sequence = []
-for sequence in SeqIO.parse(fasta_file, "fasta"):
-    if sequence.id in (target_id, query_id):
-        target_sequence.append((sequence.seq, sequence.id))
-    if len(target_sequence) == 2:
-        pwid = run_pw(target_sequence[0][0], target_sequence[1][0])
-        print('{}\t{}\t{}'.format(
-            target_sequence[0][1], target_sequence[1][1], pwid))
-        break
+    # read the fasta file and find the sequences for the query and target
+    target_sequence = []
+    for sequence in SeqIO.parse(fasta_file, "fasta"):
+        if sequence.id in (target_id, query_id):
+            target_sequence.append((sequence.seq, sequence.id))
+        if len(target_sequence) == 2:
+            pwid = run_pw(target_sequence[0][0], target_sequence[1][0])
+            print('{}\t{}\t{}'.format(
+                target_sequence[0][1], target_sequence[1][1], pwid))
+            break
