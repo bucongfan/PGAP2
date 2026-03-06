@@ -28,7 +28,8 @@ def launch(args: argparse.Namespace):
          nodraw=args.nodraw, single_file=args.single_file,
          marker_file=args.marker, ani_thre=args.ani_thre,
          annot=args.annot, threads=args.threads, gcode=args.gcode,
-         disable=args.disable, retrieve=args.retrieve, falen=args.min_falen,)
+         disable=args.disable, retrieve=args.retrieve, falen=args.min_falen,
+         exclude_outlier=args.exclude_outlier,)
     return 0
 
 
@@ -106,6 +107,8 @@ def preprocess_cmd(subparser: _SubParsersAction):
                                       action='store_true', default=False, help='Retrieving gene that may lost with annotations')
     subparser_preprocess.add_argument('--gcode', required=False, type=check_gcode,
                                       default=11, help='The genetic code of your species. Default is [11] (bacteria).')
+    subparser_preprocess.add_argument('--exclude_outlier', required=False,
+                                      action='store_true', default=False, help='Exclude outlier strains from the output pkl. When set, low-quality or dissimilar strains will be removed from the pangenome data. By default, all strains are kept in the pkl (outliers are flagged but not removed).')
     subparser_preprocess.add_argument('--nodraw', required=False,
                                       action='store_true', default=False, help='Only output flat file, but no drawing plot')
     subparser_preprocess.add_argument(

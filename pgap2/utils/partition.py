@@ -696,6 +696,17 @@ def main(indir: str, outdir: str, evalue: float, hconf_thre: float, aligner: str
                 tree = previous.data_dump('tree')
                 previous_file_dict = previous.data_dump('file_dict')
 
+                # Consistency check: pg.strain_num must match file_dict
+                if pg.strain_num != len(previous_file_dict):
+                    logger.error(
+                        f'Inconsistent preprocess.pkl: pangenome has {pg.strain_num} strains but file_dict has {len(previous_file_dict)} strains.')
+                    logger.error(
+                        f'This is likely caused by the preprocess step filtering out low-quality strains without --exclude_outlier flag in an older version.')
+                    logger.error(
+                        f'Please re-run the preprocess step (pgap2 prep) to regenerate a consistent preprocess.pkl.')
+                    raise ValueError(
+                        f'Inconsistent preprocess.pkl: strain count mismatch between pangenome ({pg.strain_num}) and file_dict ({len(previous_file_dict)})')
+
                 if previous_file_dict != file_dict:
                     logger.warning(
                         f'File structure has changed')

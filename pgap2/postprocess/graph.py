@@ -30,6 +30,7 @@ Usage
 
 import os
 import re
+import json
 import math
 import argparse
 import collections
@@ -40,10 +41,6 @@ from loguru import logger
 from argparse import ArgumentParser, _SubParsersAction
 
 from pgap2.utils.supply import set_verbosity_level
-
-# ---------------------------------------------------------------------------
-# GML parser (lightweight, no networkx dependency)
-# ---------------------------------------------------------------------------
 
 
 def parse_gml(gml_path: str) -> Tuple[Dict[int, str], List[Tuple[int, int]]]:
@@ -400,7 +397,7 @@ def compute_layout(
 
     # 10. Compute circular 2D coordinates
     #     Map ref_pos → angle around a circle so the graph looks like a
-    #     circular bacterial genome (similar to Panaroo visualisation).
+    #     circular bacterial genome (similar to Panaroo reference_based_layout.py).
     R_BASE = 500.0          # base radius for the circle
     R_REF_OFFSET = 0.0      # ref nodes sit exactly on the circle
     R_ACC_OFFSET = 30.0     # accessory nodes sit slightly inside/outside
@@ -492,10 +489,6 @@ def compute_layout(
     }
 
 
-# ---------------------------------------------------------------------------
-# GML writer (for Cytoscape Desktop)
-# ---------------------------------------------------------------------------
-
 def write_gml(
     result: dict,
     original_nodes: Dict[int, str],
@@ -539,10 +532,6 @@ def write_gml(
 
     logger.info(f"  GML written to {out_path}")
 
-
-# ---------------------------------------------------------------------------
-# Annotated GML generation
-# ---------------------------------------------------------------------------
 
 def _parse_detail_tsv(detail_path: str) -> Tuple[List[str], List[dict]]:
     """Parse ``pgap2.partition.gene_content.detail.tsv``.
@@ -867,21 +856,204 @@ def generate_annotated_gml(
     logger.success("Done")
 
 
-# ---------------------------------------------------------------------------
-# Entry-points following PGAP2 post-process pattern
-# ---------------------------------------------------------------------------
+_GROUP_COLOR = {
+    "Strict_core": "#409EFF",
+    "Core": "#67C23A",
+    "Soft_core": "#E6A23C",
+    "Shell": "#F56C6C",
+    "Cloud": "#9099A4",
+}
+
+
+def compute_igraph_layout(
+    layout_gml_path: str,
+    output_json_path: str,
+    algorithm: str = "drl",
+) -> str:
+    """Pre-compute 2-D coordinates for every node using igraph.
+
+    Reads the ``_layout.gml`` file (long-range edges already removed)
+    and writes a compact JSON file that the frontend can render with
+    D3 Canvas.
+
+    Parameters
+    ----------
+    layout_gml_path : str
+        Path to ``pgap2.partition.map_annotated_layout.gml``.
+    output_json_path : str
+        Destination JSON file.
+    algorithm : str
+        igraph layout algorithm.  ``"drl"`` (DrL / distributed recursive
+        layout) is recommended for 10 000+ nodes; ``"fr"`` (Fruchterman–
+        Reingold) works better for smaller graphs.
+
+    Returns
+    -------
+    str
+        Path to the written JSON file.
+    """
+    import igraph as ig
+
+    logger.info(f"Computing igraph layout (algorithm={algorithm}) …")
+
+    # ---- 1. Parse GML into igraph ----
+    # We parse manually for speed and to preserve per-node attributes.
+    node_attrs: Dict[int, dict] = {}       # gml_id → {label, gene_name, …}
+    edge_list: List[Tuple[int, int]] = []
+    edge_attrs: List[dict] = []
+
+    with open(layout_gml_path, "r", encoding="utf-8") as fh:
+        in_node = in_edge = False
+        cur: dict = {}
+        for raw in fh:
+            line = raw.strip()
+            if line == "node [":
+                in_node, cur = True, {}
+            elif line == "edge [":
+                in_edge, cur = True, {}
+            elif line == "]":
+                if in_node:
+                    nid = cur.get("id")
+                    if nid is not None:
+                        node_attrs[nid] = cur
+                elif in_edge:
+                    s, t = cur.get("source"), cur.get("target")
+                    if s is not None and t is not None:
+                        edge_list.append((s, t))
+                        edge_attrs.append(cur)
+                in_node = in_edge = False
+            elif in_node or in_edge:
+                # Parse key-value
+                m = re.match(r'(\w+)\s+(.*)', line)
+                if m:
+                    key, val = m.group(1), m.group(2)
+                    # Strip quotes
+                    if val.startswith('"') and val.endswith('"'):
+                        val = val[1:-1]
+                    else:
+                        # Try int / float
+                        try:
+                            val = int(val)
+                        except ValueError:
+                            try:
+                                val = float(val)
+                            except ValueError:
+                                pass
+                    cur[key] = val
+
+    # Build gml_id → igraph_idx mapping
+    sorted_ids = sorted(node_attrs.keys())
+    id_to_idx = {gml_id: idx for idx, gml_id in enumerate(sorted_ids)}
+    n_nodes = len(sorted_ids)
+
+    logger.info(f"  Nodes: {n_nodes}, Edges: {len(edge_list)}")
+
+    # ---- 2. Build igraph Graph ----
+    g = ig.Graph(n=n_nodes, directed=False)
+    ig_edges = []
+    ig_weights = []
+    for (s, t), ea in zip(edge_list, edge_attrs):
+        si, ti = id_to_idx.get(s), id_to_idx.get(t)
+        if si is not None and ti is not None:
+            ig_edges.append((si, ti))
+            ig_weights.append(ea.get("size", 1))
+    g.add_edges(ig_edges)
+    g.es["weight"] = ig_weights
+
+    # ---- 3. Compute layout ----
+    if algorithm == "drl":
+        lo = g.layout_drl(weights="weight")
+    elif algorithm == "fr":
+        lo = g.layout_fruchterman_reingold(weights="weight", niter=500)
+    elif algorithm == "kk":
+        lo = g.layout_kamada_kawai()
+    elif algorithm == "graphopt":
+        lo = g.layout_graphopt(niter=500)
+    else:
+        lo = g.layout_drl(weights="weight")
+
+    coords = lo.coords  # list of (x, y) tuples
+
+    # ---- 4. Normalise to [0, width] × [0, height] canvas ----
+    xs = [c[0] for c in coords]
+    ys = [c[1] for c in coords]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    range_x = max_x - min_x if max_x > min_x else 1.0
+    range_y = max_y - min_y if max_y > min_y else 1.0
+
+    CANVAS = 4000.0  # virtual canvas size
+    PAD = 50.0
+
+    def norm_x(v):
+        return round(PAD + (v - min_x) / range_x * (CANVAS - 2 * PAD), 2)
+
+    def norm_y(v):
+        return round(PAD + (v - min_y) / range_y * (CANVAS - 2 * PAD), 2)
+
+    # ---- 5. Assemble JSON ----
+    json_nodes = []
+    for idx, gml_id in enumerate(sorted_ids):
+        na = node_attrs[gml_id]
+        json_nodes.append({
+            "id": gml_id,
+            "label": na.get("label", f"clust_{gml_id}"),
+            "gene_name": na.get("gene_name", ""),
+            "product": na.get("product", ""),
+            "group": na.get("group", ""),
+            "size": na.get("size", 1),
+            "involved_strain": na.get("involved_strain", 0),
+            "color": _GROUP_COLOR.get(na.get("group", ""), "#909399"),
+            "x": norm_x(coords[idx][0]),
+            "y": norm_y(coords[idx][1]),
+        })
+
+    json_edges = []
+    for (s, t), ea in zip(edge_list, edge_attrs):
+        json_edges.append({
+            "source": s,
+            "target": t,
+            "size": ea.get("size", 1),
+        })
+
+    # Group statistics
+    group_counts: Dict[str, int] = collections.Counter()
+    for n in json_nodes:
+        group_counts[n["group"]] += 1
+
+    result = {
+        "canvas": {"width": CANVAS, "height": CANVAS},
+        "total_nodes": n_nodes,
+        "total_edges": len(json_edges),
+        "groups": dict(group_counts),
+        "algorithm": algorithm,
+        "nodes": json_nodes,
+        "edges": json_edges,
+    }
+
+    with open(output_json_path, "w", encoding="utf-8") as fh:
+        json.dump(result, fh)
+
+    size_mb = os.path.getsize(output_json_path) / (1024 * 1024)
+    logger.info(
+        f"  Layout JSON written to {output_json_path} ({size_mb:.1f} MB)")
+    return output_json_path
+
 
 def main(
     indir: str,
     outdir: str,
     ref: Optional[str] = None,
     distance_threshold: int = 100,
+    compute_layout_json: bool = False,
+    layout_algorithm: str = "drl",
 ):
     """Unified graph post-processing pipeline.
 
     1. Generate annotated GML  → ``pgap2.partition.map_annotated.gml``
     2. Reference-based layout  → ``pgap2.partition.map_annotated_layout.gml``
                                  ``pgap2.partition.map_annotated_complete.gml``
+    3. (optional) igraph pre-computed layout → ``…_layout.json``
     """
     from pgap2.postprocess.reference_layout import layout, resolve_ref, read_gml
 
@@ -917,6 +1089,18 @@ def main(
         f"Edges kept: {G_layout.number_of_edges()}, "
         f"Edges cut: {len(cut_edges)}"
     )
+
+    # Step 4 – (optional) igraph pre-computed layout → JSON
+    if compute_layout_json:
+        logger.info("=== Step 4: igraph pre-computed layout ===")
+        layout_gml = output_prefix + "_layout.gml"
+        layout_json = output_prefix + "_layout.json"
+        compute_igraph_layout(
+            layout_gml_path=layout_gml,
+            output_json_path=layout_json,
+            algorithm=layout_algorithm,
+        )
+
     logger.success("Done")
 
 
@@ -931,6 +1115,8 @@ def launch(args: argparse.Namespace):
         outdir=outdir,
         ref=getattr(args, "ref", None),
         distance_threshold=getattr(args, "distance_threshold", 100),
+        compute_layout_json=getattr(args, "compute_layout", False),
+        layout_algorithm=getattr(args, "layout_algorithm", "drl"),
     )
 
 
@@ -963,6 +1149,18 @@ def graph_cmd(subparser: _SubParsersAction):
     p.add_argument(
         "--distance-threshold", required=False, default=100, type=int,
         help="Gene-order distance threshold for long-range edge detection",
+    )
+    p.add_argument(
+        "--compute-layout", required=False, action="store_true", default=False,
+        help="Pre-compute 2-D coordinates with igraph and output a JSON file "
+             "for D3 Canvas rendering (requires python-igraph)",
+    )
+    p.add_argument(
+        "--layout-algorithm", required=False, default="drl",
+        choices=["drl", "fr", "kk", "graphopt"],
+        help="igraph layout algorithm (only used with --compute-layout). "
+             "drl=DrL (best for 10k+ nodes), fr=Fruchterman-Reingold, "
+             "kk=Kamada-Kawai, graphopt=GraphOpt",
     )
     p.add_argument(
         "--verbose", "-V", required=False, action="store_true", default=False,

@@ -202,7 +202,7 @@ def find_outlier_from_cloud(genome_attr):
     return outlier
 
 
-def main(indir, outdir, orth_id, para_id, dup_id, id_attr_key, type_filter, max_targets, evalue, aligner, clust_method, accurate, coverage, nodraw, single_file, LD, AS, AL, marker_file, ani_thre, annot, threads, disable, retrieve, falen, gcode):
+def main(indir, outdir, orth_id, para_id, dup_id, id_attr_key, type_filter, max_targets, evalue, aligner, clust_method, accurate, coverage, nodraw, single_file, LD, AS, AL, marker_file, ani_thre, annot, threads, disable, retrieve, falen, gcode, exclude_outlier=False):
     logger.debug(f'----------------')
     file_dict = get_file_dict(indir=indir)
     decode_status = False
@@ -221,7 +221,15 @@ def main(indir, outdir, orth_id, para_id, dup_id, id_attr_key, type_filter, max_
                 tree = previous.data_dump('tree')
                 previous_file_dict = previous.data_dump('file_dict')
 
-                if previous_file_dict != file_dict:
+                # Consistency check: pg.strain_num must match file_dict
+                if pg.strain_num != len(previous_file_dict):
+                    logger.warning(
+                        f'Inconsistent preprocess.pkl: pangenome has {pg.strain_num} strains but file_dict has {len(previous_file_dict)} strains.')
+                    logger.warning(
+                        f'This may be caused by a previous run that filtered strains. Will re-run from the beginning.')
+                    decode_status = False
+
+                if decode_status and previous_file_dict != file_dict:
                     logger.warning(
                         f'File structure has changed')
                     total_name = set(list(file_dict.keys()) +
@@ -362,8 +370,33 @@ def main(indir, outdir, orth_id, para_id, dup_id, id_attr_key, type_filter, max_
             len(discard_strains)))
         for discard_strain in discard_strains:
             logger.warning(f'discarded strain: {discard_strain}')
-        indir = f'{outdir}/refined_input'
-        file_dict = new_file_dict
+
+        if exclude_outlier:
+            logger.warning(
+                f'--exclude_outlier is set, re-building pangenome data with filtered strains from {outdir}/refined_input')
+            indir = f'{outdir}/refined_input'
+            file_dict = new_file_dict
+            # Remove old prot/annot files before re-building (file_parser opens with 'a')
+            file_prot = f'{outdir}/total.involved_prot.fa'
+            file_annot = f'{outdir}/total.involved_annot.tsv'
+            if os.path.exists(file_prot):
+                os.remove(file_prot)
+            if os.path.exists(file_annot):
+                os.remove(file_annot)
+            # Re-run file_parser to rebuild pg and tree with consistent strain indices
+            pg = file_parser(
+                indir=indir, outdir=outdir, annot=annot, threads=threads, disable=disable, retrieve=retrieve, falen=falen, gcode=gcode, id_attr_key=id_attr_key, type_filter=type_filter, prefix='preprocess')
+            pg.load_annot_file(file_annot)
+            pg.load_prot_file(file_prot)
+            tree = generate_tree(
+                input_file=file_prot, orth_list=[dup_id, orth_id], outdir=pg.outdir, max_targets=max_targets, coverage=coverage, LD=LD, AS=AS, AL=AL, falen=falen, disable=disable, threads=threads, evalue=evalue, aligner=aligner, clust_method=clust_method)
+        else:
+            logger.info(
+                f'Outlier strains are flagged but kept in the pangenome data (default behavior).')
+            logger.info(
+                f'To exclude outlier strains, re-run with --exclude_outlier flag.')
+            logger.info(
+                f'Filtered input files are available at: {outdir}/refined_input')
     else:  # If it is same number after preprocess, it will not rerun the file_parser
         file_dict = file_dict
 
