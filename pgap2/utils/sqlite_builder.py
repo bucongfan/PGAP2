@@ -100,6 +100,7 @@ def build_sqlite(
     if sqlite_file.exists():
         sqlite_file.unlink()
 
+    print(f"[pgap2 sqlite] Creating database: {output_path}")
     logger.info("Creating SQLite database: %s", output_path)
 
     engine = create_engine(f"sqlite:///{output_path}", echo=False)
@@ -121,9 +122,14 @@ def build_sqlite(
 
     engine.dispose()
     info["sqlite_path"] = str(sqlite_file)
+
+    db_size = sqlite_file.stat().st_size
+    size_mb = db_size / (1024 * 1024)
+    print(f"[pgap2 sqlite] Done! {info['num_strains']} strains, "
+          f"{info['num_clusters']} clusters -> {size_mb:.1f} MB")
     logger.info(
-        "SQLite export complete: %d strains, %d clusters -> %s",
-        info["num_strains"], info["num_clusters"], output_path,
+        "SQLite export complete: %d strains, %d clusters -> %s (%.1f MB)",
+        info["num_strains"], info["num_clusters"], output_path, size_mb,
     )
     return info
 
@@ -142,6 +148,7 @@ def _import_all(
     """Run every import phase inside a single session."""
 
     # 1. Create project
+    print("[pgap2 sqlite] [1/9] Creating project ...")
     project = Project(
         name=project_name,
         species=species,
@@ -153,6 +160,7 @@ def _import_all(
     logger.info("Created project %s (id=%d)", project_name, project.id)
 
     # 2. Parse detail TSV → strains + clusters + PAV
+    print("[pgap2 sqlite] [2/9] Importing strains, clusters & PAV ...")
     detail_file = data_path / "pgap2.partition.gene_content.detail.tsv"
     pav_file = data_path / "pgap2.partition.gene_content.pav"
 
@@ -172,8 +180,11 @@ def _import_all(
     project.num_strains = len(strain_map)
     project.num_clusters = len(cluster_map)
     project.strain_order = ",".join(strain_names) if strain_names else None
+    print(f"             {len(strain_map)} strains, "
+          f"{len(cluster_map)} clusters loaded")
 
     # 3. Summary statistics fallback
+    print("[pgap2 sqlite] [3/9] Importing statistics ...")
     pan_group_file = _find_file(data_path,
                                 "postprocess/postprocess.pan_group_stat.tsv",
                                 "postprocess.pan_group_stat.tsv")
@@ -182,12 +193,14 @@ def _import_all(
         _import_summary_statistics(db, project.id, summary_file)
 
     # 4. Gene annotations
+    print("[pgap2 sqlite] [4/9] Importing gene annotations ...")
     annot_file = data_path / "total.involved_annot.tsv"
     if annot_file.exists():
         _import_annotations(db, project.id, annot_file,
                             strain_map, cluster_map)
 
     # 5. Post-processing results
+    print("[pgap2 sqlite] [5/9] Importing post-processing results ...")
     _import_post_results(db, project.id, data_path)
 
     # 5b. Cluster-strain frequency histogram
@@ -198,16 +211,20 @@ def _import_all(
         _compute_freq_histogram(db, project.id, cluster_map)
 
     # 6. Trees
+    print("[pgap2 sqlite] [6/9] Importing phylogeny trees ...")
     _import_trees(db, project.id, data_path)
 
     # 7. BAPS
+    print("[pgap2 sqlite] [7/9] Importing BAPS clusters ...")
     _import_baps(db, project.id, data_path, strain_map)
 
     # 8. Preprocess stats
+    print("[pgap2 sqlite] [8/9] Importing preprocess statistics ...")
     _import_prep_stats(db, project.id, data_path, strain_map)
     _import_gene_code(db, project.id, data_path)
 
-    # 9. Embed disk files (MSA, FASTA, GML, layout JSON …) as BLOBs
+    # 9. Embed disk files (MSA, GML, layout JSON …) as BLOBs
+    print("[pgap2 sqlite] [9/9] Embedding files (MSA, graph, layout) ...")
     _embed_files(db, project.id, data_path)
 
     db.flush()
@@ -1084,15 +1101,14 @@ def parse_readme(readme_path: Path) -> Dict[str, str]:
 # ═══════════════════════════════════════════════════════
 
 # Category → (subdirectory relative to data_path, glob pattern, mime_type)
+#
+# NOTE: protein (01.gene_prot) and CDS (01.gene_cds) FASTA are intentionally
+# NOT embedded.  They are only used by the "Download FASTA" dropdown in
+# ClusterMSADialog and would significantly bloat the .db file.  For the
+# download-only use case, the Web app falls back to reading them from disk.
 _FILE_SPECS: List[Tuple[str, str, str, str]] = [
-    # MSA trimmed alignments
+    # MSA trimmed alignments — displayed in the MSA viewer
     ("msa", "postprocess_phylogeny/04.trim_alignment", "*.fa",
-     "text/x-fasta"),
-    # Protein FASTA
-    ("protein", "postprocess_phylogeny/01.gene_prot", "*.fa",
-     "text/x-fasta"),
-    # CDS FASTA
-    ("cds", "postprocess_phylogeny/01.gene_cds", "*.fa",
      "text/x-fasta"),
 ]
 
@@ -1126,19 +1142,26 @@ def _embed_files(db: Session, project_id: int, data_path: Path):
     zlib-compressed BLOB in the ``project_files`` table.
     """
     count = 0
+    total_raw = 0
+    total_compressed = 0
     batch: List[ProjectFile] = []
     batch_size = 50  # flush every N files to limit memory
+    category_counts: Dict[str, int] = {}
 
-    # ── Glob-based directories (MSA, protein, CDS) ──
+    # ── Glob-based directories (MSA) ──
     for category, subdir, pattern, mime in _FILE_SPECS:
         full_dir = data_path / subdir
         if not full_dir.is_dir():
             continue
+        cat_count = 0
         for fpath in sorted(full_dir.glob(pattern)):
             if not fpath.is_file():
                 continue
             rel = fpath.relative_to(data_path).as_posix()
             raw = fpath.read_bytes()
+            compressed = zlib.compress(raw, level=6)
+            total_raw += len(raw)
+            total_compressed += len(compressed)
             batch.append(ProjectFile(
                 project_id=project_id,
                 path=rel,
@@ -1146,13 +1169,16 @@ def _embed_files(db: Session, project_id: int, data_path: Path):
                 mime_type=mime,
                 size=len(raw),
                 compressed=True,
-                content=zlib.compress(raw, level=6),
+                content=compressed,
             ))
             count += 1
+            cat_count += 1
             if len(batch) >= batch_size:
                 db.add_all(batch)
                 db.flush()
                 batch = []
+        if cat_count:
+            category_counts[category] = cat_count
 
     # ── Root-level files (GML, JSON, TSV) ──
     seen_categories: Dict[str, bool] = {}
@@ -1165,6 +1191,9 @@ def _embed_files(db: Session, project_id: int, data_path: Path):
             continue
         seen_categories[category] = True
         raw = fpath.read_bytes()
+        compressed = zlib.compress(raw, level=6)
+        total_raw += len(raw)
+        total_compressed += len(compressed)
         batch.append(ProjectFile(
             project_id=project_id,
             path=rel_path,
@@ -1172,12 +1201,23 @@ def _embed_files(db: Session, project_id: int, data_path: Path):
             mime_type=mime,
             size=len(raw),
             compressed=True,
-            content=zlib.compress(raw, level=6),
+            content=compressed,
         ))
         count += 1
+        category_counts[category] = category_counts.get(category, 0) + 1
 
     if batch:
         db.add_all(batch)
         db.flush()
 
+    if count:
+        ratio = total_raw / total_compressed if total_compressed else 0
+        parts = [f"{cat}: {n}" for cat, n in sorted(category_counts.items())]
+        print(f"             {count} files embedded "
+              f"({total_raw / 1024 / 1024:.1f} MB -> "
+              f"{total_compressed / 1024 / 1024:.1f} MB, "
+              f"{ratio:.1f}x compression)")
+        print(f"             [{', '.join(parts)}]")
+    else:
+        print("             No files found to embed")
     logger.info("Embedded %d files into project_files table", count)
