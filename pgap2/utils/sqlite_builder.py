@@ -22,13 +22,13 @@ from __future__ import annotations
 
 import csv
 import json
-import logging
 import re
 import zlib
 from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+from loguru import logger
 from sqlalchemy import create_engine, event, select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -41,8 +41,6 @@ from pgap2.models import (
     PrepStat, GeneCodeUsage,
     ProjectFile,
 )
-
-logger = logging.getLogger(__name__)
 
 # Map the group labels used in detail.tsv to PanGroup enum values
 GROUP_MAP = {
@@ -100,8 +98,7 @@ def build_sqlite(
     if sqlite_file.exists():
         sqlite_file.unlink()
 
-    print(f"[pgap2 sqlite] Creating database: {output_path}")
-    logger.info("Creating SQLite database: %s", output_path)
+    logger.info("Creating database: {}", output_path)
 
     engine = create_engine(f"sqlite:///{output_path}", echo=False)
 
@@ -125,11 +122,9 @@ def build_sqlite(
 
     db_size = sqlite_file.stat().st_size
     size_mb = db_size / (1024 * 1024)
-    print(f"[pgap2 sqlite] Done! {info['num_strains']} strains, "
-          f"{info['num_clusters']} clusters -> {size_mb:.1f} MB")
-    logger.info(
-        "SQLite export complete: %d strains, %d clusters -> %s (%.1f MB)",
-        info["num_strains"], info["num_clusters"], output_path, size_mb,
+    logger.success(
+        "Done! {} strains, {} clusters -> {:.1f} MB",
+        info["num_strains"], info["num_clusters"], size_mb,
     )
     return info
 
@@ -148,7 +143,7 @@ def _import_all(
     """Run every import phase inside a single session."""
 
     # 1. Create project
-    print("[pgap2 sqlite] [1/9] Creating project ...")
+    logger.info("[1/9] Creating project ...")
     project = Project(
         name=project_name,
         species=species,
@@ -157,10 +152,10 @@ def _import_all(
     )
     db.add(project)
     db.flush()
-    logger.info("Created project %s (id=%d)", project_name, project.id)
+    logger.debug("Created project {} (id={})", project_name, project.id)
 
     # 2. Parse detail TSV → strains + clusters + PAV
-    print("[pgap2 sqlite] [2/9] Importing strains, clusters & PAV ...")
+    logger.info("[2/9] Importing strains, clusters & PAV ...")
     detail_file = data_path / "pgap2.partition.gene_content.detail.tsv"
     pav_file = data_path / "pgap2.partition.gene_content.pav"
 
@@ -180,11 +175,11 @@ def _import_all(
     project.num_strains = len(strain_map)
     project.num_clusters = len(cluster_map)
     project.strain_order = ",".join(strain_names) if strain_names else None
-    print(f"             {len(strain_map)} strains, "
-          f"{len(cluster_map)} clusters loaded")
+    logger.info("       {} strains, {} clusters loaded",
+               len(strain_map), len(cluster_map))
 
     # 3. Summary statistics fallback
-    print("[pgap2 sqlite] [3/9] Importing statistics ...")
+    logger.info("[3/9] Importing statistics ...")
     pan_group_file = _find_file(data_path,
                                 "postprocess/postprocess.pan_group_stat.tsv",
                                 "postprocess.pan_group_stat.tsv")
@@ -193,14 +188,14 @@ def _import_all(
         _import_summary_statistics(db, project.id, summary_file)
 
     # 4. Gene annotations
-    print("[pgap2 sqlite] [4/9] Importing gene annotations ...")
+    logger.info("[4/9] Importing gene annotations ...")
     annot_file = data_path / "total.involved_annot.tsv"
     if annot_file.exists():
         _import_annotations(db, project.id, annot_file,
                             strain_map, cluster_map)
 
     # 5. Post-processing results
-    print("[pgap2 sqlite] [5/9] Importing post-processing results ...")
+    logger.info("[5/9] Importing post-processing results ...")
     _import_post_results(db, project.id, data_path)
 
     # 5b. Cluster-strain frequency histogram
@@ -211,20 +206,20 @@ def _import_all(
         _compute_freq_histogram(db, project.id, cluster_map)
 
     # 6. Trees
-    print("[pgap2 sqlite] [6/9] Importing phylogeny trees ...")
+    logger.info("[6/9] Importing phylogeny trees ...")
     _import_trees(db, project.id, data_path)
 
     # 7. BAPS
-    print("[pgap2 sqlite] [7/9] Importing BAPS clusters ...")
+    logger.info("[7/9] Importing BAPS clusters ...")
     _import_baps(db, project.id, data_path, strain_map)
 
     # 8. Preprocess stats
-    print("[pgap2 sqlite] [8/9] Importing preprocess statistics ...")
+    logger.info("[8/9] Importing preprocess statistics ...")
     _import_prep_stats(db, project.id, data_path, strain_map)
     _import_gene_code(db, project.id, data_path)
 
     # 9. Embed disk files (MSA, GML, layout JSON …) as BLOBs
-    print("[pgap2 sqlite] [9/9] Embedding files (MSA, graph, layout) ...")
+    logger.info("[9/9] Embedding files (MSA, graph, layout) ...")
     _embed_files(db, project.id, data_path)
 
     db.flush()
@@ -234,8 +229,8 @@ def _import_all(
         (s.name, s.assembly_accession) for s in strain_map.values()
     ]
 
-    logger.info("Import complete: %d strains, %d clusters",
-                project.num_strains, project.num_clusters)
+    logger.debug("Import complete: {} strains, {} clusters",
+                 project.num_strains, project.num_clusters)
 
     return {
         "project_id": project.id,
@@ -471,8 +466,8 @@ def _create_pav_rows(
     if pav_batch:
         db.add_all(pav_batch)
         db.flush()
-    logger.info("Created PAV rows for %d clusters × %d strains",
-                len(cluster_map), len(strain_map))
+    logger.debug("Created PAV rows for {} clusters × {} strains",
+                 len(cluster_map), len(strain_map))
 
 
 # ═══════════════════════════════════════════════════════
@@ -608,7 +603,7 @@ def _import_annotations(
     if batch:
         db.add_all(batch)
         db.flush()
-    logger.info("Imported %d gene annotations", count)
+    logger.debug("Imported {} gene annotations", count)
 
 
 # ═══════════════════════════════════════════════════════
@@ -632,7 +627,7 @@ def _compute_freq_histogram(
     if batch:
         db.add_all(batch)
         db.flush()
-    logger.info("Computed frequency histogram: %d bins", len(batch))
+    logger.debug("Computed frequency histogram: {} bins", len(batch))
 
 
 # ═══════════════════════════════════════════════════════
@@ -812,7 +807,7 @@ def _import_pan_group_stat(
             percentage=pct,
         ))
     db.flush()
-    logger.info("Imported pan group stats: %d groups", len(group_stats))
+    logger.debug("Imported pan group stats: {} groups", len(group_stats))
 
 
 def _import_paralog_stat(
@@ -838,7 +833,7 @@ def _import_paralog_stat(
     if batch:
         db.add_all(batch)
         db.flush()
-    logger.info("Imported %d paralog stat rows", len(batch))
+    logger.debug("Imported {} paralog stat rows", len(batch))
 
 
 # ═══════════════════════════════════════════════════════
@@ -999,7 +994,7 @@ def _import_prep_stats(
     if batch:
         db.add_all(batch)
         db.flush()
-    logger.info("Imported %d preprocess stat rows", len(batch))
+    logger.debug("Imported {} preprocess stat rows", len(batch))
 
 
 def _import_gene_code(db: Session, project_id: int, data_path: Path):
@@ -1029,7 +1024,7 @@ def _import_gene_code(db: Session, project_id: int, data_path: Path):
     if batch:
         db.add_all(batch)
         db.flush()
-    logger.info("Imported %d gene code usage entries", len(batch))
+    logger.debug("Imported {} gene code usage entries", len(batch))
 
 
 # ═══════════════════════════════════════════════════════
@@ -1213,11 +1208,11 @@ def _embed_files(db: Session, project_id: int, data_path: Path):
     if count:
         ratio = total_raw / total_compressed if total_compressed else 0
         parts = [f"{cat}: {n}" for cat, n in sorted(category_counts.items())]
-        print(f"             {count} files embedded "
-              f"({total_raw / 1024 / 1024:.1f} MB -> "
-              f"{total_compressed / 1024 / 1024:.1f} MB, "
-              f"{ratio:.1f}x compression)")
-        print(f"             [{', '.join(parts)}]")
+        logger.info(
+            "       {} files embedded ({:.1f} MB -> {:.1f} MB, {:.1f}x compression)",
+            count, total_raw / 1024 / 1024,
+            total_compressed / 1024 / 1024, ratio,
+        )
+        logger.info("       [{}]", ", ".join(parts))
     else:
-        print("             No files found to embed")
-    logger.info("Embedded %d files into project_files table", count)
+        logger.info("       No files found to embed")
