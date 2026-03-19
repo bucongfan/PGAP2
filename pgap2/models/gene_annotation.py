@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from sqlalchemy import String, Integer, ForeignKey
+from sqlalchemy import String, Text, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from pgap2.models.base import Base
@@ -17,16 +17,20 @@ class GeneAnnotation(Base):
     strain_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("strains.id"), nullable=False)
     gene_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    product: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    product: Mapped[Optional[str]] = mapped_column(
+        String(1024), nullable=True)
     gene_name: Mapped[Optional[str]] = mapped_column(
-        String(64), nullable=True)
+        String(255), nullable=True)
     locus_tag: Mapped[Optional[str]] = mapped_column(
-        String(64), nullable=True)
+        String(255), nullable=True)
     contig: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     start: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     end: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     strand: Mapped[Optional[str]] = mapped_column(String(1), nullable=True)
     length: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    sequence: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    annotation_json: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True)
 
     gene_cluster = relationship(
         "GeneCluster", back_populates="gene_annotations")

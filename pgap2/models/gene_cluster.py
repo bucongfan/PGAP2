@@ -25,7 +25,8 @@ class GeneCluster(Base):
     project_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("projects.id"), nullable=False)
     cluster_id: Mapped[str] = mapped_column(String(64), nullable=False)
-    annotation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    annotation: Mapped[Optional[str]] = mapped_column(
+        String(1024), nullable=True)
     num_strains: Mapped[int] = mapped_column(Integer, default=0)
     num_genes: Mapped[int] = mapped_column(Integer, default=0)
     group: Mapped[Optional[PanGroup]] = mapped_column(

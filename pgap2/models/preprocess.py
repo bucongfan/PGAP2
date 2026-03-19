@@ -28,7 +28,7 @@ class PrepStat(Base):
     genome_size: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True)
     nucleotide_composition: Mapped[Optional[str]] = mapped_column(
-        String(64), nullable=True,
+        String(255), nullable=True,
         comment="A|T|C|G counts")
     gc_content: Mapped[Optional[float]] = mapped_column(
         Float, nullable=True)
@@ -48,6 +48,6 @@ class GeneCodeUsage(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     project_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("projects.id"), nullable=False)
-    gene_code: Mapped[str] = mapped_column(String(16), nullable=False)
+    gene_code: Mapped[str] = mapped_column(String(50), nullable=False)
     strain_name: Mapped[str] = mapped_column(String(255), nullable=False)
     count: Mapped[int] = mapped_column(Integer, default=0)

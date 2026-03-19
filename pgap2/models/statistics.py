@@ -64,7 +64,7 @@ class ParalogStat(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     project_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("projects.id"), nullable=False)
-    pan_group: Mapped[str] = mapped_column(String(32), nullable=False)
+    pan_group: Mapped[str] = mapped_column(String(64), nullable=False)
     para_strain: Mapped[int] = mapped_column(Integer, default=0)
     para_gene: Mapped[int] = mapped_column(Integer, default=0)
 
@@ -76,7 +76,7 @@ class StatAttrBin(Base):
     project_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("projects.id"), nullable=False)
     attr: Mapped[str] = mapped_column(
-        String(64), nullable=False,
+        String(16), nullable=False,
         comment="e.g. gene_length, gc_content")
     group: Mapped[str] = mapped_column(String(32), nullable=False)
     edge: Mapped[str] = mapped_column(String(64), nullable=False)

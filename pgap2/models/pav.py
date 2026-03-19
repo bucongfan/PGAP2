@@ -1,6 +1,6 @@
 """Presence-absence variation model."""
 
-from sqlalchemy import Integer, ForeignKey
+from sqlalchemy import Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from pgap2.models.base import Base
@@ -8,6 +8,11 @@ from pgap2.models.base import Base
 
 class PAV(Base):
     __tablename__ = "pav"
+    __table_args__ = (
+        UniqueConstraint(
+            "gene_cluster_id", "strain_id",
+            name="uq_pav_cluster_strain"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     project_id: Mapped[int] = mapped_column(

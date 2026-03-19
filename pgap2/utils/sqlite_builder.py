@@ -182,7 +182,8 @@ def _import_all(
     # 4. Gene annotations
     annot_file = data_path / "total.involved_annot.tsv"
     if annot_file.exists():
-        _import_annotations(db, project.id, annot_file, strain_map, cluster_map)
+        _import_annotations(db, project.id, annot_file,
+                            strain_map, cluster_map)
 
     # 5. Post-processing results
     _import_post_results(db, project.id, data_path)

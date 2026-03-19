@@ -15,7 +15,7 @@ class PhylogenyTree(Base):
     project_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("projects.id"), nullable=False)
     tree_type: Mapped[str] = mapped_column(
-        String(64), nullable=False,
+        String(32), nullable=False, index=True,
         comment="e.g. single_copy, pav")
     newick: Mapped[str] = mapped_column(Text, nullable=False)
     num_leaves: Mapped[int] = mapped_column(Integer, default=0)
