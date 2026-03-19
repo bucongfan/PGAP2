@@ -14,7 +14,8 @@ class Project(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    species: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    species: Mapped[str] = mapped_column(
+        String(255), nullable=False, index=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     species_taxid: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True)

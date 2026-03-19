@@ -14,6 +14,7 @@ from pgap2.models.phylogeny import PhylogenyTree
 from pgap2.models.baps import BAPSCluster
 from pgap2.models.tajimas_d import TajimasD
 from pgap2.models.preprocess import PrepStat, GeneCodeUsage
+from pgap2.models.project_file import ProjectFile
 
 __all__ = [
     "Base",
@@ -23,4 +24,5 @@ __all__ = [
     "ParalogStat", "StatAttrBin",
     "PhylogenyTree", "BAPSCluster", "TajimasD",
     "PrepStat", "GeneCodeUsage",
+    "ProjectFile",
 ]

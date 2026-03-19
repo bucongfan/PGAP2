@@ -24,6 +24,7 @@ import csv
 import json
 import logging
 import re
+import zlib
 from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -38,6 +39,7 @@ from pgap2.models import (
     ParalogStat, StatAttrBin,
     PhylogenyTree, BAPSCluster, TajimasD,
     PrepStat, GeneCodeUsage,
+    ProjectFile,
 )
 
 logger = logging.getLogger(__name__)
@@ -204,6 +206,9 @@ def _import_all(
     # 8. Preprocess stats
     _import_prep_stats(db, project.id, data_path, strain_map)
     _import_gene_code(db, project.id, data_path)
+
+    # 9. Embed disk files (MSA, FASTA, GML, layout JSON …) as BLOBs
+    _embed_files(db, project.id, data_path)
 
     db.flush()
 
@@ -1072,3 +1077,107 @@ def parse_readme(readme_path: Path) -> Dict[str, str]:
             if field and val:
                 info[field] = val
     return info
+
+
+# ═══════════════════════════════════════════════════════
+# File embedding — pack disk files into project_files table
+# ═══════════════════════════════════════════════════════
+
+# Category → (subdirectory relative to data_path, glob pattern, mime_type)
+_FILE_SPECS: List[Tuple[str, str, str, str]] = [
+    # MSA trimmed alignments
+    ("msa", "postprocess_phylogeny/04.trim_alignment", "*.fa",
+     "text/x-fasta"),
+    # Protein FASTA
+    ("protein", "postprocess_phylogeny/01.gene_prot", "*.fa",
+     "text/x-fasta"),
+    # CDS FASTA
+    ("cds", "postprocess_phylogeny/01.gene_cds", "*.fa",
+     "text/x-fasta"),
+]
+
+# Files searched directly from data_path root
+_ROOT_FILE_SPECS: List[Tuple[str, str, str]] = [
+    # Pangenome graph GML
+    ("gml", "pgap2.partition.map.gml", "application/gml+xml"),
+    ("gml", "partition/pgap2.partition.map.gml", "application/gml+xml"),
+    # Annotated layout GML
+    ("layout_gml", "pgap2.partition.map_annotated_layout.gml",
+     "application/gml+xml"),
+    ("layout_gml", "partition/pgap2.partition.map_annotated_layout.gml",
+     "application/gml+xml"),
+    # Reference-based graph layout JSON (Cytoscape.js)
+    ("graph_json", "pgap2.graph_layout.json", "application/json"),
+    ("graph_json", "partition/pgap2.graph_layout.json", "application/json"),
+    # D3 Canvas precomputed layout JSON
+    ("layout_json", "pgap2.partition.map_annotated_layout.json",
+     "application/json"),
+    ("layout_json", "output/pgap2.partition.map_annotated_layout.json",
+     "application/json"),
+    # Annotation TSV (used for real-time graph computation fallback)
+    ("annot_tsv", "total.involved_annot.tsv", "text/tab-separated-values"),
+    ("annot_tsv", "partition/total.involved_annot.tsv",
+     "text/tab-separated-values"),
+]
+
+
+def _embed_files(db: Session, project_id: int, data_path: Path):
+    """Walk PGAP2 output dirs and store every Web-needed file as a
+    zlib-compressed BLOB in the ``project_files`` table.
+    """
+    count = 0
+    batch: List[ProjectFile] = []
+    batch_size = 50  # flush every N files to limit memory
+
+    # ── Glob-based directories (MSA, protein, CDS) ──
+    for category, subdir, pattern, mime in _FILE_SPECS:
+        full_dir = data_path / subdir
+        if not full_dir.is_dir():
+            continue
+        for fpath in sorted(full_dir.glob(pattern)):
+            if not fpath.is_file():
+                continue
+            rel = fpath.relative_to(data_path).as_posix()
+            raw = fpath.read_bytes()
+            batch.append(ProjectFile(
+                project_id=project_id,
+                path=rel,
+                category=category,
+                mime_type=mime,
+                size=len(raw),
+                compressed=True,
+                content=zlib.compress(raw, level=6),
+            ))
+            count += 1
+            if len(batch) >= batch_size:
+                db.add_all(batch)
+                db.flush()
+                batch = []
+
+    # ── Root-level files (GML, JSON, TSV) ──
+    seen_categories: Dict[str, bool] = {}
+    for category, rel_path, mime in _ROOT_FILE_SPECS:
+        # For categories with multiple candidates, take the first found
+        if category in seen_categories:
+            continue
+        fpath = data_path / rel_path
+        if not fpath.is_file():
+            continue
+        seen_categories[category] = True
+        raw = fpath.read_bytes()
+        batch.append(ProjectFile(
+            project_id=project_id,
+            path=rel_path,
+            category=category,
+            mime_type=mime,
+            size=len(raw),
+            compressed=True,
+            content=zlib.compress(raw, level=6),
+        ))
+        count += 1
+
+    if batch:
+        db.add_all(batch)
+        db.flush()
+
+    logger.info("Embedded %d files into project_files table", count)
