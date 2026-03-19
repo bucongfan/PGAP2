@@ -4,7 +4,8 @@ Generates a self-contained SQLite database from PGAP2 output files.
 
 Usage::
 
-    pgap2 sqlite -i /path/to/output -o /path/to/output
+    pgap2 sqlite -i /path/to/output
+    pgap2 sqlite -i /path/to/output -o /path/to/output/pgap2.db
     pgap2 sqlite -i /path/to/output --name "My Project" --species "E. coli"
 """
 
@@ -18,7 +19,12 @@ def launch(args: argparse.Namespace):
     from pgap2.utils.sqlite_builder import build_sqlite, parse_readme
 
     indir = os.path.abspath(args.indir)
-    outdir = os.path.abspath(args.outdir) if args.outdir else indir
+
+    # Resolve output path: default is <indir>/pgap2.db
+    if args.output:
+        output_path = os.path.abspath(args.output)
+    else:
+        output_path = os.path.join(indir, "pgap2.db")
 
     # Try to derive project name / species from README.md if not provided
     project_name = args.name
@@ -37,8 +43,6 @@ def launch(args: argparse.Namespace):
     if not species:
         species = "Unknown"
 
-    output_path = os.path.join(outdir, args.db_name)
-
     info = build_sqlite(
         data_dir=indir,
         output_path=output_path,
@@ -47,11 +51,6 @@ def launch(args: argparse.Namespace):
         description=args.description or "",
     )
 
-    print(f"SQLite database created: {info['sqlite_path']}")
-    print(f"  Project:  {project_name}")
-    print(f"  Species:  {species}")
-    print(f"  Strains:  {info['num_strains']}")
-    print(f"  Clusters: {info['num_clusters']}")
     return 0
 
 
@@ -71,8 +70,8 @@ def sqlite_cmd(subparser: _SubParsersAction):
         "--indir", "-i", required=True,
         help="PGAP2 output directory (contains .pav, .detail.tsv, etc.)")
     sp.add_argument(
-        "--outdir", "-o", required=False, default=None,
-        help="Output directory for the SQLite file (defaults to indir)")
+        "--output", "-o", required=False, default=None,
+        help="Output SQLite file path (default: <indir>/pgap2.db)")
     sp.add_argument(
         "--name", "-n", required=False, default=None,
         help="Project name (auto-detected from README.md if present)")
@@ -82,7 +81,4 @@ def sqlite_cmd(subparser: _SubParsersAction):
     sp.add_argument(
         "--description", "-d", required=False, default="",
         help="Optional project description")
-    sp.add_argument(
-        "--db-name", required=False, default="pgap2_web.db",
-        help="Name of the output SQLite file")
     sp.set_defaults(func=sqlite_portal)

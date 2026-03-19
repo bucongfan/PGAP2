@@ -9,7 +9,7 @@ Usage (programmatic)::
 
     from pgap2.utils.sqlite_builder import build_sqlite
     info = build_sqlite(data_dir="/path/to/pgap2/output",
-                        output_path="/path/to/pgap2_web.db",
+                        output_path="/path/to/pgap2.db",
                         project_name="My Project",
                         species="E. coli")
 
@@ -71,7 +71,7 @@ def build_sqlite(
         Path to the PGAP2 output directory (contains *.pav, *.detail.tsv, …).
     output_path : str, optional
         Path for the resulting SQLite file.  Defaults to
-        ``<data_dir>/pgap2_web.db``.
+        ``<data_dir>/pgap2.db``.
     project_name : str
         Human-readable project name.
     species : str
@@ -90,7 +90,7 @@ def build_sqlite(
         raise FileNotFoundError(f"Data directory not found: {data_dir}")
 
     if output_path is None:
-        output_path = str(data_path / "pgap2_web.db")
+        output_path = str(data_path / "pgap2.db")
     sqlite_file = Path(output_path)
     sqlite_file.parent.mkdir(parents=True, exist_ok=True)
 
