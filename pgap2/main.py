@@ -10,6 +10,7 @@ from pgap2.cli.postprocess import postprocess_cmd
 from pgap2.cli.partition_add import add_cmd as partition_add_cmd
 from pgap2.cli.partition_merge import merge_cmd as partition_merge_cmd
 from pgap2.cli.partition_minus import minus_cmd as partition_minus_cmd
+from pgap2.cli.sqlite_cmd import sqlite_cmd
 
 from pgap2 import __version__, __author__
 
@@ -31,6 +32,7 @@ def main():
     partition_merge_cmd(subparser)
     partition_minus_cmd(subparser)
     postprocess_cmd(subparser)
+    sqlite_cmd(subparser)
     args: Namespace = parser.parse_args()
     if hasattr(args, 'func'):
         args.func(args)

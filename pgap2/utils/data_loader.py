@@ -642,7 +642,7 @@ def file_parser(indir, outdir, annot, threads: int,  disable: bool = False, id_a
         f'Check the total involved protein sequence in {outdir}/{run_type}.involved_prot.fa')
     logger.info(
         f'Check the total annotation in {outdir}/{run_type}.involved_annot.tsv')
-    # shutil.rmtree(temp_out)  # clean up the temporary directory
+    shutil.rmtree(temp_out)  # clean up the temporary directory
 
     return pg
 

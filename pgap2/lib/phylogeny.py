@@ -433,18 +433,28 @@ class Phylogeny():
         os.makedirs(tree_outdir, exist_ok=True)
         tree_path = os.path.join(tree_outdir, 'core_gene_alignment')
         add_paras = self.add_paras_dict[6]
+        extra = (add_paras or "").strip()
+
         if self.tree_method == 'raxml':
-            cmd = f'{sfw.raxml} --msa {self.first_aln} --model GTR+G --prefix {tree_path} --all --bs-trees 100 --redo {add_paras}'
-            best_tree = os.path.join(
-                tree_outdir, 'core_gene_alignment'+'.raxml.bestTree')
+            cmd = (
+                f'{sfw.raxml} --msa {self.maskrc_aln} --model GTR+G '
+                f'--prefix {tree_path} --all --bs-trees 100 --redo {extra}'
+            ).strip()
+            best_tree = f'{tree_path}.raxml.support'   # 带 bootstrap 支持值的最终树
+
         elif self.tree_method == 'fasttree':
-            cmd = f'{sfw.fasttree} -gtr -gamma -nt -out {tree_path}.treefile {self.first_aln} {add_paras} 2> {tree_path}.log'
-            best_tree = os.path.join(
-                tree_outdir, 'core_gene_alignment'+'.treefile')
+            cmd = (
+                f'{sfw.fasttree} -nt -gtr -gamma {extra} '
+                f'-log {tree_path}.log {self.maskrc_aln} > {tree_path}.treefile'
+            ).strip()
+            best_tree = f'{tree_path}.treefile'
+
         elif self.tree_method == 'iqtree':
-            cmd = f'{sfw.iqtree} -s {self.first_aln} -m GTR+G -pre {tree_path} -bb 1000 -redo -nt AUTO {add_paras}'
-            best_tree = os.path.join(
-                tree_outdir, 'core_gene_alignment'+'.treefile')
+            cmd = (
+                f'{sfw.iqtree} -s {self.maskrc_aln} -m GTR+G '
+                f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
+            ).strip()
+            best_tree = f'{tree_path}.treefile'
 
         self.results_file.append(best_tree)
 
