@@ -176,7 +176,7 @@ def _import_all(
     project.num_clusters = len(cluster_map)
     project.strain_order = ",".join(strain_names) if strain_names else None
     logger.info("       {} strains, {} clusters loaded",
-               len(strain_map), len(cluster_map))
+                len(strain_map), len(cluster_map))
 
     # 3. Summary statistics fallback
     logger.info("[3/9] Importing statistics ...")

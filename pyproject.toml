@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PGAP2"
-version = "2.0"
+version = "2.1"
 dynamic = ["readme"]
 keywords = ["pan-genome", "prokaryotic", "genomes", "pipeline","cluster"]
 

@@ -47,7 +47,8 @@ def main(pav_file: str, outdir: str, nodraw: bool, threads: int = 1, disable: bo
     if not is_number:
         logger.warning(
             'The pav matrix contains non-numeric values, counting the number of ";" in each cell')
-        pav = pav.map(lambda x: 0 if pd.isna(x) else len(str(x).split(';')))
+        pav = pav.applymap(lambda x: 0 if pd.isna(x)
+                           else len(str(x).split(';')))
 
     pan_profile, new_clusters = get_rarefaction(
         pav, outdir, disable=disable, threads=threads, S=S, N=N, R=R, K=K, method=method)
