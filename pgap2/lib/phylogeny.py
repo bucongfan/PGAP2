@@ -359,6 +359,7 @@ class Phylogeny():
         concatenated_gb.annotations['molecule_type'] = 'DNA'
 
         position_offset = 0  # Track the concatenated sequence length
+        partition_entries = []  # RAxML-style partition definitions
 
         real_involved_clusters = {
             strain: 0 for strain in self.basic.strain_dict}
@@ -400,7 +401,18 @@ class Phylogeny():
                                  type="region",
                                  qualifiers={"note": core_cluster_path, "locus_tag": core_cluster})
             concatenated_gb.features.append(feature)
+            # Record partition range (1-based) for RAxML/IQ-TREE partition model
+            partition_entries.append(
+                f'DNA, {core_cluster} = {position_offset + 1}-{position_offset + example_length}')
             position_offset += example_length  # Update position for the next cluster
+
+        # Save partition file (RAxML-style, also accepted by IQ-TREE with -p)
+        partition_path = os.path.join(
+            cat_align_outdir, 'core_gene_alignment.partitions')
+        with open(partition_path, 'w') as fh:
+            fh.write('\n'.join(partition_entries) + '\n')
+        logger.info(
+            f'Partition file: {partition_path} ({len(partition_entries)} partitions)')
 
         # Save the concatenated record to a GenBank file
         SeqIO.write(concatenated_gb, os.path.join(
@@ -424,6 +436,8 @@ class Phylogeny():
         self.results_file.append(f'{cat_align_outdir}/core_gene_alignment.aln')
         self.results_file.append(f'{cat_align_outdir}/core_gene_alignment.gb')
         self.results_file.append(f'{cat_align_outdir}/core_gene_alignment.txt')
+        self.results_file.append(partition_path)
+        self.partition_file = partition_path
         return f'{cat_align_outdir}/core_gene_alignment.aln'
 
     def construct_tree(self, wd):
@@ -435,25 +449,37 @@ class Phylogeny():
         add_paras = self.add_paras_dict[6]
         extra = (add_paras or "").strip()
 
+        # Use partition model when partition file is available
+        has_partition = hasattr(
+            self, 'partition_file') and os.path.exists(self.partition_file)
+
         if self.tree_method == 'raxml':
+            model_arg = self.partition_file if has_partition else 'GTR+G'
             cmd = (
-                f'{sfw.raxml} --msa {self.maskrc_aln} --model GTR+G '
+                f'{sfw.raxml} --msa {self.first_aln} --model {model_arg} '
                 f'--prefix {tree_path} --all --bs-trees 100 --redo {extra}'
             ).strip()
             best_tree = f'{tree_path}.raxml.support'   # 带 bootstrap 支持值的最终树
 
         elif self.tree_method == 'fasttree':
+            # FastTree does not support partition models
             cmd = (
                 f'{sfw.fasttree} -nt -gtr -gamma {extra} '
-                f'-log {tree_path}.log {self.maskrc_aln} > {tree_path}.treefile'
+                f'-log {tree_path}.log {self.first_aln} > {tree_path}.treefile'
             ).strip()
             best_tree = f'{tree_path}.treefile'
 
         elif self.tree_method == 'iqtree':
-            cmd = (
-                f'{sfw.iqtree} -s {self.maskrc_aln} -m GTR+G '
-                f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
-            ).strip()
+            if has_partition:
+                cmd = (
+                    f'{sfw.iqtree} -s {self.first_aln} -p {self.partition_file} '
+                    f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
+                ).strip()
+            else:
+                cmd = (
+                    f'{sfw.iqtree} -s {self.first_aln} -m GTR+G '
+                    f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
+                ).strip()
             best_tree = f'{tree_path}.treefile'
 
         self.results_file.append(best_tree)
@@ -539,19 +565,40 @@ class Phylogeny():
         os.makedirs(tree_outdir, exist_ok=True)
         tree_path = os.path.join(tree_outdir, 'reconstructed_tree')
         add_paras = self.add_paras_dict[9]
+        extra = (add_paras or "").strip()
+
+        # Use partition model when partition file is available
+        has_partition = hasattr(
+            self, 'partition_file') and os.path.exists(self.partition_file)
 
         if self.tree_method == 'raxml':
-            cmd = f'{sfw.raxml} --msa {self.maskrc_aln} --model GTR+G --prefix {tree_path} --all --bs-trees 100 --redo {add_paras}'
-            best_tree = os.path.join(
-                tree_outdir, 'reconstructed_tree'+'.raxml.bestTree')
+            model_arg = self.partition_file if has_partition else 'GTR+G'
+            cmd = (
+                f'{sfw.raxml} --msa {self.maskrc_aln} --model {model_arg} '
+                f'--prefix {tree_path} --all --bs-trees 100 --redo {extra}'
+            ).strip()
+            best_tree = f'{tree_path}.raxml.support'   # 带 bootstrap 支持值的最终树
+
         elif self.tree_method == 'fasttree':
-            cmd = f'{sfw.fasttree} -gtr -gamma -nt -out {tree_path}.treefile {self.maskrc_aln} {add_paras} 2> {tree_path}.log'
-            best_tree = os.path.join(
-                tree_outdir, 'reconstructed_tree'+'.treefile')
+            # FastTree does not support partition models
+            cmd = (
+                f'{sfw.fasttree} -nt -gtr -gamma {extra} '
+                f'-log {tree_path}.log {self.maskrc_aln} > {tree_path}.treefile'
+            ).strip()
+            best_tree = f'{tree_path}.treefile'
+
         elif self.tree_method == 'iqtree':
-            cmd = f'{sfw.iqtree} -s {self.maskrc_aln} -m GTR+G -pre {tree_path} -bb 1000 -redo -nt AUTO {add_paras}'
-            best_tree = os.path.join(
-                tree_outdir, 'reconstructed_tree'+'.treefile')
+            if has_partition:
+                cmd = (
+                    f'{sfw.iqtree} -s {self.maskrc_aln} -p {self.partition_file} '
+                    f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
+                ).strip()
+            else:
+                cmd = (
+                    f'{sfw.iqtree} -s {self.maskrc_aln} -m GTR+G '
+                    f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
+                ).strip()
+            best_tree = f'{tree_path}.treefile'
 
         self.results_file.append(best_tree)
         finished_status = self.check_before_run(cmd, tree_outdir)

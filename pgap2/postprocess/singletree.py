@@ -136,7 +136,7 @@ def singletree_cmd(subparser: _SubParsersAction):
         '--threads', '-t', required=False, default=1, help='threads used in parallel', type=int)
     subparser_postprocess.add_argument('--msa_method', required=False, default='mafft', choices=(
         'mafft', 'muscle', 'tcoffee'), help='The method of multiple sequence alignment.')
-    subparser_postprocess.add_argument('--tree_method', required=False, default='fasttree', choices=(
+    subparser_postprocess.add_argument('--tree_method', required=False, default='iqtree', choices=(
         'fasttree', 'raxml', 'iqtree'), help='The method of tree building.')
     subparser_postprocess.add_argument('--para_strategy', required=False, default='best', choices=('drop', 'best'),
                                        help='The strategy of paralog including cluster. best: keep the best one; drop: drop all paralogs contained clusters.')
