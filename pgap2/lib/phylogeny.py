@@ -45,7 +45,7 @@ def set_logger(logger_):
 
 
 class Phylogeny():
-    def __init__(self, basic, outdir, threads, disable, msa_method, tree_method, fastbaps_levels=None, fastbaps_prior=None, add_paras=[]) -> None:
+    def __init__(self, basic, outdir, threads, disable, msa_method, tree_method, fastbaps_levels=None, fastbaps_prior=None, add_paras=[], no_partition=False) -> None:
         self.basic: Basic = basic
         self.outdir = outdir
         self.threads = threads
@@ -54,6 +54,7 @@ class Phylogeny():
         self.tree_method = tree_method
         self.fastbaps_levels = fastbaps_levels
         self.fastbaps_prior = fastbaps_prior
+        self.no_partition = no_partition
         self.add_paras_dict = {2: '', 4: '',
                                6: '', 7: '', 8: '', 9: '', 10: ''}
         self.load_additional_paras(add_paras)
@@ -403,16 +404,20 @@ class Phylogeny():
             concatenated_gb.features.append(feature)
             # Record partition range (1-based) for RAxML/IQ-TREE partition model
             partition_entries.append(
-                f'DNA, {core_cluster} = {position_offset + 1}-{position_offset + example_length}')
+                f'GTR+G, {core_cluster} = {position_offset + 1}-{position_offset + example_length}')
             position_offset += example_length  # Update position for the next cluster
 
         # Save partition file (RAxML-style, also accepted by IQ-TREE with -p)
-        partition_path = os.path.join(
-            cat_align_outdir, 'core_gene_alignment.partitions')
-        with open(partition_path, 'w') as fh:
-            fh.write('\n'.join(partition_entries) + '\n')
-        logger.info(
-            f'Partition file: {partition_path} ({len(partition_entries)} partitions)')
+        if not self.no_partition:
+            partition_path = os.path.join(
+                cat_align_outdir, 'core_gene_alignment.partitions')
+            with open(partition_path, 'w') as fh:
+                fh.write('\n'.join(partition_entries) + '\n')
+            logger.info(
+                f'Partition file: {partition_path} ({len(partition_entries)} partitions)')
+        else:
+            partition_path = None
+            logger.info('Partition file generation skipped (--no-partition)')
 
         # Save the concatenated record to a GenBank file
         SeqIO.write(concatenated_gb, os.path.join(
@@ -436,8 +441,9 @@ class Phylogeny():
         self.results_file.append(f'{cat_align_outdir}/core_gene_alignment.aln')
         self.results_file.append(f'{cat_align_outdir}/core_gene_alignment.gb')
         self.results_file.append(f'{cat_align_outdir}/core_gene_alignment.txt')
-        self.results_file.append(partition_path)
-        self.partition_file = partition_path
+        if partition_path is not None:
+            self.results_file.append(partition_path)
+            self.partition_file = partition_path
         return f'{cat_align_outdir}/core_gene_alignment.aln'
 
     def construct_tree(self, wd):
@@ -448,21 +454,16 @@ class Phylogeny():
         tree_path = os.path.join(tree_outdir, 'core_gene_alignment')
         add_paras = self.add_paras_dict[6]
         extra = (add_paras or "").strip()
-
-        # Use partition model when partition file is available
-        has_partition = hasattr(
-            self, 'partition_file') and os.path.exists(self.partition_file)
+        model_arg = 'GTR+G'
 
         if self.tree_method == 'raxml':
-            model_arg = self.partition_file if has_partition else 'GTR+G'
             cmd = (
                 f'{sfw.raxml} --msa {self.first_aln} --model {model_arg} '
                 f'--prefix {tree_path} --all --bs-trees 100 --redo {extra}'
             ).strip()
-            best_tree = f'{tree_path}.raxml.support'   # 带 bootstrap 支持值的最终树
+            best_tree = f'{tree_path}.raxml.support'
 
         elif self.tree_method == 'fasttree':
-            # FastTree does not support partition models
             cmd = (
                 f'{sfw.fasttree} -nt -gtr -gamma {extra} '
                 f'-log {tree_path}.log {self.first_aln} > {tree_path}.treefile'
@@ -470,16 +471,10 @@ class Phylogeny():
             best_tree = f'{tree_path}.treefile'
 
         elif self.tree_method == 'iqtree':
-            if has_partition:
-                cmd = (
-                    f'{sfw.iqtree} -s {self.first_aln} -p {self.partition_file} '
-                    f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
-                ).strip()
-            else:
-                cmd = (
-                    f'{sfw.iqtree} -s {self.first_aln} -m GTR+G '
-                    f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
-                ).strip()
+            cmd = (
+                f'{sfw.iqtree} -s {self.first_aln} -m {model_arg} '
+                f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
+            ).strip()
             best_tree = f'{tree_path}.treefile'
 
         self.results_file.append(best_tree)
@@ -591,7 +586,7 @@ class Phylogeny():
             if has_partition:
                 cmd = (
                     f'{sfw.iqtree} -s {self.maskrc_aln} -p {self.partition_file} '
-                    f'-pre {tree_path} -bb 1000 -bnni -redo -nt AUTO {extra}'
+                    f'-pre {tree_path} -m MFP+MERGE -bb 1000 -bnni -redo -nt AUTO {extra}'
                 ).strip()
             else:
                 cmd = (

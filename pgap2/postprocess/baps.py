@@ -41,7 +41,7 @@ output:
 """
 
 
-def main(indir: str, outdir: str, nodraw: bool, threads: int, disable: bool = False, also_pan: bool = False, core_thre: float = 0.95, step: int = 9, para_strategy: str = 'best', msa_method: str = 'mafft', tree_method: str = 'fasttree', fastbaps_levels: int = 2, fastbaps_prior: str = 'symmetric', add_paras: list = []):
+def main(indir: str, outdir: str, nodraw: bool, threads: int, disable: bool = False, also_pan: bool = False, core_thre: float = 0.95, step: int = 9, para_strategy: str = 'best', msa_method: str = 'mafft', tree_method: str = 'fasttree', fastbaps_levels: int = 2, fastbaps_prior: str = 'symmetric', add_paras: list = [], no_partition: bool = False):
     detail_file = f'{indir}/pgap2.partition.gene_content.detail.tsv'
     fa_file = f'{indir}/total.involved_annot.tsv'
 
@@ -62,7 +62,7 @@ def main(indir: str, outdir: str, nodraw: bool, threads: int, disable: bool = Fa
     basic.phylogeny_from_id(file=fa_file)
     phy = Phylogeny(basic=basic, outdir=outdir, threads=threads, disable=disable,
                     msa_method=msa_method, tree_method=tree_method,
-                    fastbaps_levels=fastbaps_levels, fastbaps_prior=fastbaps_prior, add_paras=add_paras)
+                    fastbaps_levels=fastbaps_levels, fastbaps_prior=fastbaps_prior, add_paras=add_paras, no_partition=no_partition)
     for step_i in range(step):
         step_i += 1
         phy.start_at(step_i)
@@ -91,7 +91,7 @@ def launch(args: argparse.Namespace):
          core_thre=args.core_threshold, step=args.step, para_strategy=args.para_strategy,
          msa_method=args.msa_method,
          fastbaps_levels=args.fastbaps_levels, fastbaps_prior=args.fastbaps_prior,
-         tree_method=args.tree_method, add_paras=args.add_paras)
+         tree_method=args.tree_method, add_paras=args.add_paras, no_partition=args.no_partition)
 
 
 def postprocess_portal(args):
@@ -169,5 +169,8 @@ def baps_cmd(subparser: _SubParsersAction):
                                        ''', type=int, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     subparser_postprocess.add_argument(
         '--add_paras', action='append', help='Add additional parameters in the step. Format like "Step number:Parameters.", such as: 7:--kappa 4.232')
+    subparser_postprocess.add_argument(
+        '--no-partition', dest='no_partition', required=False, action='store_true', default=False,
+        help='Do not generate the partition model file (core_gene_alignment.partitions) during concatenation')
 
     subparser_postprocess.set_defaults(func=postprocess_portal)
