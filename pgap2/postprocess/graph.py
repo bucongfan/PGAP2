@@ -513,7 +513,7 @@ def write_gml(
             fh.write(f"    ref_pos {info.get('ref_pos', -1.0):.2f}\n")
             fh.write(f"    is_ref {1 if info.get('is_ref') else 0}\n")
             fh.write(f"    num_genomes {info.get('num_genomes', 0)}\n")
-            annot_str = info.get('annotation', '').replace('"', "'")
+            annot_str = info.get('annotation', '').replace('"', '')
             fh.write(f'    annotation "{annot_str}"\n')
             fh.write(f"    x {info.get('x', 0.0):.2f}\n")
             fh.write(f"    y {info.get('y', 0.0):.2f}\n")
@@ -603,8 +603,7 @@ def _build_gene_to_cluster_map(clusters: List[dict]) -> Dict[str, int]:
 
 
 def _gml_escape(s: str) -> str:
-    """Escape a string for GML attribute values."""
-    return s.replace("\\", "\\\\").replace('"', '\\"')
+    return s.replace('"', '').replace("\\", "\\\\")
 
 
 def _clean_bracket_str(s: str) -> str:
@@ -655,7 +654,7 @@ def generate_annotated_gml(
     indir: str,
     outdir: str,
 ):
-    """Read PGAP2 output files and write a richly annotated GML.
+    """Read PGAP2 output files and write a annotated GML.
 
     The output GML has:
     - Nodes renamed to ``clust_<id>``
