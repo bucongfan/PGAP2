@@ -65,6 +65,7 @@ class MockPangenome:
 
     def __init__(self):
         self.strain_dict: Dict[int, MockStrain] = {}
+        self.annot: Dict[str, dict] = {}
 
     def load_strain(self, strain: MockStrain):
         self.strain_dict[strain.strain_index] = strain
