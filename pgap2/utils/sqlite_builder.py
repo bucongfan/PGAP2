@@ -1109,9 +1109,6 @@ _FILE_SPECS: List[Tuple[str, str, str, str]] = [
 
 # Files searched directly from data_path root
 _ROOT_FILE_SPECS: List[Tuple[str, str, str]] = [
-    # Pangenome graph GML
-    ("gml", "pgap2.partition.map.gml", "application/gml+xml"),
-    ("gml", "partition/pgap2.partition.map.gml", "application/gml+xml"),
     # Annotated layout GML
     ("layout_gml", "pgap2.partition.map_annotated_layout.gml",
      "application/gml+xml"),
@@ -1125,10 +1122,6 @@ _ROOT_FILE_SPECS: List[Tuple[str, str, str]] = [
      "application/json"),
     ("layout_json", "output/pgap2.partition.map_annotated_layout.json",
      "application/json"),
-    # Annotation TSV (used for real-time graph computation fallback)
-    ("annot_tsv", "total.involved_annot.tsv", "text/tab-separated-values"),
-    ("annot_tsv", "partition/total.involved_annot.tsv",
-     "text/tab-separated-values"),
 ]
 
 

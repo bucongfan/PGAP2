@@ -272,8 +272,7 @@ class Pangenome():
             bar = tqdm(total=self.total_gene_num,
                        unit=' Gene', desc=tqdm_.step(6), disable=self.disable_tqdm)
             loaded_contig_name = set()
-            if retrieve:
-                coord_pat = re.compile(r'\[(\d+):\d+\]\(([+-])\)')
+            coord_pat = re.compile(r'\[(\d+):\d+\]\(([+-])\)')
 
             with open(flat_annot_file) as fh:
                 for line in fh:
@@ -291,20 +290,20 @@ class Pangenome():
                     gene_id = lines[5]
                     gene_name = lines[6]
                     gene_product = lines[7]
+                    strand = ''
+                    m = coord_pat.search(lines[3])
+                    if m:
+                        start = int(m.group(1))
+                        strand = m.group(2)        # '+' or '-'
                     if retrieve:
-                        # start = int(re.search(r'\[(\d+):', lines[3]).group(1))
-                        # strand = re.search(r'\[(\+|-)\d+:\d+\]', lines[3]).group(1)
-                        m = coord_pat.search(lines[3])
-                        if m:
-                            start = int(m.group(1))   # 起始坐标
-                            strand = m.group(2)        # '+' 或 '-'
                         contig = ":".join(lines[0].split(":")[:2])
                         if strand == '+':
                             self.gene_rank[contig][0].append(start)
                         else:
                             self.gene_rank[contig][1].append(start)
                     self.annot.update({gene_index: {'len': gene_len, 'id': gene_id,
-                                                    'name': gene_name, 'product': gene_product}})
+                                                    'name': gene_name, 'product': gene_product,
+                                                    'strand': strand}})
             bar.close()
         else:
             logger.error(f'Cannot find the annot file {flat_annot_file}')

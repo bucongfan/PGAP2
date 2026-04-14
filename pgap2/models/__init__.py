@@ -15,6 +15,7 @@ from pgap2.models.baps import BAPSCluster
 from pgap2.models.tajimas_d import TajimasD
 from pgap2.models.preprocess import PrepStat, GeneCodeUsage
 from pgap2.models.project_file import ProjectFile
+from pgap2.models.gene_neighborhood import GeneNeighborhood, NeighborhoodMember
 
 __all__ = [
     "Base",
@@ -25,4 +26,5 @@ __all__ = [
     "PhylogenyTree", "BAPSCluster", "TajimasD",
     "PrepStat", "GeneCodeUsage",
     "ProjectFile",
+    "GeneNeighborhood", "NeighborhoodMember",
 ]
