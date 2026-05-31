@@ -282,10 +282,11 @@ class Pangenome():
                     bar.update()
                     gene_index = lines[0]
                     contig_name = lines[2]
-                    if contig_name not in loaded_contig_name:
-                        loaded_contig_name.add(contig_name)
-                        self.annot_contig_map.update(
-                            {':'.join(gene_index.split(':')[:2]): contig_name})
+                    contig_key = ':'.join(gene_index.split(':')[:2])
+                    if contig_key not in loaded_contig_name:
+                        #may duplicate when use contig name as the global var, chaning to genome_id:contig_id
+                        loaded_contig_name.add(contig_key)
+                        self.annot_contig_map[contig_key] = contig_name
                     gene_len = int(lines[4])
                     gene_id = lines[5]
                     gene_name = lines[6]

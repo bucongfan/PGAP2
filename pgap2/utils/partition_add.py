@@ -549,6 +549,6 @@ def main(indir: str, outdir: str, previous_dir: str, aligner: str, clust_method:
     logger.info(
         f'To save the basic results of this project for downstream visulization...')
     pickle_basic = PklCheck(outdir=outdir, name='basic')
-    pickle_basic.load('basic', main_data=Basic(pg=pg))
+    pickle_basic.load('basic', main_data=Basic(pg=pg, params=params))
     pickle_basic.pickle_()
     return 0

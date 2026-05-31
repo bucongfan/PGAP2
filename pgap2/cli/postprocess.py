@@ -7,6 +7,7 @@ from pgap2.postprocess.baps import baps_cmd
 from pgap2.postprocess.singletree import singletree_cmd
 from pgap2.postprocess.tajimas_d import tajimas_d_cmd
 from pgap2.postprocess.graph import graph_cmd
+from pgap2.postprocess.neighborhood import neigh_cmd
 from argparse import ArgumentParser, _SubParsersAction
 import argparse
 
@@ -21,3 +22,4 @@ def postprocess_cmd(subparser: _SubParsersAction):
     baps_cmd(sub_subparsers)
     tajimas_d_cmd(sub_subparsers)
     graph_cmd(sub_subparsers)
+    neigh_cmd(sub_subparsers)
