@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 
 
 @pytest.fixture
@@ -41,3 +42,54 @@ def test_rare(test_basic):
         pan_profile) == 3, "get_rarefaction did not return the expected number of profiles"
     assert len(
         new_clusters) == 2, "get_rarefaction did not return the expected number of clusters"
+
+
+def test_fit_rarefaction_keeps_running_when_core_fit_fails(tmp_path, monkeypatch):
+    from pgap2.postprocess import stat
+
+    pan_profile = [
+        [1, 2, 3, 4],
+        [[3000], [2500], [2300], [2200]],
+        [[4000], [4500], [4800], [5100]],
+    ]
+    original_curve_fit = stat.curve_fit
+
+    def fail_core_fit(model, *args, **kwargs):
+        if model is stat.core_gene_model:
+            raise RuntimeError("forced core failure")
+        return original_curve_fit(model, *args, **kwargs)
+
+    monkeypatch.setattr(stat, "curve_fit", fail_core_fit)
+
+    stat.fit_rerefaction(pan_profile, tmp_path)
+
+    content = (tmp_path / "postprocess.curve_fit.txt").read_text()
+    assert "Optimal parameters for core genes: NA" in content
+    assert "Pan Gene Fit: y=" in content
+
+
+def test_fit_rarefaction_uses_pan_loglog_fallback(tmp_path, monkeypatch):
+    from pgap2.postprocess import stat
+
+    pan_profile = [
+        [1, 2, 4, 8],
+        [[3000], [2500], [2300], [2200]],
+        [[1000], [1414], [2000], [2828]],
+    ]
+
+    def fail_pan_fit(model, *args, **kwargs):
+        if model is stat.pan_gene_model:
+            raise RuntimeError("forced pan failure")
+        return (
+            np.asarray([800.0, 0.1, 2200.0], dtype=float),
+            np.eye(3),
+        )
+
+    monkeypatch.setattr(stat, "curve_fit", fail_pan_fit)
+
+    stat.fit_rerefaction(pan_profile, tmp_path)
+
+    content = (tmp_path / "postprocess.curve_fit.txt").read_text()
+    assert "Optimal parameters for pan genes:" in content
+    assert "log-log fallback" in content
+    assert "Pan Gene Fit: y=" in content

@@ -55,6 +55,40 @@ def core_gene_model(x, C0, a, C_inf):
 def pan_gene_model(x, k, gamma):
     return k * x**gamma
 
+#make sure that only finite values are used in the fitting process.
+def _drop_invalid_fit_points(x_data, y_data):
+    x_data = np.asarray(x_data, dtype=float)
+    y_data = np.asarray(y_data, dtype=float)
+    valid_points = np.isfinite(x_data) & np.isfinite(y_data)
+    return x_data[valid_points], y_data[valid_points]
+
+
+def _get_core_fit_initial_params(core_gene_means):
+    if len(core_gene_means) == 0:
+        raise ValueError("No valid core gene points are available for curve fitting.")
+    C_inf = max(float(core_gene_means[-1]), 0.0)
+    C0 = max(float(core_gene_means[0]) - C_inf, 0.0)
+    return [C0, 0.05, C_inf]
+
+
+def _get_pan_fit_initial_params(pan_gene_means):
+    if len(pan_gene_means) == 0:
+        raise ValueError("No valid pan gene points are available for curve fitting.")
+    k = max(float(pan_gene_means[0]), 0.0)
+    return [k, 0.5]
+
+
+def _fit_pan_gene_loglog(x_data, pan_gene_means):
+    positive_points = (x_data > 0) & (pan_gene_means > 0)
+    if np.count_nonzero(positive_points) < 2:
+        raise RuntimeError(
+            "At least two positive points are required for log-log pan gene fitting.")
+
+    gamma, log_k = np.polyfit(
+        np.log(x_data[positive_points]), np.log(pan_gene_means[positive_points]), 1)
+    k = np.exp(log_k)
+    return np.asarray([k, gamma], dtype=float)
+
 
 def stat_pan_core(sampling_list, pav, i_strain, strain_num):
     core_list = []
@@ -122,7 +156,7 @@ def log_pan_genome_state(popt_pan, ofh):
 
 def fit_rerefaction(pan_rarefaction, outdir):
 
-    x_data = pan_rarefaction[0]
+    x_data = np.asarray(pan_rarefaction[0], dtype=float)
     core_gene_samples = pan_rarefaction[1]
     pan_gene_samples = pan_rarefaction[2]
 
@@ -134,27 +168,75 @@ def fit_rerefaction(pan_rarefaction, outdir):
             pan_gene_samples[i] = [
                 int(_) for _ in pan_gene_samples[i] if _ != 'NA']
 
-    core_gene_means = [np.mean(samples) for samples in core_gene_samples]
-    pan_gene_means = [np.mean(samples) for samples in pan_gene_samples]
+    core_gene_means = np.asarray(
+        [np.mean(samples) for samples in core_gene_samples], dtype=float)
+    pan_gene_means = np.asarray(
+        [np.mean(samples) for samples in pan_gene_samples], dtype=float)
 
-    ofh = open(file=f'{outdir}/postprocess.curve_fit.txt', mode='w')
+    core_x_data, core_gene_means = _drop_invalid_fit_points(
+        x_data, core_gene_means)
+    pan_x_data, pan_gene_means = _drop_invalid_fit_points(
+        x_data, pan_gene_means)
 
-    logger.info("Fitting core gene data.")
-    popt_core, _ = curve_fit(core_gene_model, x_data,
-                             core_gene_means, p0=[2000, 0.1, 500])
-    logger.info(f"Optimal parameters for core genes: {popt_core}")
-    ofh.write(f'Optimal parameters for core genes: {popt_core}\n')
+    with open(file=f'{outdir}/postprocess.curve_fit.txt', mode='w') as ofh:
 
-    logger.info("Fitting pan gene data.")
-    popt_pan, _ = curve_fit(pan_gene_model, x_data,
-                            pan_gene_means, p0=[1000, 0.8])
-    logger.info(f"Optimal parameters for pan genes: {popt_pan}")
-    ofh.write(f'Optimal parameters for pan genes: {popt_pan}\n')
-    ofh.write(
-        f'Core Gene Fit: y={popt_core[0]:.3f}*exp({popt_core[1]:.3f}*x)+ {popt_core[2]:.3f}\n')
-    ofh.write(
-        f'Pan Gene Fit: y={popt_pan[0]:.3f}*x^{popt_pan[1]:.3f} \n')
-    log_pan_genome_state(popt_pan, ofh)
+        logger.info("Fitting core gene data.")
+        try:
+            popt_core, _ = curve_fit(
+                core_gene_model,
+                core_x_data,
+                core_gene_means,
+                p0=_get_core_fit_initial_params(core_gene_means),
+                bounds=([0, 0, 0], [np.inf, np.inf, np.inf]),
+                maxfev=10000,
+            )
+            logger.info(f"Optimal parameters for core genes: {popt_core}")
+            ofh.write(f'Optimal parameters for core genes: {popt_core}\n')
+        except (RuntimeError, ValueError) as err:
+            popt_core = None
+            logger.warning(f"Core gene curve fitting failed: {err}")
+            ofh.write('Optimal parameters for core genes: NA\n')
+
+        logger.info("Fitting pan gene data.")
+        try:
+            popt_pan, _ = curve_fit(
+                pan_gene_model,
+                pan_x_data,
+                pan_gene_means,
+                p0=_get_pan_fit_initial_params(pan_gene_means),
+                bounds=([0, 0], [np.inf, np.inf]),
+                maxfev=10000,
+            )
+            logger.info(f"Optimal parameters for pan genes: {popt_pan}")
+            ofh.write(f'Optimal parameters for pan genes: {popt_pan}\n')
+        except (RuntimeError, ValueError) as err:
+            logger.warning(
+                f"Pan gene curve fitting failed with curve_fit: {err}. Trying log-log fallback.")
+            try:
+                popt_pan = _fit_pan_gene_loglog(pan_x_data, pan_gene_means)
+                logger.info(
+                    f"Optimal parameters for pan genes from log-log fallback: {popt_pan}")
+                ofh.write(
+                    f'Optimal parameters for pan genes: {popt_pan} (log-log fallback)\n')
+            except (RuntimeError, ValueError) as fallback_err:
+                popt_pan = None
+                logger.warning(
+                    f"Pan gene log-log fallback fitting failed: {fallback_err}")
+                ofh.write('Optimal parameters for pan genes: NA\n')
+
+        if popt_core is None:
+            ofh.write('Core Gene Fit: NA\n')
+        else:
+            ofh.write(
+                f'Core Gene Fit: y={popt_core[0]:.3f}*exp(-{popt_core[1]:.3f}*x)+ {popt_core[2]:.3f}\n')
+
+        if popt_pan is None:
+            ofh.write('Pan Gene Fit: NA\n')
+            ofh.write('Pan-genome state: NA\n')
+        else:
+            ofh.write(
+                f'Pan Gene Fit: y={popt_pan[0]:.3f}*x^{popt_pan[1]:.3f} \n')
+            log_pan_genome_state(popt_pan, ofh)
 
     # plt.figure(figsize=(8, 6))
 
