@@ -23,7 +23,7 @@ def main():
     parser.add_argument(
         "-V", "--version",
         action="version",
-        version=f"%(prog)s {__version__}  (author: {__author__})"
+        version=f"%(prog)s current version: {__version__}"
     )
     subparser: _SubParsersAction = parser.add_subparsers()
 

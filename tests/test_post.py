@@ -93,3 +93,51 @@ def test_fit_rarefaction_uses_pan_loglog_fallback(tmp_path, monkeypatch):
     assert "Optimal parameters for pan genes:" in content
     assert "log-log fallback" in content
     assert "Pan Gene Fit: y=" in content
+
+
+@pytest.mark.parametrize(
+    ("alpha", "expected_state"),
+    [
+        (0.5, "open"),
+        (1.5, "closed"),
+    ],
+)
+def test_fit_rarefaction_classifies_state_from_new_genes(
+        tmp_path, alpha, expected_state):
+    from pgap2.postprocess import stat
+
+    x_data = np.asarray([1, 2, 4, 8, 16, 32], dtype=float)
+    pan_profile = [
+        x_data.tolist(),
+        [[3000 - 20 * i] for i in range(len(x_data))],
+        [[4000 + 300 * np.sqrt(x)] for x in x_data],
+    ]
+    new_x_data = x_data[1:]
+    new_gene_means = 1000 * new_x_data**(-alpha)
+    new_clusters = [
+        new_x_data.tolist(),
+        [[value] for value in new_gene_means],
+    ]
+
+    stat.fit_rerefaction(pan_profile, tmp_path, new_clusters)
+
+    content = (tmp_path / "postprocess.curve_fit.txt").read_text()
+    assert "New Gene Fit: y=" in content
+    assert f"The pan-genome is {expected_state}" in content
+
+
+def test_fit_rarefaction_reports_na_with_too_few_new_gene_points(tmp_path):
+    from pgap2.postprocess import stat
+
+    pan_profile = [
+        [1, 2, 3, 4],
+        [[3000], [2500], [2300], [2200]],
+        [[4000], [4500], [4800], [5100]],
+    ]
+    new_clusters = [[2, 3], [[500], [200]]]
+
+    stat.fit_rerefaction(pan_profile, tmp_path, new_clusters)
+
+    content = (tmp_path / "postprocess.curve_fit.txt").read_text()
+    assert "Optimal parameters for new genes: NA" in content
+    assert "Pan-genome state: NA" in content

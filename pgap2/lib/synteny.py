@@ -17,8 +17,9 @@ The algorithm works in four steps:
      gene neighborhoods.
 
 Reference:
-  Zhang, R., Mirdita, M., & Söding, J. (2024). De novo discovery of conserved
-  gene clusters in microbial genomes with Spacedust. bioRxiv.
+  Zhang, R., Mirdita, M. & Söding, J. De novo discovery of conserved gene clusters in microbial genomes with Spacedust. 
+  Nat Methods 22, 2065–2073 (2025). 
+  https://doi.org/10.1038/s41592-025-02816-x
 """
 
 import math

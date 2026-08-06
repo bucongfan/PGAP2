@@ -55,7 +55,7 @@ def main(pav_file: str, outdir: str, nodraw: bool, threads: int = 1, disable: bo
     group_freq, pan_para_stat = get_pan_group(pav, outdir)
 
     logger.info("Starting rarefaction curve fitting.")
-    fit_rerefaction(pan_profile, outdir)
+    fit_rerefaction(pan_profile, outdir, new_clusters)
 
     if nodraw:
         logger.info('Drawing is disabled')

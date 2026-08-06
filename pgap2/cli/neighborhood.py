@@ -4,6 +4,12 @@ CLI definitions for the 'neigh' (conserved gene neighborhood) subcommand.
 This subcommand runs the full partition pipeline (identical to 'main')
 followed by a conserved gene neighborhood discovery step inspired by
 spacedust's agglomerative clustering algorithm.
+
+spacedust:
+https://github.com/soedinglab/spacedust
+Zhang, R., Mirdita, M. & Söding, J. De novo discovery of conserved gene clusters in microbial genomes with Spacedust. 
+Nat Methods 22, 2065–2073 (2025). https://doi.org/10.1038/s41592-025-02816-x
+
 """
 
 import os
@@ -79,7 +85,7 @@ def neighborhood_cmd(subparser: _SubParsersAction):
         'neigh',
         help='Conserved gene neighborhood (synteny block) analysis. '
              'Runs the full partition pipeline then discovers conserved '
-             'gene neighborhoods across genomes (spacedust-style).',
+             'gene neighborhoods across genomes.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # ---- Partition parameters (same as 'main') ----

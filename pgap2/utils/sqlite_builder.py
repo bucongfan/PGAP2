@@ -714,11 +714,9 @@ def _import_post_results(db: Session, project_id: int, data_path: Path):
     if curve_file.exists():
         content = curve_file.read_text().strip()
         if content:
-            openness = None
-            if "open" in content.lower():
-                openness = "open"
-            elif "closed" in content.lower():
-                openness = "closed"
+            state_match = re.search(
+                r"The pan-genome is (open|closed)\b", content, re.IGNORECASE)
+            openness = state_match.group(1).lower() if state_match else None
             db.add(CurveFit(
                 project_id=project_id,
                 model_name="heaps",

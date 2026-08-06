@@ -55,7 +55,12 @@ def core_gene_model(x, C0, a, C_inf):
 def pan_gene_model(x, k, gamma):
     return k * x**gamma
 
-#make sure that only finite values are used in the fitting process.
+
+def new_gene_model(x, k, alpha):
+    return k * x**(-alpha)
+
+
+# Make sure that only finite values are used in the fitting process.
 def _drop_invalid_fit_points(x_data, y_data):
     x_data = np.asarray(x_data, dtype=float)
     y_data = np.asarray(y_data, dtype=float)
@@ -88,6 +93,93 @@ def _fit_pan_gene_loglog(x_data, pan_gene_means):
         np.log(x_data[positive_points]), np.log(pan_gene_means[positive_points]), 1)
     k = np.exp(log_k)
     return np.asarray([k, gamma], dtype=float)
+
+
+def _prepare_new_gene_fit_data(new_clusters):
+    if new_clusters is None or len(new_clusters) != 2:
+        raise ValueError("New gene cluster data are required for pan-genome state fitting.")
+
+    x_data = np.asarray(new_clusters[0], dtype=float)
+    sample_groups = new_clusters[1]
+    if len(x_data) != len(sample_groups):
+        raise ValueError("New gene cluster strain counts and samples have different lengths.")
+
+    means = []
+    for samples in sample_groups:
+        values = np.asarray(
+            [value for value in samples if value != 'NA'], dtype=float)
+        values = values[np.isfinite(values)]
+        means.append(np.mean(values) if len(values) else np.nan)
+
+    x_data, means = _drop_invalid_fit_points(x_data, means)
+    valid_points = (x_data > 0) & (means >= 0)
+    x_data = x_data[valid_points]
+    means = means[valid_points]
+    if len(np.unique(x_data)) < 3:
+        raise ValueError(
+            "At least three distinct strain counts are required for pan-genome state fitting.")
+    return x_data, means
+
+
+def _fit_new_gene_decay(new_clusters):
+    x_data, new_gene_means = _prepare_new_gene_fit_data(new_clusters)
+    if np.all(new_gene_means == 0):
+        return np.asarray([0.0, np.inf]), None
+
+    alpha_initial = 0.5
+    k_initial = max(
+        float(new_gene_means[0]) * float(x_data[0])**alpha_initial,
+        np.finfo(float).eps,
+    )
+    try:
+        return curve_fit(
+            new_gene_model,
+            x_data,
+            new_gene_means,
+            p0=[k_initial, alpha_initial],
+            bounds=([0, 0], [np.inf, np.inf]),
+            maxfev=10000,
+        )
+    except (RuntimeError, ValueError):
+        positive_points = new_gene_means > 0
+        if np.count_nonzero(positive_points) < 3:
+            raise RuntimeError(
+                "At least three positive points are required for log-log new gene fitting.")
+
+        coefficients, log_covariance = np.polyfit(
+            np.log(x_data[positive_points]),
+            np.log(new_gene_means[positive_points]),
+            1,
+            cov=True,
+        )
+        slope, log_k = coefficients
+        popt = np.asarray([np.exp(log_k), -slope], dtype=float)
+        covariance = np.zeros((2, 2), dtype=float)
+        covariance[1, 1] = log_covariance[0, 0]
+        return popt, covariance
+
+
+def _get_alpha_confidence_interval(alpha, covariance):
+    if covariance is None or not np.isfinite(alpha):
+        return None
+    alpha_variance = covariance[1, 1]
+    if not np.isfinite(alpha_variance) or alpha_variance < 0:
+        return None
+    margin = 1.96 * np.sqrt(alpha_variance)
+    return alpha - margin, alpha + margin
+
+
+def _classify_pan_genome(alpha, alpha_interval):
+    if np.isposinf(alpha):
+        return "closed"
+    if alpha_interval is None:
+        return "uncertain"
+    lower_alpha, upper_alpha = alpha_interval
+    if lower_alpha > 1:
+        return "closed"
+    if upper_alpha <= 1:
+        return "open"
+    return "uncertain"
 
 
 def stat_pan_core(sampling_list, pav, i_strain, strain_num):
@@ -131,30 +223,33 @@ def calculate_rarefaction(i_strain, pangp: PanGP):
     return {'strain_num': i_strain, 'profile': record, 'new_clusters': new_clusters, }
 
 
-def log_pan_genome_state(popt_pan, ofh):
-    k, gamma = popt_pan
-    if gamma < 1:
-        genome_status = "open"
+def log_pan_genome_state(alpha, alpha_interval, genome_status, ofh):
+    if genome_status == "open":
         status_description = (
-            "The pan-genome is open, meaning that the discovery of new genes will continue as more genomes are added."
+            "The pan-genome is open because the 95% confidence interval for alpha is at or below 1."
+        )
+    elif genome_status == "closed":
+        status_description = (
+            "The pan-genome is closed because no new clusters were observed or the 95% confidence interval for alpha is above 1."
         )
     else:
-        genome_status = "closed"
         status_description = (
-            "The pan-genome is closed, meaning that the discovery of new genes will saturate as more genomes are added."
+            "The pan-genome state is uncertain because the alpha confidence interval crosses 1."
         )
     logger.info(
-        f"The pan-genome is {genome_status}. {status_description}")
-    ofh.write(
-        f"The pan-genome is {genome_status}. {status_description}\n")
+        status_description)
+    ofh.write(f"{status_description}\n")
 
-    logger.info(
-        f"The coefficient k is approximately {k:.2f}, indicating the initial addition rate of new gene clusters per genome.\nLarger values of k suggest a higher initial rate of gene discovery. ")
-    ofh.write(
-        f"The coefficient k is approximately {k:.2f}, indicating the initial addition rate of new gene clusters per genome.\nLarger values of k suggest a higher initial rate of gene discovery. ")
+    if np.isfinite(alpha):
+        ofh.write(f"The new-gene decay exponent alpha is {alpha:.3f}.\n")
+    else:
+        ofh.write("The new-gene decay exponent alpha is infinite.\n")
+    if alpha_interval is not None:
+        ofh.write(
+            f"The 95% confidence interval for alpha is [{alpha_interval[0]:.3f}, {alpha_interval[1]:.3f}].\n")
 
 
-def fit_rerefaction(pan_rarefaction, outdir):
+def fit_rerefaction(pan_rarefaction, outdir, new_clusters=None):
 
     x_data = np.asarray(pan_rarefaction[0], dtype=float)
     core_gene_samples = pan_rarefaction[1]
@@ -232,11 +327,32 @@ def fit_rerefaction(pan_rarefaction, outdir):
 
         if popt_pan is None:
             ofh.write('Pan Gene Fit: NA\n')
-            ofh.write('Pan-genome state: NA\n')
         else:
             ofh.write(
                 f'Pan Gene Fit: y={popt_pan[0]:.3f}*x^{popt_pan[1]:.3f} \n')
-            log_pan_genome_state(popt_pan, ofh)
+
+        logger.info("Fitting new gene decay data for pan-genome state classification.")
+        try:
+            popt_new, covariance_new = _fit_new_gene_decay(new_clusters)
+            k_new, alpha = popt_new
+            alpha_interval = _get_alpha_confidence_interval(
+                alpha, covariance_new)
+            genome_status = _classify_pan_genome(alpha, alpha_interval)
+            logger.info(f"Optimal parameters for new genes: {popt_new}")
+            ofh.write(f'Optimal parameters for new genes: {popt_new}\n')
+            if np.isfinite(alpha):
+                ofh.write(
+                    f'New Gene Fit: y={k_new:.3f}*x^(-{alpha:.3f})\n')
+            else:
+                ofh.write('New Gene Fit: y=0\n')
+            log_pan_genome_state(
+                alpha, alpha_interval, genome_status, ofh)
+        except (RuntimeError, ValueError) as err:
+            logger.warning(
+                f"Pan-genome state fitting could not be completed: {err}")
+            ofh.write('Optimal parameters for new genes: NA\n')
+            ofh.write('New Gene Fit: NA\n')
+            ofh.write('Pan-genome state: NA\n')
 
     # plt.figure(figsize=(8, 6))
 
@@ -443,7 +559,7 @@ def main(indir: str, outdir: str, nodraw: bool, threads: int, disable: bool = Fa
     pan_profile, new_clusters = get_rarefaction(
         basic.pav, outdir, disable=disable, threads=threads, S=S, N=N, R=R, K=K, method=method)
     logger.info("Starting rarefaction curve fitting.")
-    fit_rerefaction(pan_profile, outdir)
+    fit_rerefaction(pan_profile, outdir, new_clusters)
 
     if nodraw:
         logger.info('Drawing is disabled')
