@@ -5,3 +5,7 @@ __pycache__/
 
 # Test/tool caches
 .pytest_cache/
+
+*.egg-info/
+build/
+dist/
