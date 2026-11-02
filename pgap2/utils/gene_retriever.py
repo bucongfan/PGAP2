@@ -103,7 +103,6 @@ def retrieve_from_paf(fpaf, min_overlap_bp=1):
             split_list = line.rstrip('\n').split('\t')
 
             query = split_list[0]
-            qlen = int(split_list[1]) * 3
             strand = 1 if split_list[4] == '+' else -1
             contig = split_list[5]
             t_start = int(split_list[7])
@@ -122,8 +121,8 @@ def retrieve_from_paf(fpaf, min_overlap_bp=1):
                     f"PAF line {line.strip()} does not contain AS:i: score, using matches {matches} as fallback."
                 )
 
-            identity = round(
-                qlen / block, 5) if block >= qlen else round(matches / block, 5)
+            # Both counts are in nucleotide units in miniprot PAF.
+            identity = round(matches / block, 5)
 
             rec = dict(q=query, start=t_start, end=t_end,
                        score=score, identity=identity,
@@ -258,7 +257,7 @@ def realign(pg: Pangenome, tree: Tree, outdir, need_realign_root: set):
                 if node in pg.nucl_fa:
                     exitst_file_flag = True
                     nucl_seq = Seq(pg.nucl_fa[node])
-                    fh.write(f'>{node}\n{nucl_seq.translate()}\n')
+                    fh.write(f'>{node}\n{nucl_seq.translate(table=pg.gcode)}\n')
     if exitst_file_flag:
         logger.info('Re-aligning sequences to update the identity network...')
         edges, notused_edges = realign_parser(outdir=outdir, evalue=pg.evalue, aligner=pg.aligner, mcxdeblast=sfw.mcxdeblast,
@@ -403,16 +402,18 @@ def retrieve_gene_from_genome(G: nx.Graph, pg: Pangenome, tree: Tree):
                         logger.trace(
                             f'Retrieved gene ({loc}) overlaps existing CDS, skip.')
                         continue
-                before_e = before_s + \
-                    pg.annot[f'{strain}:{contig}:{gene_rank_all.index(before_s)}']['len']*3+3
+                # Gene IDs use the contig-wide order, not the strand-specific rank.
+                before_gene = f'{strain}:{contig}:{gene_rank_all.index(before_s)}'
+                after_gene = f'{strain}:{contig}:{gene_rank_all.index(after_s)}'
+                before_e = before_s + pg.annot[before_gene]['len']*3+3
                 if before_e >= start:
                     logger.trace(
                         f'Retrived gene ({loc})) has overlap with exists coding gene, skip it.')
                     continue
 
                 assumed_gene = f'{strain}:{contig}:{gene_num+j}'
-                before_node = member2leaf[f'{strain}:{contig}:{gene_rank.index(before_s)}']
-                after_node = member2leaf[f'{strain}:{contig}:{gene_rank.index(after_s)}']
+                before_node = member2leaf[before_gene]
+                after_node = member2leaf[after_gene]
 
                 if not G.has_node(before_node) or not G.has_node(after_node):
                     # this gene has been merged baited by other strain's gene
@@ -451,13 +452,14 @@ def retrieve_gene_from_genome(G: nx.Graph, pg: Pangenome, tree: Tree):
                     start=start, end=end, strand=loc['strand']), type="CDS", id=retrieve_gene_name)
                 seq = feature.extract(strain_seq_dict[contig].seq)
                 with warnings.catch_warnings(record=True) as w:
-                    # only capture BiopythonWarning
                     warnings.simplefilter("always", BiopythonWarning)
 
-                    prot = seq.translate()
+                    prot = seq.translate(table=pg.gcode)
 
-                    # check if any warnings were captured
-                    if len(w) > 0 and issubclass(w[0].category, BiopythonWarning):
+                    has_translation_warning = any(
+                        issubclass(warning.category, BiopythonWarning) for warning in w)
+                    # Internal stops do not raise warnings; a single terminal stop is allowed.
+                    if has_translation_warning or '*' in prot[:-1]:
                         pseudo_gene_product = f'pseudo|{identity}|{cigar}'
                         tree.pseudo_root_leaf[tree.leaf_root[expect_node]].add(
                             assumed_gene)
