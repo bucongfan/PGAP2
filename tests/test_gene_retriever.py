@@ -11,6 +11,17 @@ from pgap2.lib.tree import Tree
 from pgap2.utils import gene_retriever
 
 
+@pytest.mark.parametrize("dna,protein", [
+    ("", ""), ("A", ""), ("AT", ""), ("ATG", "M"), ("TAA", "*"),
+])
+@pytest.mark.filterwarnings("error::Bio.BiopythonWarning")
+def test_short_retrieved_sequence_is_partial(dna, protein):
+    status, translated = gene_retriever.classify_retrieved_sequence(dna, 11)
+
+    assert status == "partial"
+    assert str(translated) == protein
+
+
 def _paf_line(query, protein_length, matches, block, strand="+", score=50):
     fields = [
         query, protein_length, 0, min(protein_length, block // 3), strand,
@@ -136,7 +147,7 @@ def test_retrieval_identity_and_neighbors(tmp_path, monkeypatch, strand,
     else:
         fields = annotation.strip().split("\t")
         assert fields[0] == "#" + retrieved_gene
-        assert fields[7].split("|")[:2] == ["coding", str(matches / 300)]
+        assert fields[7].split("|")[:2] == ["partial", str(matches / 300)]
         assert fields[8] == dna
         assert tree.distance_graph[retrieved_gene][expected_node]["weight"] == matches / 300
         assert realign_roots == {0}
@@ -157,14 +168,37 @@ def test_retrieval_identity_and_neighbors(tmp_path, monkeypatch, strand,
         pytest.param("ATGAAATAGGGG", 11, "MK*G", "pseudo", id="internal-tag"),
         pytest.param("ATGAAATGAGGG", 11, "MK*G", "pseudo", id="internal-tga"),
         pytest.param("ATGAAAGGGTAA", 11, "MKG*", "coding", id="terminal-stop"),
-        pytest.param("ATGAAAGGG", 11, "MKG", "coding", id="no-terminal-stop"),
-        pytest.param("AAAGGG", 11, "KG", "coding", id="no-start-codon"),
+        pytest.param("ATGAAAGGGTAG", 11, "MKG*", "coding", id="terminal-tag"),
+        pytest.param("ATGAAAGGGTGA", 11, "MKG*", "coding", id="terminal-tga"),
+        pytest.param("GTGAAATAA", 11, "VK*", "coding", id="gtg-start"),
+        pytest.param("TTGAAATAA", 11, "LK*", "coding", id="ttg-start"),
+        pytest.param("CTGAAATAA", 11, "LK*", "coding", id="ctg-start"),
+        pytest.param("ATTAAATAA", 11, "IK*", "coding", id="att-start"),
+        pytest.param("ATCAAATAA", 11, "IK*", "coding", id="atc-start"),
+        pytest.param("ATAAAATAA", 11, "IK*", "coding", id="ata-start"),
+        pytest.param("GTGAAATAA", 1, "VK*", "partial", id="start-code-dependent"),
+        pytest.param("ATGAAAGGG", 11, "MKG", "partial", id="no-terminal-stop"),
+        pytest.param("AAAGGG", 11, "KG", "partial", id="neither-boundary"),
+        pytest.param("AAAGGGTAA", 11, "KG*", "partial", id="no-start-codon"),
         pytest.param("ATGAAATAAGGGTAA", 11, "MK*G*", "pseudo", id="both-stops"),
         pytest.param("ATGAAATAATAA", 11, "MK**", "pseudo", id="consecutive-stops"),
-        pytest.param("ATGAAAGGGA", 11, "MKG", "pseudo", id="partial-codon"),
-        pytest.param("ATGAAATGAGGG", 4, "MKWG", "coding", id="alternative-code"),
+        pytest.param("AAATAAGGG", 11, "K*G", "pseudo", id="pseudo-before-partial"),
+        pytest.param("ATGAAATAAA", 11, "MK*", "pseudo", id="stop-before-trailing-base"),
+        pytest.param("ATGAAAGGGA", 11, "MKG", "partial", id="partial-codon"),
+        pytest.param("ATGAAAGGGAA", 11, "MKG", "partial", id="two-trailing-bases"),
+        pytest.param("ATGAAAGGGTAA", 4, "MKG*", "coding", id="alternative-code-stop"),
+        pytest.param("ATGAAATGAGGG", 4, "MKWG", "partial", id="alternative-code-partial"),
+        pytest.param("ATGAAATGAGGGTAA", 4, "MKWG*", "coding", id="alternative-code-coding"),
+        pytest.param("ATGAAATGA", 4, "MKW", "partial", id="tga-not-stop-in-code4"),
+        pytest.param("atgaaataa", 11, "MK*", "coding", id="lowercase"),
+        pytest.param("ATGNNNTAA", 11, "MX*", "partial", id="unresolved-codon"),
+        pytest.param("NNNAAATAA", 11, "XK*", "partial", id="ambiguous-start"),
+        pytest.param("ATGAAATAN", 11, "MKX", "partial", id="ambiguous-stop"),
+        pytest.param("ATGAAATAR", 11, "MK*", "partial", id="ambiguous-terminal-stop"),
+        pytest.param("ATGTARGGG", 11, "M*G", "pseudo", id="ambiguous-internal-stop"),
     ],
 )
+@pytest.mark.filterwarnings("error::Bio.BiopythonWarning")
 def test_retrieved_gene_classification(tmp_path, monkeypatch, strand, dna, gcode,
                                        protein, status):
     expected_node = "1:0:0"
@@ -242,10 +276,16 @@ def test_retrieved_gene_classification(tmp_path, monkeypatch, strand, dna, gcode
         assert realign_roots == {0}
 
 
-@pytest.mark.parametrize("gcode,protein", [(4, "MKW"), (11, "MK*")])
-def test_realign_uses_configured_genetic_code(tmp_path, monkeypatch, gcode, protein):
+@pytest.mark.parametrize("dna,gcode,protein", [
+    ("ATGAAATGA", 4, "MKW"),
+    ("ATGAAATGA", 11, "MK*"),
+    ("ATGAAAA", 11, "MK"),
+    ("ATGAAAAA", 11, "MK"),
+])
+@pytest.mark.filterwarnings("error::Bio.BiopythonWarning")
+def test_realign_uses_configured_genetic_code(tmp_path, monkeypatch, dna, gcode, protein):
     pg = Pangenome(outdir=str(tmp_path), threads=1, gcode=gcode, disable=True)
-    pg.nucl_fa = {"0:0:0": Seq("ATGAAATGA")}
+    pg.nucl_fa = {"0:0:0": Seq(dna)}
     tree = Tree()
     tree.root_leaf[0].update(["0:0:0", "1:0:0", "2:0:0"])
     parser = Mock(return_value=(None, None))

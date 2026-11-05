@@ -3,7 +3,6 @@ import itertools
 import os
 import bisect
 import tempfile
-import warnings
 import networkx as nx
 from collections import defaultdict
 
@@ -11,7 +10,7 @@ from loguru import logger
 from tqdm import tqdm
 from Bio import SeqIO
 from Bio.Seq import Seq
-from Bio import BiopythonWarning
+from Bio.Data import CodonTable
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 
 from pgap2.lib.pangenome import Pangenome
@@ -29,8 +28,8 @@ When the upstream and downstream neighbors of a gene node are found to be presen
 the node itself is missing, PGAP2 considers the strain as a candidate for gene loss and attempts retrieval.
 
 The retrieval process uses the longest protein sequence from the missing node as a query, and calls Miniprot 
-to align it against the genome of the candidate strain. Retrieved sequences may correspond to coding genes 
-or pseudogenes.
+to align it against the genome of the candidate strain. Retrieved sequences are classified as complete
+coding sequences, partial sequences, or potential pseudogenes.
 
 PGAP2 then evaluates each candidate based on multiple criteria—including sequence identity, overlap with existing genes, 
 and physical distance to neighboring genes—to decide whether the candidate should be inserted as a new node 
@@ -58,6 +57,25 @@ output:
 def set_logger(logger_):
     global logger
     logger = logger_
+
+
+def classify_retrieved_sequence(seq, gcode):
+    """Return (status, protein) for the retrieved interval in coding orientation."""
+    seq = Seq(seq).upper()
+    codon_table = CodonTable.unambiguous_dna_by_id[gcode]
+    complete_length = len(seq) - len(seq) % 3
+    # A trailing incomplete codon alone is not evidence of a pseudogene.
+    protein = seq[:complete_length].translate(table=gcode)
+    has_terminal_stop = (complete_length == len(seq)
+                         and str(seq[-3:]) in codon_table.stop_codons)
+    # A stop followed by leftover bases is internal, even if it is the last amino acid.
+    internal_protein = protein[:-1] if complete_length == len(seq) else protein
+    if '*' in internal_protein:
+        return 'pseudo', protein
+    if (len(seq) >= 6 and has_terminal_stop
+            and str(seq[:3]) in codon_table.start_codons and 'X' not in protein):
+        return 'coding', protein
+    return 'partial', protein
 
 
 def find_nearest_numbers(array, target):
@@ -257,7 +275,9 @@ def realign(pg: Pangenome, tree: Tree, outdir, need_realign_root: set):
                 if node in pg.nucl_fa:
                     exitst_file_flag = True
                     nucl_seq = Seq(pg.nucl_fa[node])
-                    fh.write(f'>{node}\n{nucl_seq.translate(table=pg.gcode)}\n')
+                    complete_length = len(nucl_seq) - len(nucl_seq) % 3
+                    prot = nucl_seq[:complete_length].translate(table=pg.gcode)
+                    fh.write(f'>{node}\n{prot}\n')
     if exitst_file_flag:
         logger.info('Re-aligning sequences to update the identity network...')
         edges, notused_edges = realign_parser(outdir=outdir, evalue=pg.evalue, aligner=pg.aligner, mcxdeblast=sfw.mcxdeblast,
@@ -451,31 +471,23 @@ def retrieve_gene_from_genome(G: nx.Graph, pg: Pangenome, tree: Tree):
                 feature = SeqFeature(FeatureLocation(
                     start=start, end=end, strand=loc['strand']), type="CDS", id=retrieve_gene_name)
                 seq = feature.extract(strain_seq_dict[contig].seq)
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter("always", BiopythonWarning)
-
-                    prot = seq.translate(table=pg.gcode)
-
-                    has_translation_warning = any(
-                        issubclass(warning.category, BiopythonWarning) for warning in w)
-                    # Internal stops do not raise warnings; a single terminal stop is allowed.
-                    if has_translation_warning or '*' in prot[:-1]:
-                        pseudo_gene_product = f'pseudo|{identity}|{cigar}'
-                        tree.pseudo_root_leaf[tree.leaf_root[expect_node]].add(
-                            assumed_gene)
-                    else:
-                        pseudo_gene_product = f'coding|{identity}|{cigar}'
-                        pg.nucl_fa[assumed_gene] = seq
-                        need_realign_root.add(tree.leaf_root[expect_node])
-                        tree.root_leaf[tree.leaf_root[expect_node]].add(
-                            assumed_gene)
+                status, prot = classify_retrieved_sequence(seq, pg.gcode)
+                gene_product = f'{status}|{identity}|{cigar}'
+                if status == 'pseudo':
+                    tree.pseudo_root_leaf[tree.leaf_root[expect_node]].add(
+                        assumed_gene)
+                else:
+                    pg.nucl_fa[assumed_gene] = seq
+                    need_realign_root.add(tree.leaf_root[expect_node])
+                    tree.root_leaf[tree.leaf_root[expect_node]].add(
+                        assumed_gene)
 
                 contig_name = pg.annot_contig_map[f'{strain}:{contig}']
                 strain_name = pg.strain_dict[strain].strain_name
                 location = f"[{start+1}:{end}]({'+' if strand == 1 else '-'})"
                 fh_annot.write(
-                    f'#{assumed_gene}\t{strain_name}\t{contig_name}\t{location}\t{len(prot)}\t{retrieve_gene_name}\t{expect_node_name}\t{pseudo_gene_product}\t{seq}\t{prot}\n')
-                pg.annot[assumed_gene] = {'id': retrieve_gene_name, 'name': expect_node_name, 'product': pseudo_gene_product,
+                    f'#{assumed_gene}\t{strain_name}\t{contig_name}\t{location}\t{len(prot)}\t{retrieve_gene_name}\t{expect_node_name}\t{gene_product}\t{seq}\t{prot}\n')
+                pg.annot[assumed_gene] = {'id': retrieve_gene_name, 'name': expect_node_name, 'product': gene_product,
                                           'len': len(prot)}
                 logger.debug(
                     f'Retrieved {retrieve_gene_name} in {loc} with identity {identity}, and merged to {expect_node_name}.')
